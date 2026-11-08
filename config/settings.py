@@ -33,9 +33,24 @@ DEBUG = os.getenv('DEBUG', 'True').lower() in ('true', '1', 'yes')
 allowed_hosts_env = os.getenv('ALLOWED_HOSTS', '127.0.0.1,localhost')
 ALLOWED_HOSTS = [host.strip() for host in allowed_hosts_env.split(',') if host.strip()]
 
-# CSRF Trusted Origins for Cloud Deployment (e.g. https://lifeos.up.railway.app, https://*.onrender.com)
+# Automatic detection of Railway public domain
+railway_domain = os.getenv('RAILWAY_PUBLIC_DOMAIN', '').strip()
+if railway_domain and railway_domain not in ALLOWED_HOSTS:
+    ALLOWED_HOSTS.append(railway_domain)
+
+# CSRF Trusted Origins for Cloud Deployment (e.g. https://lifeos.up.railway.app)
 csrf_trusted_env = os.getenv('CSRF_TRUSTED_ORIGINS', '')
 CSRF_TRUSTED_ORIGINS = [origin.strip() for origin in csrf_trusted_env.split(',') if origin.strip()]
+if railway_domain:
+    railway_origin = f"https://{railway_domain}"
+    if railway_origin not in CSRF_TRUSTED_ORIGINS:
+        CSRF_TRUSTED_ORIGINS.append(railway_origin)
+
+if any('.railway.app' in h for h in ALLOWED_HOSTS) or railway_domain:
+    if 'https://*.railway.app' not in CSRF_TRUSTED_ORIGINS:
+        CSRF_TRUSTED_ORIGINS.append('https://*.railway.app')
+    if 'https://*.up.railway.app' not in CSRF_TRUSTED_ORIGINS:
+        CSRF_TRUSTED_ORIGINS.append('https://*.up.railway.app')
 
 
 # Application definition
@@ -100,7 +115,7 @@ ASGI_APPLICATION = 'config.asgi.application'
 
 # Database Configuration
 # LifeOS supports MySQL natively as well as cloud-provisioned DATABASE_URL strings.
-database_url = os.getenv('DATABASE_URL')
+database_url = os.getenv('DATABASE_URL') or os.getenv('MYSQL_URL')
 if database_url:
     DATABASES = {
         'default': dj_database_url.config(
@@ -110,11 +125,11 @@ if database_url:
         )
     }
 else:
-    DB_NAME = os.getenv('DB_NAME', 'lifeos_db')
-    DB_USER = os.getenv('DB_USER', 'root')
-    DB_PASSWORD = os.getenv('DB_PASSWORD', '')
-    DB_HOST = os.getenv('DB_HOST', '127.0.0.1')
-    DB_PORT = os.getenv('DB_PORT', '3306')
+    DB_NAME = os.getenv('DB_NAME') or os.getenv('MYSQLDATABASE', 'lifeos_db')
+    DB_USER = os.getenv('DB_USER') or os.getenv('MYSQLUSER', 'root')
+    DB_PASSWORD = os.getenv('DB_PASSWORD') or os.getenv('MYSQLPASSWORD', '')
+    DB_HOST = os.getenv('DB_HOST') or os.getenv('MYSQLHOST', '127.0.0.1')
+    DB_PORT = os.getenv('DB_PORT') or os.getenv('MYSQLPORT', '3306')
 
     DATABASES = {
         'default': {

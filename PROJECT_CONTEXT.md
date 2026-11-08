@@ -55,3 +55,13 @@ LifeOS is structured into four primary cognitive domains:
 - **Typography**: Inter (Google Fonts + system fallback stack)
 - **Design Identity**: Minimal Modern Dark + Soft Indigo Accents
 - **Security & Configuration**: Environment variables loaded via `python-dotenv`, secrets excluded from version control, custom `AbstractUser` model configured upfront.
+
+---
+
+## 4. Multi-User Authentication & Data Isolation Architecture
+
+Established in Step 03:
+- **Authentication**: Email-based authentication backend (`apps.accounts.backends.EmailAuthBackend`) with case-insensitive normalization and timing-attack mitigation.
+- **Session Management**: Session cookies configured with `HttpOnly`, CSRF protection, and duration toggled by "Remember Me" (14 days persistent vs. browser session).
+- **Access Control Rule**: All private application routes (`/dashboard/`, `/timetable/`, `/tasks/`, `/habits/`, `/study/`, `/profile/`, etc.) strictly enforce `@login_required` access control.
+- **Ownership Verification**: All future models must tie private records directly to `user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)`. Never trust user IDs provided in form payloads or URL parameters — always filter and assign through `request.user`.

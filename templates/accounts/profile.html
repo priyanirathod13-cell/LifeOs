@@ -1,0 +1,182 @@
+{% extends 'layouts/app_layout.html' %}
+{% load static %}
+
+{% block title %}Account & Profile Settings — LifeOS{% endblock %}
+{% block header_breadcrumb %}Account Profile{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="page-header-info">
+        <h1 class="page-title">Profile & Security Settings</h1>
+        <p class="page-subtitle">Manage your personal credentials, behavioral philosophy, and account security.</p>
+    </div>
+</div>
+
+<div class="grid grid-cols-3 gap-6">
+    <!-- Left Column: User Overview Card (1 Col) -->
+    <div class="card" style="height: fit-content;">
+        <div class="card-body flex flex-col items-center text-center gap-3">
+            <div style="position: relative;">
+                <img src="{% static 'images/avatar-placeholder.svg' %}" alt="Profile Avatar" style="width: 80px; height: 80px; border-radius: 50%; border: 2px solid var(--border-focus);">
+                <span class="status-dot" style="position: absolute; bottom: 4px; right: 4px; width: 14px; height: 14px; border: 2px solid var(--bg-card);" title="Active User"></span>
+            </div>
+
+            <div>
+                <h2 style="font-size: var(--font-size-lg); font-weight: 700; color: var(--text-primary);">{{ request.user.get_display_name }}</h2>
+                <div style="font-size: var(--font-size-xs); color: var(--text-muted);">{{ request.user.email }}</div>
+            </div>
+
+            <div style="width: 100%; border-top: 1px solid var(--border-subtle); padding-top: var(--space-4); margin-top: var(--space-2); display: flex; flex-direction: column; gap: var(--space-2); text-align: left; font-size: var(--font-size-xs);">
+                <div class="flex justify-between">
+                    <span style="color: var(--text-muted);">Role</span>
+                    <span class="badge badge-accent">{% if request.user.is_staff %}Staff Administrator{% else %}Standard User{% endif %}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span style="color: var(--text-muted);">Member Since</span>
+                    <span style="color: var(--text-primary);">{{ request.user.date_joined|date:"M d, Y" }}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span style="color: var(--text-muted);">Account Status</span>
+                    <span style="color: var(--success); font-weight: var(--font-weight-medium);">Active & Verified</span>
+                </div>
+                <div class="flex justify-between">
+                    <span style="color: var(--text-muted);">Configured Timezone</span>
+                    <span style="color: var(--accent-primary);">{{ request.user.timezone_pref }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Column: Profile & Password Forms (2 Cols) -->
+    <div style="grid-column: span 2; display: flex; flex-direction: column; gap: var(--space-6);">
+        <!-- Profile Details Form -->
+        <div class="card">
+            <div class="card-header">
+                <div>
+                    <h2 class="card-title">Personal Details & Preferences</h2>
+                    <p class="card-subtitle">Update your display identity and behavioral orientation</p>
+                </div>
+            </div>
+            <div class="card-body">
+                <form method="post" action="{% url 'accounts:profile' %}" novalidate>
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="update_profile">
+
+                    <!-- Full Name -->
+                    <div class="form-group">
+                        <label class="form-label" for="{{ profile_form.full_name.id_for_label }}">
+                            <span>Full Name</span>
+                        </label>
+                        {{ profile_form.full_name }}
+                        {% if profile_form.full_name.errors %}
+                        <span class="form-error-text">{{ profile_form.full_name.errors.0 }}</span>
+                        {% endif %}
+                    </div>
+
+                    <!-- Email Address (Read-only for safety) -->
+                    <div class="form-group">
+                        <label class="form-label" for="readonlyEmail">
+                            <span>Email Address (Account Credential)</span>
+                            <span class="form-label-optional">Verified</span>
+                        </label>
+                        <input type="email" id="readonlyEmail" class="form-control" value="{{ request.user.email }}" disabled style="cursor: not-allowed; opacity: 0.7;">
+                        <span class="form-help-text">Email address is your primary unique authentication identifier.</span>
+                    </div>
+
+                    <!-- Timezone Preference -->
+                    <div class="form-group">
+                        <label class="form-label" for="{{ profile_form.timezone_pref.id_for_label }}">
+                            <span>Primary Timezone</span>
+                        </label>
+                        {{ profile_form.timezone_pref }}
+                        {% if profile_form.timezone_pref.errors %}
+                        <span class="form-error-text">{{ profile_form.timezone_pref.errors.0 }}</span>
+                        {% endif %}
+                    </div>
+
+                    <!-- Bio / Philosophy -->
+                    <div class="form-group">
+                        <label class="form-label" for="{{ profile_form.bio.id_for_label }}">
+                            <span>Personal Behavioral Philosophy & Core Drivers</span>
+                            <span class="form-label-optional">Optional</span>
+                        </label>
+                        {{ profile_form.bio }}
+                        {% if profile_form.bio.errors %}
+                        <span class="form-error-text">{{ profile_form.bio.errors.0 }}</span>
+                        {% else %}
+                        <span class="form-help-text">Summarize your high-level principles or personal motto.</span>
+                        {% endif %}
+                    </div>
+
+                    <div style="display: flex; justify-content: flex-end; margin-top: var(--space-4);">
+                        <button type="submit" class="btn btn-primary">
+                            Save Profile Changes
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Security & Password Change Form -->
+        <div class="card">
+            <div class="card-header">
+                <div>
+                    <h2 class="card-title">Change Master Password</h2>
+                    <p class="card-subtitle">Keep your personal behavioral records safe</p>
+                </div>
+            </div>
+            <div class="card-body">
+                <form method="post" action="{% url 'accounts:profile' %}" novalidate>
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="change_password">
+
+                    {% if password_form.non_field_errors %}
+                    <div class="alert alert-danger" style="margin-bottom: var(--space-4);">
+                        <div class="alert-content">
+                            {% for error in password_form.non_field_errors %}
+                            <div>{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Old Password -->
+                    <div class="form-group">
+                        <label class="form-label" for="{{ password_form.old_password.id_for_label }}">Current Password</label>
+                        <input type="password" name="old_password" id="{{ password_form.old_password.id_for_label }}" class="form-control" autocomplete="current-password" placeholder="Enter your existing password" required>
+                        {% if password_form.old_password.errors %}
+                        <span class="form-error-text">{{ password_form.old_password.errors.0 }}</span>
+                        {% endif %}
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <!-- New Password -->
+                        <div class="form-group">
+                            <label class="form-label" for="{{ password_form.new_password1.id_for_label }}">New Master Password</label>
+                            <input type="password" name="new_password1" id="{{ password_form.new_password1.id_for_label }}" class="form-control" autocomplete="new-password" placeholder="Minimum 8 characters" required>
+                            {% if password_form.new_password1.errors %}
+                            <span class="form-error-text">{{ password_form.new_password1.errors.0 }}</span>
+                            {% endif %}
+                        </div>
+
+                        <!-- Confirm New Password -->
+                        <div class="form-group">
+                            <label class="form-label" for="{{ password_form.new_password2.id_for_label }}">Confirm New Password</label>
+                            <input type="password" name="new_password2" id="{{ password_form.new_password2.id_for_label }}" class="form-control" autocomplete="new-password" placeholder="Re-enter new password" required>
+                            {% if password_form.new_password2.errors %}
+                            <span class="form-error-text">{{ password_form.new_password2.errors.0 }}</span>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div style="display: flex; justify-content: flex-end; margin-top: var(--space-4);">
+                        <button type="submit" class="btn btn-secondary">
+                            Update Master Password
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

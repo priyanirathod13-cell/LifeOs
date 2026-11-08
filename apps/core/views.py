@@ -1,5 +1,6 @@
+from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
-from django.shortcuts import render
+from django.shortcuts import redirect, render
 
 
 def health_check(request):
@@ -15,10 +16,24 @@ def health_check(request):
     })
 
 
+def landing_view(request):
+    """
+    Public landing page introducing LifeOS as 'Your Personal Behavioral Intelligence System'.
+    If the user is already authenticated, seamlessly redirect them to their dashboard.
+    """
+    if request.user.is_authenticated:
+        return redirect('core:dashboard')
+
+    return render(request, 'pages/landing.html', {
+        'page_title': 'LifeOS — Personal Behavioral Intelligence System',
+    })
+
+
+@login_required
 def dashboard(request):
     """
-    Main application dashboard view showcasing daily rhythm, priority focus,
-    and behavioral insights.
+    Protected application dashboard view showcasing daily rhythm, priority focus,
+    and behavioral insights for the currently authenticated user.
     """
     context = {
         'page_title': 'Dashboard',
@@ -51,7 +66,8 @@ def generic_module_view(request, template_name, title, active_nav, description="
     return render(request, template_name, context)
 
 
-# Specific module views ensuring zero broken navigation links
+# Protected module views ensuring strict access control and zero broken navigation links
+@login_required
 def timetable_view(request):
     return generic_module_view(
         request, 'pages/placeholder.html', 'Daily Timetable', 'timetable',
@@ -59,6 +75,7 @@ def timetable_view(request):
     )
 
 
+@login_required
 def routines_view(request):
     return generic_module_view(
         request, 'pages/placeholder.html', 'Daily Routines', 'routines',
@@ -66,6 +83,7 @@ def routines_view(request):
     )
 
 
+@login_required
 def tasks_view(request):
     return generic_module_view(
         request, 'pages/tasks.html', 'Tasks & Productivity', 'tasks',
@@ -73,6 +91,7 @@ def tasks_view(request):
     )
 
 
+@login_required
 def habits_view(request):
     return generic_module_view(
         request, 'pages/habits.html', 'Habits & Routines', 'habits',
@@ -80,6 +99,7 @@ def habits_view(request):
     )
 
 
+@login_required
 def activities_view(request):
     return generic_module_view(
         request, 'pages/placeholder.html', 'Activities', 'activities',
@@ -87,6 +107,7 @@ def activities_view(request):
     )
 
 
+@login_required
 def checkin_view(request):
     return generic_module_view(
         request, 'pages/placeholder.html', 'Daily Check-in', 'checkin',
@@ -94,6 +115,7 @@ def checkin_view(request):
     )
 
 
+@login_required
 def study_view(request):
     return generic_module_view(
         request, 'pages/study.html', 'Study Management', 'study',
@@ -101,6 +123,7 @@ def study_view(request):
     )
 
 
+@login_required
 def goals_view(request):
     return generic_module_view(
         request, 'pages/placeholder.html', 'Goals & Milestones', 'goals',
@@ -108,6 +131,7 @@ def goals_view(request):
     )
 
 
+@login_required
 def projects_view(request):
     return generic_module_view(
         request, 'pages/projects.html', 'Projects', 'projects',
@@ -115,6 +139,7 @@ def projects_view(request):
     )
 
 
+@login_required
 def journal_view(request):
     return generic_module_view(
         request, 'pages/journal.html', 'Journal Entries', 'journal',
@@ -122,6 +147,7 @@ def journal_view(request):
     )
 
 
+@login_required
 def decisions_view(request):
     return generic_module_view(
         request, 'pages/placeholder.html', 'Decisions Log', 'decisions',
@@ -129,6 +155,7 @@ def decisions_view(request):
     )
 
 
+@login_required
 def mistakes_view(request):
     return generic_module_view(
         request, 'pages/placeholder.html', 'Mistakes & Learning', 'mistakes',
@@ -136,6 +163,7 @@ def mistakes_view(request):
     )
 
 
+@login_required
 def productivity_analytics_view(request):
     return generic_module_view(
         request, 'pages/placeholder.html', 'Productivity Analytics', 'productivity_analytics',
@@ -143,6 +171,7 @@ def productivity_analytics_view(request):
     )
 
 
+@login_required
 def study_analytics_view(request):
     return generic_module_view(
         request, 'pages/placeholder.html', 'Study Analytics', 'study_analytics',
@@ -150,6 +179,7 @@ def study_analytics_view(request):
     )
 
 
+@login_required
 def behavioral_insights_view(request):
     return generic_module_view(
         request, 'pages/placeholder.html', 'Behavioral Insights', 'behavioral_insights',
@@ -157,6 +187,7 @@ def behavioral_insights_view(request):
     )
 
 
+@login_required
 def financial_analytics_view(request):
     return generic_module_view(
         request, 'pages/placeholder.html', 'Financial Analytics', 'financial_analytics',
@@ -164,6 +195,7 @@ def financial_analytics_view(request):
     )
 
 
+@login_required
 def recommendations_view(request):
     return generic_module_view(
         request, 'pages/placeholder.html', 'AI Recommendations', 'recommendations',
@@ -171,6 +203,7 @@ def recommendations_view(request):
     )
 
 
+@login_required
 def settings_view(request):
     return generic_module_view(
         request, 'pages/settings.html', 'Settings', 'settings',

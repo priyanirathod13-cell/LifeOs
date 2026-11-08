@@ -358,6 +358,19 @@ Scheduled milestone exam, quiz, mid-term, or competitive test.
 
 ---
 
+### G. `apps.analytics`
+
+#### 1. `analytics_dismissedinsight`
+Records user-dismissed behavioral observations to prevent resurfacing acknowledged insights for a specific temporal period or heuristic rule.
+- **Primary Key**: `id` (`BIGINT`)
+- **Foreign Keys**: `user_id` -> `accounts_user(id)` ON DELETE CASCADE
+- **Columns**: `insight_key` (`VARCHAR(150)`), `dismissed_at` (`DATETIME(6)`)
+- **Constraints**:
+  - `UniqueConstraint(fields=['user', 'insight_key'], name='unique_user_dismissed_insight')`
+- **Indexes**: `['user', 'insight_key']`, `['-dismissed_at']`
+
+---
+
 ## 4. Normalization and 3NF Analysis
 
 1. **First Normal Form (1NF)**:

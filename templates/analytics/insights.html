@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Behavioral Insights Engine — LifeOS{% endblock %}
+
+{% block body %}
+<div class="app-shell">
+    {% include "components/sidebar.html" %}
+
+    <main class="main-content">
+        <!-- Top Navigation -->
+        <header class="top-nav" style="margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center;">
+            <div>
+                <h1 style="font-size: 1.5rem; font-weight: 700; color: var(--text-primary); margin: 0;">
+                    Behavioral Insights Engine
+                </h1>
+                <p style="color: var(--text-secondary); font-size: 0.875rem; margin: 4px 0 0 0;">
+                    Automated, deterministic heuristics transforming your recorded data into actionable self-awareness.
+                </p>
+            </div>
+            <span class="badge badge-accent" style="font-size: 0.8rem; padding: 6px 12px;">
+                {{ dt_info.label }}
+            </span>
+        </header>
+
+        {% include "analytics/analytics_nav.html" %}
+
+        <!-- Filter Controls -->
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+            <!-- Category Filter Pills -->
+            <div style="display: flex; gap: 0.5rem; overflow-x: auto; padding-bottom: 2px;">
+                <a href="?range={{ dt_info.preset }}&category=ALL{% if show_dismissed %}&show_dismissed=true{% endif %}" class="btn btn-xs {% if category_filter == 'ALL' %}btn-primary{% else %}btn-outline{% endif %}">
+                    All
+                </a>
+                <a href="?range={{ dt_info.preset }}&category=PRODUCTIVITY{% if show_dismissed %}&show_dismissed=true{% endif %}" class="btn btn-xs {% if category_filter == 'PRODUCTIVITY' %}btn-primary{% else %}btn-outline{% endif %}">
+                    Productivity
+                </a>
+                <a href="?range={{ dt_info.preset }}&category=STUDY{% if show_dismissed %}&show_dismissed=true{% endif %}" class="btn btn-xs {% if category_filter == 'STUDY' %}btn-primary{% else %}btn-outline{% endif %}">
+                    Study
+                </a>
+                <a href="?range={{ dt_info.preset }}&category=HABITS{% if show_dismissed %}&show_dismissed=true{% endif %}" class="btn btn-xs {% if category_filter == 'HABITS' %}btn-primary{% else %}btn-outline{% endif %}">
+                    Habits
+                </a>
+                <a href="?range={{ dt_info.preset }}&category=TIME{% if show_dismissed %}&show_dismissed=true{% endif %}" class="btn btn-xs {% if category_filter == 'TIME' %}btn-primary{% else %}btn-outline{% endif %}">
+                    Time
+                </a>
+                <a href="?range={{ dt_info.preset }}&category=WELLBEING{% if show_dismissed %}&show_dismissed=true{% endif %}" class="btn btn-xs {% if category_filter == 'WELLBEING' %}btn-primary{% else %}btn-outline{% endif %}">
+                    Well-being
+                </a>
+                <a href="?range={{ dt_info.preset }}&category=FINANCE{% if show_dismissed %}&show_dismissed=true{% endif %}" class="btn btn-xs {% if category_filter == 'FINANCE' %}btn-primary{% else %}btn-outline{% endif %}">
+                    Finance
+                </a>
+            </div>
+
+            <!-- Active vs Dismissed Toggle -->
+            <div style="display: flex; gap: 0.5rem; align-items: center;">
+                <a href="?range={{ dt_info.preset }}&category={{ category_filter }}&show_dismissed=false" class="btn btn-xs {% if not show_dismissed %}btn-primary{% else %}btn-ghost{% endif %}">
+                    Active ({{ active_count }})
+                </a>
+                <a href="?range={{ dt_info.preset }}&category={{ category_filter }}&show_dismissed=true" class="btn btn-xs {% if show_dismissed %}btn-primary{% else %}btn-ghost{% endif %}">
+                    Dismissed ({{ dismissed_count }})
+                </a>
+            </div>
+        </div>
+
+        <!-- Insights List Grid -->
+        {% if insights %}
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: 1.25rem;">
+            {% for item in insights %}
+            <div class="card" style="display: flex; flex-direction: column; justify-content: space-between; position: relative;">
+                <div>
+                    <!-- Header Badges -->
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                        <span class="badge {{ item.category_badge }}" style="font-size: 0.7rem; font-weight: 600;">
+                            {{ item.category }}
+                        </span>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <span style="font-size: 0.7rem; color: var(--text-muted);">
+                                {{ item.period }}
+                            </span>
+                            <span class="badge badge-neutral" style="font-size: 0.65rem;">
+                                {{ item.confidence }}
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Title & Narrative -->
+                    <h3 style="font-size: 1.05rem; font-weight: 600; color: var(--text-primary); margin: 0 0 0.5rem 0; line-height: 1.35;">
+                        {{ item.title }}
+                    </h3>
+                    <p style="font-size: 0.875rem; color: var(--text-secondary); line-height: 1.5; margin: 0 0 1rem 0;">
+                        {{ item.description }}
+                    </p>
+                </div>
+
+                <!-- Footer Supporting Metric & Actions -->
+                <div style="border-top: 1px solid var(--border); padding-top: 0.75rem; display: flex; justify-content: space-between; align-items: center;">
+                    <div style="font-size: 0.75rem; color: var(--text-muted); font-family: monospace;">
+                        {{ item.supporting_metric }}
+                    </div>
+
+                    <div>
+                        {% if not item.is_dismissed %}
+                        <form method="POST" action="{% url 'analytics:dismiss_insight' %}" style="display: inline;">
+                            {% csrf_token %}
+                            <input type="hidden" name="insight_key" value="{{ item.key }}">
+                            <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                            <button type="submit" class="btn btn-xs btn-ghost" style="color: var(--text-muted); font-size: 0.75rem;" title="Dismiss this insight">
+                                Dismiss
+                            </button>
+                        </form>
+                        {% else %}
+                        <form method="POST" action="{% url 'analytics:restore_insight' %}" style="display: inline;">
+                            {% csrf_token %}
+                            <input type="hidden" name="insight_key" value="{{ item.key }}">
+                            <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                            <button type="submit" class="btn btn-xs btn-outline" style="font-size: 0.75rem;">
+                                Restore
+                            </button>
+                        </form>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="card empty-state" style="padding: 3rem 1.5rem; text-align: center;">
+            <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="var(--text-muted)" stroke-width="1.5" style="margin: 0 auto 1rem auto;">
+                <circle cx="12" cy="12" r="10"></circle>
+                <path d="M12 16v-4"></path>
+                <path d="M12 8h.01"></path>
+            </svg>
+            <h3 style="font-size: 1.1rem; color: var(--text-primary); margin: 0 0 0.5rem 0;">
+                {% if show_dismissed %}
+                No Dismissed Insights
+                {% else %}
+                No Active Observations For Selected Filter
+                {% endif %}
+            </h3>
+            <p style="color: var(--text-muted); font-size: 0.875rem; max-width: 480px; margin: 0 auto;">
+                The LifeOS Behavioral Insights Engine generates transparent heuristics based solely on confirmed recorded data. As you log more tasks, study sessions, habits, check-ins, and timetable blocks, meaningful behavioral patterns will appear here.
+            </p>
+        </div>
+        {% endif %}
+    </main>
+</div>
+{% endblock %}

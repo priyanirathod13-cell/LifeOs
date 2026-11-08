@@ -17,6 +17,7 @@ urlpatterns = [
     path('', include('apps.study.urls', namespace='study')),
     path('', include('apps.personal.urls', namespace='personal')),
     path('', include('apps.finance.urls', namespace='finance')),
+    path('analytics/', include('apps.analytics.urls', namespace='analytics')),
     path('', include('apps.core.urls', namespace='core')),
 ]
 

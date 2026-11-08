@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Time Management Analytics — LifeOS{% endblock %}
+
+{% block extra_head %}
+<script src="{% static 'js/plotly.min.js' %}"></script>
+{% endblock %}
+
+{% block body %}
+<div class="app-shell">
+    {% include "components/sidebar.html" %}
+
+    <main class="main-content">
+        <!-- Top Navigation -->
+        <header class="top-nav" style="margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center;">
+            <div>
+                <h1 style="font-size: 1.5rem; font-weight: 700; color: var(--text-primary); margin: 0;">
+                    Time Management Analytics
+                </h1>
+                <p style="color: var(--text-secondary); font-size: 0.875rem; margin: 4px 0 0 0;">
+                    Time distribution, timetable block adherence, and scheduling accuracy.
+                </p>
+            </div>
+            <span class="badge badge-accent" style="font-size: 0.8rem; padding: 6px 12px;">
+                {{ dt_info.label }}
+            </span>
+        </header>
+
+        {% include "analytics/analytics_nav.html" %}
+
+        <!-- Metric KPI Cards -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
+            <div class="metric-card card">
+                <span class="metric-label">Total Tracked Time</span>
+                <div class="metric-value" style="color: var(--text-primary);">{{ time.total_tracked_hours }}h</div>
+                <span class="metric-delta">across all recorded activities</span>
+            </div>
+            <div class="metric-card card">
+                <span class="metric-label">Schedule Adherence</span>
+                <div class="metric-value" style="color: {% if time.adherence_rate >= 75 %}var(--success){% elif time.adherence_rate >= 50 %}var(--warning){% else %}var(--rose){% endif %};">
+                    {{ time.adherence_rate }}%
+                </div>
+                <span class="metric-delta">{{ time.completed_blocks }}/{{ time.total_scheduled_blocks }} blocks completed</span>
+            </div>
+            <div class="metric-card card">
+                <span class="metric-label">Missed / Skipped Blocks</span>
+                <div class="metric-value" style="color: {% if time.missed_blocks or time.skipped_blocks %}var(--warning){% else %}var(--text-muted){% endif %};">
+                    {{ time.missed_blocks|add:time.skipped_blocks }}
+                </div>
+                <span class="metric-delta">{{ time.missed_blocks }} missed, {{ time.skipped_blocks }} skipped</span>
+            </div>
+            <div class="metric-card card">
+                <span class="metric-label">Unscheduled Tasks</span>
+                <div class="metric-value" style="color: var(--sky);">{{ time.unscheduled_tasks_count }}</div>
+                <span class="metric-delta">pending tasks without blocks</span>
+            </div>
+        </div>
+
+        <!-- Time Distribution Grid: Donut & Table -->
+        <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
+            <div class="card">
+                <h3 style="font-size: 1rem; font-weight: 600; color: var(--text-primary); margin: 0 0 1rem 0;">
+                    Time Allocation Distribution
+                </h3>
+                <div>
+                    {{ donut_chart_html|safe }}
+                </div>
+            </div>
+
+            <div class="card">
+                <h3 style="font-size: 1rem; font-weight: 600; color: var(--text-primary); margin: 0 0 1rem 0;">
+                    Time by Category Breakdown
+                </h3>
+                {% if time.time_distribution_table %}
+                <div class="table-container">
+                    <table class="table" style="font-size: 0.85rem;">
+                        <thead>
+                            <tr>
+                                <th>Category / Domain</th>
+                                <th>Duration</th>
+                                <th>Share</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in time.time_distribution_table %}
+                            <tr>
+                                <td><strong style="color: var(--text-primary);">{{ item.category }}</strong></td>
+                                <td>{{ item.hours }} hrs</td>
+                                <td>
+                                    <span class="badge badge-accent" style="font-size: 0.75rem;">{{ item.pct }}%</span>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p style="color: var(--text-muted); font-size: 0.85rem;">No time tracked in this period.</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Schedule Block Adherence & Estimation -->
+        <div class="card">
+            <h3 style="font-size: 1rem; font-weight: 600; color: var(--text-primary); margin: 0 0 1rem 0;">
+                Timetable Execution & Schedule Integrity
+            </h3>
+
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.25rem;">
+                <div style="background: var(--bg-primary); padding: 1rem; border-radius: 8px; border: 1px solid var(--border);">
+                    <span style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">Completed Schedule Blocks</span>
+                    <div style="font-size: 1.4rem; font-weight: 700; color: var(--success); margin-top: 4px;">
+                        {{ time.completed_blocks }}
+                    </div>
+                    <span style="font-size: 0.75rem; color: var(--text-muted);">of {{ time.total_scheduled_blocks }} scheduled</span>
+                </div>
+                <div style="background: var(--bg-primary); padding: 1rem; border-radius: 8px; border: 1px solid var(--border);">
+                    <span style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">Rescheduled Blocks</span>
+                    <div style="font-size: 1.4rem; font-weight: 700; color: var(--warning); margin-top: 4px;">
+                        {{ time.rescheduled_blocks }}
+                    </div>
+                    <span style="font-size: 0.75rem; color: var(--text-muted);">shifted to another time slot</span>
+                </div>
+                <div style="background: var(--bg-primary); padding: 1rem; border-radius: 8px; border: 1px solid var(--border);">
+                    <span style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">Average Estimation Error</span>
+                    <div style="font-size: 1.4rem; font-weight: 700; color: {% if time.avg_estimation_error > 0 %}var(--warning){% elif time.avg_estimation_error < 0 %}var(--accent){% else %}var(--success){% endif %}; margin-top: 4px;">
+                        {% if time.avg_estimation_error > 0 %}+{% endif %}{{ time.avg_estimation_error }} min
+                    </div>
+                    <span style="font-size: 0.75rem; color: var(--text-muted);">planned: {{ time.avg_planned_minutes }}m, actual: {{ time.avg_actual_minutes }}m</span>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+{% endblock %}

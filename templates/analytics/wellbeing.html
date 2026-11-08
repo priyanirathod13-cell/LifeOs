@@ -1,0 +1,153 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Well-being & Correlations — LifeOS{% endblock %}
+
+{% block extra_head %}
+<script src="{% static 'js/plotly.min.js' %}"></script>
+{% endblock %}
+
+{% block body %}
+<div class="app-shell">
+    {% include "components/sidebar.html" %}
+
+    <main class="main-content">
+        <!-- Top Navigation -->
+        <header class="top-nav" style="margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center;">
+            <div>
+                <h1 style="font-size: 1.5rem; font-weight: 700; color: var(--text-primary); margin: 0;">
+                    Personal Well-being & Behavioral Correlations
+                </h1>
+                <p style="color: var(--text-secondary); font-size: 0.875rem; margin: 4px 0 0 0;">
+                    Biological and psychometric tracking, trends, and exploratory cross-domain correlations.
+                </p>
+            </div>
+            <span class="badge badge-accent" style="font-size: 0.8rem; padding: 6px 12px;">
+                {{ dt_info.label }}
+            </span>
+        </header>
+
+        {% include "analytics/analytics_nav.html" %}
+
+        <!-- Mandatory Scientific & Medical Disclaimer Banner -->
+        <div class="alert alert-info" style="margin-bottom: 1.5rem; font-size: 0.8rem; line-height: 1.5;">
+            <strong>Methodological & Medical Notice:</strong>
+            <ul style="margin: 4px 0 0 1rem; padding: 0;">
+                <li><strong>Correlation is Not Causation:</strong> Statistical associations indicate that two logged metrics tended to vary together in historical observations. They do not prove that one caused the other.</li>
+                <li><strong>Non-Diagnostic System:</strong> LifeOS is an introspective lifestyle tool for behavioral self-awareness and personal reflection. It does not provide medical, psychiatric, or therapeutic diagnosis or advice.</li>
+            </ul>
+        </div>
+
+        <!-- Metric KPI Cards -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
+            <div class="metric-card card">
+                <span class="metric-label">Average Mood</span>
+                <div class="metric-value" style="color: var(--emerald);">{{ wb.avg_mood }}/10</div>
+                <span class="metric-delta">daily check-in average</span>
+            </div>
+            <div class="metric-card card">
+                <span class="metric-label">Average Energy</span>
+                <div class="metric-value" style="color: var(--sky);">{{ wb.avg_energy }}/10</div>
+                <span class="metric-delta">vitality & alertness</span>
+            </div>
+            <div class="metric-card card">
+                <span class="metric-label">Average Stress</span>
+                <div class="metric-value" style="color: var(--rose);">{{ wb.avg_stress }}/10</div>
+                <span class="metric-delta">perceived friction</span>
+            </div>
+            <div class="metric-card card">
+                <span class="metric-label">Average Sleep</span>
+                <div class="metric-value" style="color: var(--indigo);">{{ wb.avg_sleep }}h</div>
+                <span class="metric-delta">nightly duration</span>
+            </div>
+        </div>
+
+        <!-- Trend Chart: Mood, Energy, Stress, Sleep -->
+        <div class="card" style="margin-bottom: 1.5rem;">
+            <h3 style="font-size: 1rem; font-weight: 600; color: var(--text-primary); margin: 0 0 1rem 0;">
+                Multi-Signal Trend: Mood, Energy, Stress & Sleep Duration
+            </h3>
+            <div>
+                {{ trend_chart_html|safe }}
+            </div>
+        </div>
+
+        <!-- Exploratory Correlation Analysis -->
+        <div class="card" style="margin-bottom: 1.5rem;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem;">
+                <div>
+                    <h3 style="font-size: 1rem; font-weight: 600; color: var(--text-primary); margin: 0;">
+                        Exploratory Cross-Domain Statistical Correlations
+                    </h3>
+                    <p style="color: var(--text-secondary); font-size: 0.8rem; margin: 4px 0 0 0;">
+                        Calculated via Pearson correlation coefficient (<em>r</em> &isin; [-1.0, +1.0]).
+                        To safeguard against spurious or misleading statistical artifacts, a strict minimum of <strong>14 paired daily observations</strong> is required before exploratory correlation metrics are unlocked.
+                    </p>
+                </div>
+            </div>
+
+            <div class="table-container">
+                <table class="table" style="font-size: 0.85rem;">
+                    <thead>
+                        <tr>
+                            <th>Hypothesis / Relationship</th>
+                            <th>Paired Observations</th>
+                            <th>Data Sufficiency</th>
+                            <th>Pearson r</th>
+                            <th>Behavioral Interpretation</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for corr in wb.correlations %}
+                        <tr>
+                            <td><strong style="color: var(--text-primary);">{{ corr.title }}</strong></td>
+                            <td>{{ corr.n }} / {{ corr.min_required }} pairs</td>
+                            <td>
+                                {% if corr.has_min_data %}
+                                <span class="badge badge-success" style="font-size: 0.7rem;">Sufficient ({{ corr.n }}+)</span>
+                                {% else %}
+                                <div style="display: flex; align-items: center; gap: 6px;">
+                                    <div class="progress-bar-wrap" style="width: 70px; height: 6px; background: var(--bg-primary); border-radius: 3px; overflow: hidden;">
+                                        <div class="progress-fill" style="width: {% widthratio corr.n corr.min_required 100 %}%; height: 100%; background: var(--warning);"></div>
+                                    </div>
+                                    <span style="font-size: 0.7rem; color: var(--warning); min-width: 45px;">{{ corr.n }}/{{ corr.min_required }}</span>
+                                </div>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if corr.has_min_data and corr.r is not None %}
+                                <span style="font-family: monospace; font-weight: 700; color: {% if corr.r >= 0.3 %}var(--success){% elif corr.r <= -0.3 %}var(--danger){% else %}var(--text-muted){% endif %};">
+                                    {{ corr.r|stringformat:"+0.2f" }}
+                                </span>
+                                {% else %}
+                                <span style="color: var(--text-muted); font-size: 0.75rem;">Insufficient data</span>
+                                {% endif %}
+                            </td>
+                            <td style="font-size: 0.8rem; color: var(--text-secondary); max-width: 380px;">
+                                {% if corr.has_min_data %}
+                                {{ corr.interpretation }}
+                                {% else %}
+                                <span style="color: var(--text-muted); font-style: italic;">
+                                    Log {{ corr.min_required|add:"-14" }} more daily check-ins to activate statistical correlation.
+                                </span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Scatter Visualization Section -->
+        <div class="card">
+            <h3 style="font-size: 1rem; font-weight: 600; color: var(--text-primary); margin: 0 0 1rem 0;">
+                Sleep Duration vs Energy Score Scatter Plot
+            </h3>
+            <div>
+                {{ scatter_chart_html|safe }}
+            </div>
+        </div>
+    </main>
+</div>
+{% endblock %}

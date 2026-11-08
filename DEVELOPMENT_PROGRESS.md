@@ -13,6 +13,7 @@
 | **07** | **Study Management & Syllabi** | **Completed** | Full multi-user Study Management module across 9 functional domains: Subjects (CRUD, chapter grouping, cascade warnings), Topics (chapter units, priority, completion toggle), Syllabus Tracker (dynamic progress bars, behind-schedule alerts), Study Planner (commitments, temporal tabs, status transitions), Study Sessions (live stopwatch timer, auto-closing dangling sessions, manual logs), Revision Planner (spaced revision iterations, quick reschedule), Exams & Assessments (deadlines, countdowns, score tracking), Study Analytics (14-day rhythm chart, subject time share, syllabus velocity, plan adherence), 19 study tests, 94 total system tests (100% passing). |
 | **08** | **Timetable & Daily Scheduling** | **Completed** | Smart Routine & Timetable Generator across 7 core functional areas: Daily Timetable (chronological timeline, date navigation, status actions, reschedule, KPI cards), Weekly Timetable (7-day calendar overview, backlog sidebar), Routine Management (recurring commitments, weekday filtering, overlap prevention), Availability Management (productive windows per weekday), Smart Generator Engine (deterministic rule-based scheduling, study + task prioritization, break insertion, workload cap, unscheduled item diagnostics), Generation History (audit logs with metrics and unscheduled reasons), Scheduling Preferences (customizable work bounds, break lengths, buffers, fatigue limit), 31 productivity tests, 108 total system tests (100% passing). |
 | **09** | **Personal Management Module** | **Completed** | Full Personal Management module across 8 functional areas: Personal Dashboard (8 summary KPI cards, recent journal/decisions/mistakes streams, 14-day mood trend, spending share), Journal (CRUD, date filters, search, newest/oldest sorting), Daily Check-in (standardized 1-5 scales, duplicate date prevention, 14-day history strip), Mood & Energy Tracking (7d/14d/30d/90d ranges, mood bar chart, energy vs stress comparison), Sleep Tracking (bedtime and wake-up timestamps, overnight duration calculation, 7.0–8.5h benchmark band, DailyMetric sync), Decision Journal (DRAFT/EVALUATING/DECIDED/REVIEWED lifecycle, options analysis, post-mortem outcome scoring), Mistake Tracker (anti-pattern logs, root causes, severity impacts, corrective protocols), Finance Manager (positive decimal transactions in ₹ INR, lifetime & monthly net balance/savings, category breakdowns, ledger search/filters), 22 tests in personal & finance, 123 total system tests (100% passing). |
+| **10** | **Analytics & Behavioral Intelligence** | **Completed** | Full multi-dimensional analytics suite: Main Analytics Dashboard (`/analytics/`), Productivity Analytics (task completion rate, estimation errors, daily trends), Study Analytics (subject hours, syllabus progress %, planning accuracy), Habit Analytics (frequency-aware completion, streaks, friction tracking), Time Management (time distribution donut, schedule adherence), Personal Well-being (mood/energy/stress/sleep trends, Pearson correlations with N>=14 threshold), Behavioral Insights Engine (deterministic rule-based heuristics with dismiss/restore), Period Comparison System (multi-domain delta scorecard with 0-denominator safety), 12 new analytics tests, 135 total system tests (100% passing). |
 
 ---
 
@@ -455,5 +456,95 @@
   - 14 dedicated tests in `apps.personal` verifying models, overnight sleep duration calculations, check-in deduplication, journal search/filters, decision lifecycle, mistake workflows, and IDOR isolation.
   - 8 dedicated tests in `apps.finance` verifying positive decimal validation, lifetime & monthly calculations, category ownership, ledger search/filters, and IDOR isolation.
   - 100% pass rate (`Ran 123 tests in 122.946s — OK`).
+
+---
+
+## Detailed Step 10 Deliverables
+
+### 1. Main Executive Analytics Dashboard
+- **Route**: `analytics:dashboard` (`GET /analytics/`)
+- **Features**:
+  - Unified multi-domain overview across Productivity, Study, Habits, Well-being, Time, and Finance.
+  - Active Behavioral Observations banner showcasing top-priority insights with links to full hub.
+  - 4 Productivity KPI cards, completion velocity trend chart, and daily task throughput.
+  - Time allocation donut chart and timetable block adherence gauge.
+  - Study and syllabus mastery overview cards and daily study hours bar chart.
+  - Frequency-aware habit consistency cards and highest consistency vs friction habit alerts.
+  - Personal well-being snapshot (average mood, energy, stress, sleep) with medical disclaimer.
+  - Financial cash flow snapshot (income, expenses, net savings, top expense driver).
+
+### 2. Productivity Analytics
+- **Route**: `analytics:productivity` (`GET /analytics/productivity/`)
+- **Features**:
+  - Task completion velocity, completion percentage, tasks per day, average completion time.
+  - Duration Estimation Accuracy analysis: calculates estimation error ($E = \text{Actual} - \text{Estimated}$), excluding tasks with missing durations.
+  - Accuracy percentage metrics and comparative planned vs. actual bar chart.
+  - Consistently underestimated tasks table (actual > estimated) and overestimated tasks table (actual < estimated).
+  - Daily productivity trend chart (tasks completed vs tracked hours).
+
+### 3. Study & Learning Analytics
+- **Route**: `analytics:study` (`GET /analytics/study/`)
+- **Features**:
+  - Total study duration, sessions count, daily average study hours, study consistency rate (active study days / total days), longest study streak in period.
+  - Daily study hours bar chart.
+  - Subject-wise time investment horizontal bar chart.
+  - Subject-wise syllabus completion progress table with custom color progress bars, completed vs remaining topic counters, and approaching deadline flags.
+  - Study planning accuracy: planned study hours vs actual study hours, planning variance, and commitment execution rate.
+
+### 4. Habit Analytics
+- **Route**: `analytics:habits` (`GET /analytics/habits/`)
+- **Features**:
+  - Frequency-aware habit evaluation: daily habits evaluated against days count; weekly habits (e.g. 3x/week) evaluated against proportional weekly target count without unfair 7-day penalties.
+  - Overall habit completion rate and active habit count.
+  - Horizontal progress-style completion rate chart with color-coded consistency tiers (green $\ge 80\%$, amber $50-79\%$, rose $< 50\%$).
+  - Active habit ledger displaying name, category, frequency, target count, logged vs expected completions, completion rate %, and contiguous daily streaks.
+
+### 5. Time Management Analytics
+- **Route**: `analytics:time` (`GET /analytics/time/`)
+- **Features**:
+  - Cross-domain time distribution across Study, Tasks, Projects, Routines, and Activities, preventing double-counting.
+  - Interactive Plotly time distribution donut chart and category share breakdown table.
+  - Timetable execution adherence: total scheduled blocks, completed blocks, missed blocks, skipped blocks, rescheduled blocks, and adherence percentage.
+  - Unscheduled tasks backlog counter.
+  - Average planned duration vs actual duration estimation error.
+
+### 6. Personal Well-being & Biological Correlations
+- **Route**: `analytics:wellbeing` (`GET /analytics/wellbeing/`)
+- **Features**:
+  - Multi-signal trend chart: Mood (1-10), Energy (1-10), Stress (1-10), and Sleep Duration (Hours) with dual axes.
+  - Period averages for all four biological and psychometric indicators.
+  - Exploratory cross-domain Pearson correlation analysis ($r \in [-1.0, +1.0]$):
+    - Sleep duration vs Energy score
+    - Sleep duration vs Mood score
+    - Mood score vs Study duration
+    - Energy score vs Task completion
+    - Stress score vs Productivity
+  - Minimum observation threshold enforcement: requires at least **14 paired observations** ($N \ge 14$) before displaying correlation values.
+  - Scatter plot visualization with trend indicator.
+  - Prominent scientific non-causal interpretation notices and medical disclaimer.
+
+### 7. Behavioral Insights Engine
+- **Route**: `analytics:insights` (`GET /analytics/insights/`)
+- **POST APIs**: `analytics:dismiss_insight` (`POST /analytics/insights/dismiss/`), `analytics:restore_insight` (`POST /analytics/insights/restore/`)
+- **Features**:
+  - 100% deterministic, transparent rule-based heuristics evaluating productivity velocity, duration estimation bias, subject study imbalances, approaching syllabus deadlines, keystone habit consistency, habit friction, schedule adherence gaps, well-being correlations, and expense drivers.
+  - Grounded strictly in confirmed database records (no LLM hallucinations or invented metrics).
+  - Category filtering (`ALL`, `PRODUCTIVITY`, `STUDY`, `HABITS`, `TIME`, `WELLBEING`, `FINANCE`).
+  - Insight dismissal and restoration persistence via `DismissedInsight` model.
+  - Confidence ratings (`HIGH`, `MEDIUM`), supporting metric callouts, and generation dates.
+
+### 8. Multi-Period Comparison System
+- **Route**: `analytics:compare` (`GET /analytics/compare/`)
+- **Features**:
+  - Multi-domain comparative delta scorecard across Productivity, Study, Habits, Well-being, and Finance.
+  - Compares Current vs. Previous period (e.g. This week vs Last week, This month vs Last month, or Custom range).
+  - Displays Baseline value, Current value, Absolute Delta ($Current - Previous$), and Percentage Change.
+  - Zero denominator protection: handles zero previous baseline gracefully (`N/A (baseline was 0)`).
+
+### Automated Test Suite
+- **135 Automated Tests** across all 8 applications (100% passing):
+  - 12 new dedicated tests in `apps.analytics` verifying date parsing, productivity estimation errors, study durations, frequency-aware habits, Pearson correlations, minimum data thresholds, financial metrics, delta calculations, insight generation/dismissal, and multi-user data isolation.
+  - Full system test pass: `Ran 135 tests in 145.554s — OK`.
+
 
 

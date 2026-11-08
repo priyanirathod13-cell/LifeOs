@@ -162,7 +162,16 @@
         <!-- MY INTELLIGENCE -->
         <div class="nav-group">
             <div class="nav-group-title">My Intelligence</div>
-            <a href="{% url 'core:productivity_analytics' %}" class="nav-item {% if active_nav == 'productivity_analytics' %}active{% endif %}">
+            <a href="{% url 'analytics:dashboard' %}" class="nav-item {% if active_nav == 'analytics' and analytics_tab == 'overview' %}active{% endif %}">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <rect x="3" y="3" width="7" height="9"></rect>
+                    <rect x="14" y="3" width="7" height="5"></rect>
+                    <rect x="14" y="12" width="7" height="9"></rect>
+                    <rect x="3" y="16" width="7" height="5"></rect>
+                </svg>
+                <span class="nav-label">Analytics Overview</span>
+            </a>
+            <a href="{% url 'analytics:productivity' %}" class="nav-item {% if active_nav == 'productivity_analytics' or analytics_tab == 'productivity' %}active{% endif %}">
                 <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                     <line x1="18" y1="20" x2="18" y2="10"></line>
                     <line x1="12" y1="20" x2="12" y2="4"></line>
@@ -170,13 +179,32 @@
                 </svg>
                 <span class="nav-label">Productivity Analytics</span>
             </a>
-            <a href="{% url 'core:study_analytics' %}" class="nav-item {% if active_nav == 'study_analytics' %}active{% endif %}">
+            <a href="{% url 'analytics:study' %}" class="nav-item {% if active_nav == 'study_analytics' or analytics_tab == 'study' %}active{% endif %}">
                 <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                     <path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
                 </svg>
                 <span class="nav-label">Study Analytics</span>
             </a>
-            <a href="{% url 'core:behavioral_insights' %}" class="nav-item {% if active_nav == 'behavioral_insights' %}active{% endif %}">
+            <a href="{% url 'analytics:habits' %}" class="nav-item {% if analytics_tab == 'habits' %}active{% endif %}">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+                <span class="nav-label">Habit Analytics</span>
+            </a>
+            <a href="{% url 'analytics:time' %}" class="nav-item {% if analytics_tab == 'time' %}active{% endif %}">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <polyline points="12 6 12 12 16 14"></polyline>
+                </svg>
+                <span class="nav-label">Time Management</span>
+            </a>
+            <a href="{% url 'analytics:wellbeing' %}" class="nav-item {% if analytics_tab == 'wellbeing' %}active{% endif %}">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                </svg>
+                <span class="nav-label">Well-being & Correlations</span>
+            </a>
+            <a href="{% url 'analytics:insights' %}" class="nav-item {% if active_nav == 'behavioral_insights' or analytics_tab == 'insights' %}active{% endif %}">
                 <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                     <circle cx="12" cy="12" r="10"></circle>
                     <path d="M12 16v-4"></path>
@@ -184,12 +212,15 @@
                 </svg>
                 <span class="nav-label">Behavioral Insights</span>
             </a>
-            <a href="{% url 'core:financial_analytics' %}" class="nav-item {% if active_nav == 'financial_analytics' %}active{% endif %}">
+            <a href="{% url 'analytics:compare' %}" class="nav-item {% if analytics_tab == 'compare' %}active{% endif %}">
                 <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                    <line x1="12" y1="1" x2="12" y2="23"></line>
-                    <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                    <polyline points="16 3 21 3 21 8"></polyline>
+                    <line x1="4" y1="20" x2="21" y2="3"></line>
+                    <polyline points="21 16 21 21 16 21"></polyline>
+                    <line x1="15" y1="15" x2="21" y2="21"></line>
+                    <line x1="4" y1="4" x2="9" y2="9"></line>
                 </svg>
-                <span class="nav-label">Financial Analytics</span>
+                <span class="nav-label">Period Comparison</span>
             </a>
             <a href="{% url 'core:recommendations' %}" class="nav-item {% if active_nav == 'recommendations' %}active{% endif %}">
                 <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">

@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Period Comparison System — LifeOS{% endblock %}
+
+{% block body %}
+<div class="app-shell">
+    {% include "components/sidebar.html" %}
+
+    <main class="main-content">
+        <!-- Top Navigation -->
+        <header class="top-nav" style="margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center;">
+            <div>
+                <h1 style="font-size: 1.5rem; font-weight: 700; color: var(--text-primary); margin: 0;">
+                    Multi-Period Comparison System
+                </h1>
+                <p style="color: var(--text-secondary); font-size: 0.875rem; margin: 4px 0 0 0;">
+                    Compare performance between temporal periods across productivity, study, habits, well-being, and finances.
+                </p>
+            </div>
+            <div style="display: flex; gap: 8px; align-items: center;">
+                <span class="badge badge-accent" style="font-size: 0.8rem; padding: 6px 12px;">
+                    Current: {{ curr_label }}
+                </span>
+                <span style="color: var(--text-muted); font-size: 0.8rem;">vs</span>
+                <span class="badge badge-neutral" style="font-size: 0.8rem; padding: 6px 12px;">
+                    Baseline: {{ prev_label }}
+                </span>
+            </div>
+        </header>
+
+        {% include "analytics/analytics_nav.html" %}
+
+        <!-- Comparison Scorecard Table -->
+        <div class="card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
+                <h3 style="font-size: 1.05rem; font-weight: 600; color: var(--text-primary); margin: 0;">
+                    Temporal Delta Scorecard
+                </h3>
+                <span style="font-size: 0.75rem; color: var(--text-muted);">
+                    All calculations strictly handle zero denominators without mathematical distortion.
+                </span>
+            </div>
+
+            <div class="table-container">
+                <table class="table" style="font-size: 0.875rem;">
+                    <thead>
+                        <tr>
+                            <th>Domain</th>
+                            <th>Metric Evaluated</th>
+                            <th style="text-align: right;">Baseline ({{ prev_label }})</th>
+                            <th style="text-align: right;">Current ({{ curr_label }})</th>
+                            <th style="text-align: right;">Absolute Delta</th>
+                            <th style="text-align: right;">Relative Change</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in comparisons %}
+                        <tr>
+                            <td>
+                                <span class="badge badge-neutral" style="font-size: 0.7rem;">
+                                    {{ row.category }}
+                                </span>
+                            </td>
+                            <td>
+                                <strong style="color: var(--text-primary);">{{ row.metric }}</strong>
+                            </td>
+                            <td style="text-align: right; color: var(--text-secondary);">
+                                {% if row.unit == '₹' %}₹{% endif %}{{ row.previous }}{% if row.unit != '₹' %} {{ row.unit }}{% endif %}
+                            </td>
+                            <td style="text-align: right; font-weight: 600; color: var(--text-primary);">
+                                {% if row.unit == '₹' %}₹{% endif %}{{ row.current }}{% if row.unit != '₹' %} {{ row.unit }}{% endif %}
+                            </td>
+                            <td style="text-align: right; font-weight: 600; color: {% if row.status == 'positive' %}var(--success){% elif row.status == 'negative' %}var(--danger){% else %}var(--text-muted){% endif %};">
+                                {% if row.diff > 0 %}+{% endif %}{{ row.diff }} {{ row.unit }}
+                            </td>
+                            <td style="text-align: right;">
+                                <span class="badge {% if row.status == 'positive' %}badge-success{% elif row.status == 'negative' %}badge-danger{% else %}badge-neutral{% endif %}" style="font-size: 0.75rem; min-width: 65px; text-align: center;">
+                                    {{ row.pct_display }}
+                                </span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+</div>
+{% endblock %}

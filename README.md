@@ -209,7 +209,7 @@ python manage.py import_legacy_data
 # Run Django system checks
 python manage.py check
 
-# Run automated test suite across all 7 applications
+# Run automated test suite across all 8 applications
 python manage.py test
 
 # Or run specific modules
@@ -217,12 +217,13 @@ python manage.py test apps.productivity
 python manage.py test apps.study
 python manage.py test apps.personal
 python manage.py test apps.finance
+python manage.py test apps.analytics
 ```
 
 Expected output:
 ```
 System check identified no issues (0 silenced).
-Ran 123 tests in ~122s
+Ran 135 tests in ~145s
 
 OK
 ```
@@ -275,5 +276,13 @@ python manage.py runserver
 - **Mistake Tracker**: [http://127.0.0.1:8000/personal/mistakes/](http://127.0.0.1:8000/personal/mistakes/) or `/mistakes/` (Anti-pattern logging, root cause triggers, severity impact, status Open/In Progress/Resolved/Recurring, lessons learned, preventive action plans)
 - **Finance Manager**: [http://127.0.0.1:8000/personal/finance/](http://127.0.0.1:8000/personal/finance/) or `/finance/` (Lifetime and monthly financial KPIs, net balance, cash flow comparison bar, category-wise spending breakdown, ledger transaction search/filter/sort, INR currency formatting)
 - **User Profile & Settings**: [http://127.0.0.1:8000/accounts/profile/](http://127.0.0.1:8000/accounts/profile/) (Update full name, bio, timezone, and change password)
+- **Main Executive Analytics Dashboard**: [http://127.0.0.1:8000/analytics/](http://127.0.0.1:8000/analytics/) (Central multi-domain overview of productivity, study, habits, well-being, time allocation, finances, and active behavioral insights)
+- **Productivity Analytics**: [http://127.0.0.1:8000/analytics/productivity/](http://127.0.0.1:8000/analytics/productivity/) (Task throughput, completion velocity, duration estimation accuracy, under/overestimated task cohorts, and daily trend chart)
+- **Study & Learning Analytics**: [http://127.0.0.1:8000/analytics/study/](http://127.0.0.1:8000/analytics/study/) (Study duration charts, subject time allocation, syllabus completion progress per subject, and plan adherence)
+- **Habit Analytics**: [http://127.0.0.1:8000/analytics/habits/](http://127.0.0.1:8000/analytics/habits/) (Frequency-aware habit completion rates, consistency tiers, streak reporting, and active habit ledger)
+- **Time Management Analytics**: [http://127.0.0.1:8000/analytics/time/](http://127.0.0.1:8000/analytics/time/) (Time distribution donut chart, timetable block execution adherence, and unscheduled task backlog)
+- **Well-being & Biological Correlations**: [http://127.0.0.1:8000/analytics/wellbeing/](http://127.0.0.1:8000/analytics/wellbeing/) (Mood/energy/stress/sleep trend charts, Pearson correlations with N >= 14 data threshold, scatter plots, and medical disclaimer)
+- **Behavioral Insights Engine**: [http://127.0.0.1:8000/analytics/insights/](http://127.0.0.1:8000/analytics/insights/) (Deterministic rule-based heuristics across all life domains with confidence ratings, supporting metrics, and dismiss/restore persistence)
+- **Period Comparison System**: [http://127.0.0.1:8000/analytics/compare/](http://127.0.0.1:8000/analytics/compare/) (Multi-domain comparative delta scorecard comparing current vs. previous periods with zero-denominator safety)
 - **UI Design System Showcase**: [http://127.0.0.1:8000/ui-system/](http://127.0.0.1:8000/ui-system/) (Interactive 16-component catalog)
 - **Health-Check API Endpoint**: [http://127.0.0.1:8000/health/](http://127.0.0.1:8000/health/) (Preserved from Step 01)

@@ -1,4 +1,10 @@
 from django.urls import path
+from apps.analytics.views import (
+    analytics_dashboard_view,
+    behavioral_insights_view,
+    productivity_analytics_view,
+    study_analytics_view,
+)
 from apps.finance.views import finance_dashboard_view
 from apps.personal.views import (
     daily_checkin_view,
@@ -16,13 +22,11 @@ from apps.productivity.views import (
     routine_list_view,
     task_list_view,
 )
-from apps.study.views import study_analytics_view, study_dashboard_view
+from apps.study.views import study_dashboard_view
 from .views import (
-    behavioral_insights_view,
     dashboard,
     health_check,
     landing_view,
-    productivity_analytics_view,
     quick_add_task_view,
     quick_checkin_view,
     recommendations_view,
@@ -70,6 +74,7 @@ urlpatterns = [
     path('mistakes/', mistake_list_view, name='mistakes'),
 
     # MY INTELLIGENCE (Protected)
+    path('analytics/', analytics_dashboard_view, name='analytics'),
     path('analytics/productivity/', productivity_analytics_view, name='productivity_analytics'),
     path('analytics/study/', study_analytics_view, name='study_analytics'),
     path('analytics/behavioral/', behavioral_insights_view, name='behavioral_insights'),

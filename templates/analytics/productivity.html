@@ -1,0 +1,214 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Productivity Analytics — LifeOS{% endblock %}
+
+{% block extra_head %}
+<script src="{% static 'js/plotly.min.js' %}"></script>
+{% endblock %}
+
+{% block body %}
+<div class="app-shell">
+    {% include "components/sidebar.html" %}
+
+    <main class="main-content">
+        <!-- Top Navigation -->
+        <header class="top-nav" style="margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center;">
+            <div>
+                <h1 style="font-size: 1.5rem; font-weight: 700; color: var(--text-primary); margin: 0;">
+                    Productivity Analytics
+                </h1>
+                <p style="color: var(--text-secondary); font-size: 0.875rem; margin: 4px 0 0 0;">
+                    Task completion velocity, execution trends, and duration estimation accuracy.
+                </p>
+            </div>
+            <span class="badge badge-accent" style="font-size: 0.8rem; padding: 6px 12px;">
+                {{ dt_info.label }}
+            </span>
+        </header>
+
+        {% include "analytics/analytics_nav.html" %}
+
+        <!-- KPI Metric Cards -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
+            <div class="metric-card card">
+                <span class="metric-label">Completed Tasks</span>
+                <div class="metric-value" style="color: var(--success);">{{ prod.completed_tasks }}</div>
+                <span class="metric-delta">of {{ prod.total_tasks }} active/due</span>
+            </div>
+            <div class="metric-card card">
+                <span class="metric-label">Completion Rate</span>
+                <div class="metric-value" style="color: var(--accent);">{{ prod.completion_rate }}%</div>
+                <span class="metric-delta">{{ prod.tasks_per_day }} completed/day</span>
+            </div>
+            <div class="metric-card card">
+                <span class="metric-label">Tracked Time</span>
+                <div class="metric-value" style="color: var(--text-primary);">{{ prod.total_tracked_hours }}h</div>
+                <span class="metric-delta">{{ prod.avg_daily_productive_hours }}h daily average</span>
+            </div>
+            <div class="metric-card card">
+                <span class="metric-label">Avg Task Duration</span>
+                <div class="metric-value" style="color: var(--sky);">{{ prod.avg_completion_minutes }}m</div>
+                <span class="metric-delta">based on actual recorded time</span>
+            </div>
+            <div class="metric-card card">
+                <span class="metric-label">Overdue Tasks</span>
+                <div class="metric-value" style="color: {% if prod.overdue_tasks > 0 %}var(--danger){% else %}var(--text-muted){% endif %};">
+                    {{ prod.overdue_tasks }}
+                </div>
+                <span class="metric-delta">past due date</span>
+            </div>
+        </div>
+
+        <!-- Daily Productivity Trend Chart -->
+        <div class="card" style="margin-bottom: 1.5rem;">
+            <h3 style="font-size: 1rem; font-weight: 600; color: var(--text-primary); margin: 0 0 1rem 0;">
+                Productivity Trend: Tasks Completed & Hours Tracked
+            </h3>
+            <div>
+                {{ trend_chart_html|safe }}
+            </div>
+        </div>
+
+        <!-- Planned vs Actual Duration Estimation Analysis -->
+        <div class="card" style="margin-bottom: 1.5rem;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem;">
+                <div>
+                    <h3 style="font-size: 1rem; font-weight: 600; color: var(--text-primary); margin: 0;">
+                        Planned vs. Actual Duration Estimation Accuracy
+                    </h3>
+                    <p style="color: var(--text-secondary); font-size: 0.8rem; margin: 4px 0 0 0;">
+                        Evaluates estimation error: <code>Estimation Error = Actual Duration - Estimated Duration</code>.
+                        Zero = exact, Positive = took longer (underestimated), Negative = completed faster (overestimated).
+                    </p>
+                </div>
+                <div style="text-align: right;">
+                    <span style="font-size: 0.75rem; color: var(--text-muted);">Timed Tasks Analyzed:</span>
+                    <strong style="color: var(--text-primary); font-size: 0.9rem; margin-left: 4px;">{{ prod.estimation_comparisons_count }}</strong>
+                </div>
+            </div>
+
+            {% if prod.estimation_comparisons_count > 0 %}
+            <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 1.5rem; margin-bottom: 1.5rem;">
+                <!-- Summary Stats -->
+                <div style="background: var(--bg-primary); padding: 1.25rem; border-radius: 8px; border: 1px solid var(--border);">
+                    <div style="margin-bottom: 1rem;">
+                        <span style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">Average Estimation Error</span>
+                        <div style="font-size: 1.5rem; font-weight: 700; color: {% if prod.avg_estimation_error > 0 %}var(--warning){% elif prod.avg_estimation_error < 0 %}var(--accent){% else %}var(--success){% endif %}; margin-top: 4px;">
+                            {% if prod.avg_estimation_error > 0 %}+{% endif %}{{ prod.avg_estimation_error }} min
+                        </div>
+                        <p style="font-size: 0.75rem; color: var(--text-muted); margin: 4px 0 0 0;">
+                            {% if prod.avg_estimation_error > 0 %}
+                            Tasks typically require more time than initially planned.
+                            {% elif prod.avg_estimation_error < 0 %}
+                            Tasks are completed faster than planned on average.
+                            {% else %}
+                            Planning estimates match actual durations with high precision.
+                            {% endif %}
+                        </p>
+                    </div>
+
+                    {% if prod.avg_estimation_accuracy %}
+                    <div style="border-top: 1px solid var(--border); padding-top: 0.75rem;">
+                        <span style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">Estimation Accuracy Rate</span>
+                        <div style="font-size: 1.3rem; font-weight: 700; color: var(--success); margin-top: 4px;">
+                            {{ prod.avg_estimation_accuracy }}%
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Comparison Chart -->
+                <div>
+                    {{ est_chart_html|safe }}
+                </div>
+            </div>
+
+            <!-- Underestimated vs Overestimated Breakdown Tables -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                <!-- Consistently Underestimated -->
+                <div>
+                    <h4 style="font-size: 0.85rem; font-weight: 600; color: var(--warning); margin: 0 0 0.75rem 0; display: flex; align-items: center; gap: 6px;">
+                        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
+                            <polyline points="17 6 23 6 23 12"></polyline>
+                        </svg>
+                        Underestimated Tasks (Took Longer Than Planned)
+                    </h4>
+                    {% if prod.underestimated_tasks %}
+                    <div class="table-container">
+                        <table class="table" style="font-size: 0.8rem;">
+                            <thead>
+                                <tr>
+                                    <th>Task</th>
+                                    <th>Est.</th>
+                                    <th>Actual</th>
+                                    <th>Error</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for t in prod.underestimated_tasks %}
+                                <tr>
+                                    <td style="font-weight: 500; color: var(--text-primary);">{{ t.title }}</td>
+                                    <td>{{ t.estimated }}m</td>
+                                    <td>{{ t.actual }}m</td>
+                                    <td style="color: var(--warning); font-weight: 600;">+{{ t.error }}m</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p style="font-size: 0.8rem; color: var(--text-muted);">No underestimated tasks logged in this period.</p>
+                    {% endif %}
+                </div>
+
+                <!-- Consistently Overestimated -->
+                <div>
+                    <h4 style="font-size: 0.85rem; font-weight: 600; color: var(--accent); margin: 0 0 0.75rem 0; display: flex; align-items: center; gap: 6px;">
+                        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="23 18 13.5 8.5 8.5 13.5 1 6"></polyline>
+                            <polyline points="17 18 23 18 23 12"></polyline>
+                        </svg>
+                        Overestimated Tasks (Completed Faster)
+                    </h4>
+                    {% if prod.overestimated_tasks %}
+                    <div class="table-container">
+                        <table class="table" style="font-size: 0.8rem;">
+                            <thead>
+                                <tr>
+                                    <th>Task</th>
+                                    <th>Est.</th>
+                                    <th>Actual</th>
+                                    <th>Error</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for t in prod.overestimated_tasks %}
+                                <tr>
+                                    <td style="font-weight: 500; color: var(--text-primary);">{{ t.title }}</td>
+                                    <td>{{ t.estimated }}m</td>
+                                    <td>{{ t.actual }}m</td>
+                                    <td style="color: var(--accent); font-weight: 600;">{{ t.error }}m</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p style="font-size: 0.8rem; color: var(--text-muted);">No overestimated tasks logged in this period.</p>
+                    {% endif %}
+                </div>
+            </div>
+            {% else %}
+            <div class="empty-state" style="padding: 2rem; text-align: center;">
+                <p style="color: var(--text-muted); font-size: 0.875rem;">
+                    No tasks with both estimated and recorded actual durations were found in this period.
+                    Log actual durations when completing tasks to populate estimation accuracy analytics.
+                </p>
+            </div>
+            {% endif %}
+        </div>
+    </main>
+</div>
+{% endblock %}

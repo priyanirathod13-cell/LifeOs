@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Habit Analytics — LifeOS{% endblock %}
+
+{% block extra_head %}
+<script src="{% static 'js/plotly.min.js' %}"></script>
+{% endblock %}
+
+{% block body %}
+<div class="app-shell">
+    {% include "components/sidebar.html" %}
+
+    <main class="main-content">
+        <!-- Top Navigation -->
+        <header class="top-nav" style="margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center;">
+            <div>
+                <h1 style="font-size: 1.5rem; font-weight: 700; color: var(--text-primary); margin: 0;">
+                    Habit Analytics
+                </h1>
+                <p style="color: var(--text-secondary); font-size: 0.875rem; margin: 4px 0 0 0;">
+                    Frequency-aware habit consistency, streak fidelity, and friction tracking.
+                </p>
+            </div>
+            <span class="badge badge-accent" style="font-size: 0.8rem; padding: 6px 12px;">
+                {{ dt_info.label }}
+            </span>
+        </header>
+
+        {% include "analytics/analytics_nav.html" %}
+
+        <!-- Metric KPI Cards -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
+            <div class="metric-card card">
+                <span class="metric-label">Overall Completion Rate</span>
+                <div class="metric-value" style="color: {% if habits.overall_completion_rate >= 75 %}var(--success){% elif habits.overall_completion_rate >= 50 %}var(--warning){% else %}var(--rose){% endif %};">
+                    {{ habits.overall_completion_rate }}%
+                </div>
+                <span class="metric-delta">{{ habits.total_completed_logs }}/{{ habits.total_expected_completions }} expected completions</span>
+            </div>
+            <div class="metric-card card">
+                <span class="metric-label">Active Habits</span>
+                <div class="metric-value" style="color: var(--text-primary);">{{ habits.total_active_habits }}</div>
+                <span class="metric-delta">currently tracked</span>
+            </div>
+            <div class="metric-card card">
+                <span class="metric-label">Consistent Habits</span>
+                <div class="metric-value" style="color: var(--emerald);">{{ habits.best_performing_habits|length }}</div>
+                <span class="metric-delta">&ge; 60% completion rate</span>
+            </div>
+            <div class="metric-card card">
+                <span class="metric-label">Friction Habits</span>
+                <div class="metric-value" style="color: {% if habits.inconsistent_habits %}var(--warning){% else %}var(--text-muted){% endif %};">
+                    {{ habits.inconsistent_habits|length }}
+                </div>
+                <span class="metric-delta">&lt; 60% completion rate</span>
+            </div>
+        </div>
+
+        <!-- Frequency Notice Alert -->
+        <div class="alert alert-info" style="margin-bottom: 1.5rem; font-size: 0.8rem; line-height: 1.4;">
+            <strong>Frequency-Aware Evaluation:</strong> LifeOS evaluates each habit against its declared target frequency. For example, a habit scheduled 3 times per week is evaluated against a 3-completion target rather than an artificial 7-day daily expectation, preventing misleading streak or rate penalties.
+        </div>
+
+        <!-- Chart: Habit Completion Progress -->
+        <div class="card" style="margin-bottom: 1.5rem;">
+            <h3 style="font-size: 1rem; font-weight: 600; color: var(--text-primary); margin: 0 0 1rem 0;">
+                Habit Completion Rates
+            </h3>
+            <div>
+                {{ habit_chart_html|safe }}
+            </div>
+        </div>
+
+        <!-- Detailed Habit Ledger Table -->
+        <div class="card">
+            <h3 style="font-size: 1rem; font-weight: 600; color: var(--text-primary); margin: 0 0 1rem 0;">
+                Active Habit Ledger
+            </h3>
+
+            {% if habits.habits_list %}
+            <div class="table-container">
+                <table class="table" style="font-size: 0.85rem;">
+                    <thead>
+                        <tr>
+                            <th>Habit Name</th>
+                            <th>Category</th>
+                            <th>Frequency & Target</th>
+                            <th>Logged / Expected</th>
+                            <th>Completion Rate</th>
+                            <th>Current Streak</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for h in habits.habits_list %}
+                        <tr>
+                            <td><strong style="color: var(--text-primary);">{{ h.name }}</strong></td>
+                            <td>
+                                <span class="badge" style="background: rgba(129, 140, 248, 0.15); color: {{ h.category_color }}; font-size: 0.75rem;">
+                                    {{ h.category }}
+                                </span>
+                            </td>
+                            <td>
+                                {{ h.frequency }}
+                                {% if h.frequency_raw != 'DAILY' %}
+                                ({{ h.target_count }}x)
+                                {% endif %}
+                            </td>
+                            <td>{{ h.completed_count }} / {{ h.expected_count }}</td>
+                            <td>
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <div class="progress-bar-wrap" style="width: 100px; height: 6px; background: var(--bg-primary); border-radius: 3px; overflow: hidden;">
+                                        <div class="progress-fill" style="width: {{ h.completion_rate }}%; height: 100%; background: {% if h.completion_rate >= 75 %}var(--success){% elif h.completion_rate >= 50 %}var(--warning){% else %}var(--danger){% endif %};"></div>
+                                    </div>
+                                    <span style="font-weight: 600; font-size: 0.8rem;">{{ h.completion_rate }}%</span>
+                                </div>
+                            </td>
+                            <td>
+                                {% if h.frequency_raw == 'DAILY' %}
+                                <span style="font-weight: 600; color: var(--accent);">{{ h.streak }} days</span>
+                                {% else %}
+                                <span style="color: var(--text-muted); font-size: 0.75rem;">N/A (weekly)</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p style="color: var(--text-muted); font-size: 0.85rem; margin: 0;">No active habits found. Add habits in Habit Management to view completion analytics.</p>
+            {% endif %}
+        </div>
+    </main>
+</div>
+{% endblock %}

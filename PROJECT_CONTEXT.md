@@ -210,5 +210,36 @@ Established in Step 09:
   - All views enforce `@login_required` and query exclusively within `request.user`.
   - Cross-user foreign key references (categories, decisions, options) are rejected in forms and models with HTTP 404 responses.
 
+---
+
+## 11. Analytics & Behavioral Intelligence Architecture (Step 10)
+
+Established in Step 10:
+- **Module Structure (`apps.analytics`)**:
+  - `DismissedInsight`: Lightweight persistence model storing user-dismissed behavioral observations by deterministic key (`insight_key`), timestamp, and user foreign key, avoiding redundant database tables for statistics that can be derived on-the-fly from existing telemetry.
+  - `services/date_utils.py`: Timezone-aware date parsing across standard ranges (`7d`, `30d`, `90d`, `this_week`, `this_month`, `custom`) and prior comparison window calculations.
+  - `services/productivity_service.py`: Task velocity, completion rates, overdue counting, and duration estimation error analysis ($E = \text{Actual} - \text{Estimated}$), excluding unrecorded durations and categorizing tasks into underestimated vs. overestimated cohorts.
+  - `services/study_service.py`: Study hours aggregation, subject-wise duration breakdown, overall and per-subject syllabus topic mastery rates, planned vs. actual study variances, and Monday–Sunday weekly study rhythms.
+  - `services/habit_service.py`: Frequency-aware habit completion rates respecting `DAILY` vs. `WEEKLY` (e.g. 3x/week evaluated on 3x target rather than artificial 7-day expectation), streak reporting, and friction identification.
+  - `services/time_service.py`: Cross-domain time distribution (Study, Tasks, Routines, Activities) with double-counting prevention, schedule block adherence rates, and unscheduled task backlog tracking.
+  - `services/wellbeing_service.py`: Averages for mood, energy, stress, and sleep duration, multi-signal trends, and Pearson correlation coefficients ($r$) between sleep, energy, mood, study, and productivity. Requires a strict minimum of $N \ge 14$ paired observations before displaying exploratory correlation values.
+  - `services/finance_service.py`: Period income, expenses, net savings, savings rate %, category breakdown, and top expense driver identification.
+  - `services/comparison_service.py`: Multi-period comparative delta scorecards (current vs. previous period), reporting absolute deltas and percentage changes with zero-denominator safety handling (`N/A (baseline was 0)`).
+  - `services/insights_engine.py`: Deterministic, rule-based Behavioral Insights Engine with confidence ratings, supporting metrics, time periods, category badges, and user dismissal/restoration support.
+  - `services/charts.py`: Responsive Plotly interactive charts adhering to the LifeOS Minimal Modern Dark design system (#0F1117, #1B1F2A, #818CF8, #34D399, etc.) rendered offline via bundled `static/js/plotly.min.js`.
+- **8 Core Functional Sections**:
+  1. Main Executive Analytics Dashboard (`/analytics/`): Central multi-domain overview uniting productivity, study, habits, time allocation, well-being, and finances with active behavioral insight highlights.
+  2. Productivity Analytics (`/analytics/productivity/`): Task velocity, completion rate, daily productivity trend chart, and duration estimation error tables.
+  3. Study Analytics (`/analytics/study/`): Daily study hours chart, subject comparison horizontal bar chart, syllabus progress by subject, and plan adherence metrics.
+  4. Habit Analytics (`/analytics/habits/`): Frequency-aware habit performance, completion progress chart, and active habit ledger.
+  5. Time Management Analytics (`/analytics/time/`): Time allocation donut chart, category shares, and timetable schedule block execution adherence.
+  6. Well-being & Correlations (`/analytics/wellbeing/`): Multi-signal line charts, exploratory correlation matrix ($N \ge 14$ threshold), scatter plots, and mandatory medical/non-diagnostic disclaimer.
+  7. Behavioral Insights Engine (`/analytics/insights/`): Rule-based observation cards with category filters, confidence indicators, supporting metrics, and dismiss/restore actions.
+  8. Period Comparison System (`/analytics/compare/`): Multi-domain delta scorecard comparing current vs. previous period values.
+- **Security & Data Isolation**:
+  - All analytical queries strictly filter records by `request.user`.
+  - Insights dismissal is isolated per user.
+  - All endpoints enforce `@login_required` with zero cross-user data leakage.
+
 
 

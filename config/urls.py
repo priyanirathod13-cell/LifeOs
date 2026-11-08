@@ -21,6 +21,12 @@ urlpatterns = [
     path('', include('apps.core.urls', namespace='core')),
 ]
 
+# Custom Production Error Handlers
+handler400 = 'apps.core.views.bad_request_view'
+handler403 = 'apps.core.views.permission_denied_view'
+handler404 = 'apps.core.views.page_not_found_view'
+handler500 = 'apps.core.views.server_error_view'
+
 # Serve media and static files in development
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

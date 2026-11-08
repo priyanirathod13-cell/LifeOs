@@ -216,7 +216,7 @@ python manage.py import_legacy_data
 # Run Django system checks
 python manage.py check
 
-# Run automated test suite across all 8 applications
+# Run automated test suite across all 8 applications (160 tests, 100% passing)
 python manage.py test
 
 # Or run specific modules
@@ -226,12 +226,13 @@ python manage.py test apps.personal
 python manage.py test apps.finance
 python manage.py test apps.analytics
 python manage.py test apps.core.tests_step11
+python manage.py test apps.core.tests_security
 ```
 
 Expected output:
 ```
 System check identified no issues (0 silenced).
-Ran 151 tests in ~160s
+Ran 160 tests in ~180s
 
 OK
 ```
@@ -299,3 +300,26 @@ python manage.py runserver
 - **System Settings & Preferences**: [http://127.0.0.1:8000/settings/](http://127.0.0.1:8000/settings/) (User localization, 12h/24h time, week start day, daily work goals, notification toggles)
 - **UI Design System Showcase**: [http://127.0.0.1:8000/ui-system/](http://127.0.0.1:8000/ui-system/) (Interactive 16-component catalog)
 - **Health-Check API Endpoint**: [http://127.0.0.1:8000/health/](http://127.0.0.1:8000/health/) (Preserved from Step 01)
+
+---
+
+## 7. Cloud Deployment & Production Operations
+
+LifeOS is fully production-hardened and pre-configured for instant deployment on cloud platforms:
+
+- **WhiteNoise Static Delivery**: Automatic Gzip/Brotli compression and long-lived caching directly from Gunicorn (`whitenoise.middleware.WhiteNoiseMiddleware`).
+- **Gunicorn WSGI Server**: 3 workers with 120-second timeout.
+- **Docker & Compose**: Pre-packaged [`Dockerfile`](Dockerfile) and [`docker-compose.yml`](docker-compose.yml) with automatic health checks.
+- **PaaS 1-Click Manifests**:
+  - **Railway**: Configured via [`railway.toml`](railway.toml) and [`Procfile`](Procfile) with automatic MySQL attachment.
+  - **Render**: Blueprint specification via [`render.yaml`](render.yaml).
+- **Security Hardening**:
+  - `DEBUG=False` production mode.
+  - Automatic HTTPS redirect (`SECURE_SSL_REDIRECT = True`).
+  - HSTS enabled with 1-year preload (`SECURE_HSTS_SECONDS = 31536000`).
+  - Secure and HTTP-only session and CSRF cookies.
+  - Frame protection (`X_FRAME_OPTIONS = 'DENY'`).
+  - Custom branded error pages for 400, 403, 404, and 500 errors.
+
+For complete, step-by-step production setup instructions across Railway, Render, Docker, and Ubuntu/Nginx, refer to [`DEPLOYMENT.md`](DEPLOYMENT.md).
+

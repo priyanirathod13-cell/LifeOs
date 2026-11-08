@@ -938,3 +938,46 @@ def settings_view(request):
         'user_tz': getattr(request.user, 'timezone_pref', 'Asia/Kolkata'),
     }
     return render(request, 'pages/settings.html', context)
+
+
+# ==============================================================================
+# PRODUCTION ERROR HANDLERS (HTTP 400, 403, 404, 500)
+# ==============================================================================
+
+def page_not_found_view(request, exception=None):
+    """
+    Custom 404 handler rendered with the LifeOS Minimal Modern Dark design system.
+    """
+    return render(request, '404.html', {
+        'page_title': 'Page Not Found — LifeOS',
+        'path': request.path,
+    }, status=404)
+
+
+def server_error_view(request):
+    """
+    Custom 500 handler rendered with the LifeOS Minimal Modern Dark design system.
+    """
+    return render(request, '500.html', {
+        'page_title': 'Server Error — LifeOS',
+    }, status=500)
+
+
+def permission_denied_view(request, exception=None):
+    """
+    Custom 403 handler rendered with the LifeOS Minimal Modern Dark design system.
+    """
+    return render(request, '403.html', {
+        'page_title': 'Access Denied — LifeOS',
+        'path': request.path,
+    }, status=403)
+
+
+def bad_request_view(request, exception=None):
+    """
+    Custom 400 handler rendered with the LifeOS Minimal Modern Dark design system.
+    """
+    return render(request, '400.html', {
+        'page_title': 'Bad Request — LifeOS',
+    }, status=400)
+

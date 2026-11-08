@@ -1,0 +1,50 @@
+version: '3.8'
+
+services:
+  db:
+    image: mysql:8.0
+    restart: always
+    environment:
+      MYSQL_DATABASE: lifeos_db
+      MYSQL_ALLOW_EMPTY_PASSWORD: 'yes'
+      MYSQL_ROOT_HOST: '%'
+    ports:
+      - "3306:3306"
+    volumes:
+      - lifeos_mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  web:
+    build: .
+    restart: always
+    command: >
+      sh -c "python manage.py migrate &&
+             gunicorn config.wsgi:application --bind 0.0.0.0:8000 --workers 3 --timeout 120"
+    ports:
+      - "8000:8000"
+    environment:
+      - DEBUG=False
+      - SECRET_KEY=production-secret-key-lifeos-change-this-in-env-before-deploying-38291
+      - ALLOWED_HOSTS=127.0.0.1,localhost,0.0.0.0
+      - DB_NAME=lifeos_db
+      - DB_USER=root
+      - DB_PASSWORD=
+      - DB_HOST=db
+      - DB_PORT=3306
+      - TIME_ZONE=Asia/Kolkata
+      - SECURE_SSL_REDIRECT=False
+      - SESSION_COOKIE_SECURE=False
+      - CSRF_COOKIE_SECURE=False
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - lifeos_media_data:/app/media
+
+volumes:
+  lifeos_mysql_data:
+  lifeos_media_data:

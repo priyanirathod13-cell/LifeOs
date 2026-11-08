@@ -1,0 +1,73 @@
+<!-- Reusable Personal Module Sub-Navigation Pill Bar -->
+<div class="card mb-4" style="padding: var(--space-2) var(--space-3); border-radius: var(--radius-lg); overflow-x: auto;">
+    <div style="display: flex; gap: var(--space-2); align-items: center; white-space: nowrap; min-width: max-content;">
+        <a href="{% url 'personal:dashboard' %}" 
+           class="btn btn-sm {% if personal_tab == 'dashboard' %}btn-primary{% else %}btn-outline{% endif %}"
+           style="border-radius: var(--radius-full); font-size: var(--font-size-xs);">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 4px;">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+            Personal Overview
+        </a>
+        <a href="{% url 'personal:checkin' %}" 
+           class="btn btn-sm {% if personal_tab == 'checkin' %}btn-primary{% else %}btn-outline{% endif %}"
+           style="border-radius: var(--radius-full); font-size: var(--font-size-xs);">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 4px;">
+                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+            </svg>
+            Daily Check-in
+        </a>
+        <a href="{% url 'personal:journal_list' %}" 
+           class="btn btn-sm {% if personal_tab == 'journal' %}btn-primary{% else %}btn-outline{% endif %}"
+           style="border-radius: var(--radius-full); font-size: var(--font-size-xs);">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 4px;">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+            </svg>
+            Journal
+        </a>
+        <a href="{% url 'personal:mood_energy' %}" 
+           class="btn btn-sm {% if personal_tab == 'mood_energy' %}btn-primary{% else %}btn-outline{% endif %}"
+           style="border-radius: var(--radius-full); font-size: var(--font-size-xs);">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 4px;">
+                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+            </svg>
+            Mood & Energy
+        </a>
+        <a href="{% url 'personal:sleep_list' %}" 
+           class="btn btn-sm {% if personal_tab == 'sleep' %}btn-primary{% else %}btn-outline{% endif %}"
+           style="border-radius: var(--radius-full); font-size: var(--font-size-xs);">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 4px;">
+                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+            </svg>
+            Sleep Tracking
+        </a>
+        <a href="{% url 'personal:decision_list' %}" 
+           class="btn btn-sm {% if personal_tab == 'decisions' %}btn-primary{% else %}btn-outline{% endif %}"
+           style="border-radius: var(--radius-full); font-size: var(--font-size-xs);">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 4px;">
+                <polyline points="6 9 12 15 18 9"></polyline>
+                <path d="M18 15l-6-6-6 6"></path>
+            </svg>
+            Decisions
+        </a>
+        <a href="{% url 'personal:mistake_list' %}" 
+           class="btn btn-sm {% if personal_tab == 'mistakes' %}btn-primary{% else %}btn-outline{% endif %}"
+           style="border-radius: var(--radius-full); font-size: var(--font-size-xs);">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 4px;">
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+            </svg>
+            Mistakes & Learning
+        </a>
+        <a href="{% url 'personal:finance' %}" 
+           class="btn btn-sm {% if personal_tab == 'finance' %}btn-primary{% else %}btn-outline{% endif %}"
+           style="border-radius: var(--radius-full); font-size: var(--font-size-xs);">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 4px;">
+                <line x1="12" y1="1" x2="12" y2="23"></line>
+                <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+            </svg>
+            Finance Manager
+        </a>
+    </div>
+</div>

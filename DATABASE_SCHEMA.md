@@ -212,7 +212,7 @@ Decision tracking entity for evaluating choices, rationale, and long-term conseq
   - `user_id` -> `accounts_user(id)` ON DELETE CASCADE
   - `category_id` -> `productivity_category(id)` ON DELETE SET_NULL (NULLABLE)
   - `chosen_option_id` -> `personal_decisionoption(id)` ON DELETE SET_NULL (NULLABLE)
-- **Columns**: `title` (`VARCHAR(200)`), `description` (`LONGTEXT`), `decision_date` (`DATE`), `status` (`VARCHAR(20)`: DRAFT/EVALUATING/DECIDED/REVIEWED), `created_at`, `updated_at`
+- **Columns**: `title` (`VARCHAR(200)`), `description` (`LONGTEXT`), `decision_date` (`DATE`), `status` (`VARCHAR(20)`: DRAFT/EVALUATING/DECIDED/REVIEWED), `reason_for_choosing` (`LONGTEXT`), `created_at`, `updated_at`
 - **Validation**: `category.user_id == user_id`, `chosen_option.decision_id == id`
 - **Indexes**: `['user', 'decision_date']`, `['user', 'status']`
 
@@ -228,7 +228,7 @@ Post-mortem evaluation measuring actual real-world outcomes against expectations
 - **Foreign Keys**:
   - `decision_id` -> `personal_decision(id)` ON DELETE CASCADE
   - `option_id` -> `personal_decisionoption(id)` ON DELETE SET_NULL (NULLABLE)
-- **Columns**: `actual_outcome` (`LONGTEXT`), `outcome_score` (`SMALLINT UNSIGNED`), `lessons_learned` (`LONGTEXT`), `outcome_date` (`DATE`), `created_at`
+- **Columns**: `actual_outcome` (`LONGTEXT`), `outcome_score` (`SMALLINT UNSIGNED`), `lessons_learned` (`LONGTEXT`), `reflection_notes` (`LONGTEXT`), `outcome_date` (`DATE`), `created_at`
 - **Constraints**:
   - `CheckConstraint(outcome_score >= 1 AND outcome_score <= 10)`
 - **Validation**: `option.decision_id == decision_id`, `1 <= outcome_score <= 10`
@@ -239,9 +239,9 @@ Learning log cataloging mistakes, root causes, and explicit corrective actions.
 - **Foreign Keys**:
   - `user_id` -> `accounts_user(id)` ON DELETE CASCADE
   - `category_id` -> `productivity_category(id)` ON DELETE SET_NULL (NULLABLE)
-- **Columns**: `title` (`VARCHAR(200)`), `description` (`LONGTEXT`), `mistake_date` (`DATE`), `impact_level` (`VARCHAR(20)`: MINOR/MODERATE/SEVERE), `lesson_learned` (`LONGTEXT`), `corrective_action` (`LONGTEXT`), `created_at`, `updated_at`
+- **Columns**: `title` (`VARCHAR(200)`), `description` (`LONGTEXT`), `mistake_date` (`DATE`), `impact_level` (`VARCHAR(20)`: MINOR/MODERATE/SEVERE), `status` (`VARCHAR(20)`: OPEN/IN_PROGRESS/RESOLVED/RECURRING), `cause_or_reason` (`LONGTEXT`), `lesson_learned` (`LONGTEXT`), `corrective_action` (`LONGTEXT`), `follow_up_notes` (`LONGTEXT`), `created_at`, `updated_at`
 - **Validation**: `category.user_id == user_id`
-- **Indexes**: `['user', 'mistake_date']`
+- **Indexes**: `['user', 'mistake_date']`, `['user', 'status']`
 
 #### 6. `personal_dailymetric`
 Quantitative biometric and psychometric indicators (mood, energy, stress, sleep).
@@ -255,6 +255,19 @@ Quantitative biometric and psychometric indicators (mood, energy, stress, sleep)
   - `CheckConstraint(stress_score IS NULL OR (stress_score >= 1 AND stress_score <= 10))`
   - `CheckConstraint(sleep_hours IS NULL OR (sleep_hours >= 0 AND sleep_hours <= 24))`
 - **Indexes**: `['user', 'metric_date']`
+
+#### 7. `personal_sleeprecord`
+Dedicated sleep tracking record with bedtime, wake-up time, duration calculation, and quality ratings.
+- **Primary Key**: `id` (`BIGINT`)
+- **Foreign Keys**: `user_id` -> `accounts_user(id)` ON DELETE CASCADE
+- **Columns**: `sleep_date` (`DATE`), `sleep_start` (`DATETIME(6)`), `wake_time` (`DATETIME(6)`), `duration_hours` (`DECIMAL(4,2)`, NULLABLE), `quality_rating` (`SMALLINT UNSIGNED`, NULLABLE), `notes` (`LONGTEXT`), `created_at`, `updated_at`
+- **Constraints**:
+  - `CheckConstraint(duration_hours IS NULL OR (duration_hours >= 0.00 AND duration_hours <= 24.00), name='sleep_duration_valid_range')`
+  - `CheckConstraint(quality_rating IS NULL OR (quality_rating >= 1 AND quality_rating <= 5), name='sleep_quality_rating_1_to_5')`
+- **Validation & Business Logic**:
+  - Computes `duration_hours` across midnight transitions in model `clean()`.
+  - Automatically synchronizes with `DailyMetric.objects.update_or_create(user=self.user, metric_date=self.sleep_date, defaults={'sleep_hours': self.duration_hours})` in `save()`.
+- **Indexes**: `['user', 'sleep_date']`, `['-sleep_date']`
 
 ---
 
@@ -392,6 +405,7 @@ erDiagram
     accounts_user ||--o{ personal_decision : "evaluates"
     accounts_user ||--o{ personal_mistake : "learns"
     accounts_user ||--o{ personal_dailymetric : "records"
+    accounts_user ||--o{ personal_sleeprecord : "logs"
     accounts_user ||--o{ finance_transaction : "transacts"
     accounts_user ||--o{ study_subject : "studies"
     accounts_user ||--o{ study_studysession : "logs"

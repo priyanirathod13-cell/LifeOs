@@ -1,0 +1,87 @@
+{% extends "layouts/app_layout.html" %}
+
+{% block content %}
+<div class="personal-container" style="max-width: 800px; margin: 0 auto;">
+    {% include "personal/personal_nav.html" %}
+
+    <div class="card" style="padding: var(--space-5); border-radius: var(--radius-lg);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-4);">
+            <div>
+                <h1 style="font-size: var(--font-size-xl); font-weight: 700; color: var(--text-primary); margin: 0 0 4px 0;">
+                    {% if entry %}Edit Journal Entry{% else %}New Journal Entry{% endif %}
+                </h1>
+                <p style="color: var(--text-secondary); margin: 0; font-size: var(--font-size-sm);">
+                    Express thoughts, emotions, dilemmas, and retrospective insights without friction.
+                </p>
+            </div>
+            <a href="{% if entry %}{% url 'personal:journal_detail' entry.pk %}{% else %}{% url 'personal:journal_list' %}{% endif %}" class="btn btn-outline btn-sm">
+                Cancel
+            </a>
+        </div>
+
+        <form method="post">
+            {% csrf_token %}
+            {% if form.errors %}
+                <div class="alert alert-danger mb-4">
+                    Please correct the errors indicated below.
+                </div>
+            {% endif %}
+
+            <!-- Title -->
+            <div class="form-group mb-3">
+                <label class="form-label" for="{{ form.title.id_for_label }}" style="font-weight: 600;">
+                    Entry Title <span style="color: var(--danger);">*</span>
+                </label>
+                {{ form.title }}
+                {% if form.title.errors %}
+                    <div style="color: var(--danger); font-size: var(--font-size-xs); margin-top: 4px;">{{ form.title.errors|join:", " }}</div>
+                {% endif %}
+            </div>
+
+            <!-- Date & Mood Tag Row -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); margin-bottom: var(--space-3);">
+                <div class="form-group">
+                    <label class="form-label" for="{{ form.entry_date.id_for_label }}" style="font-weight: 600;">
+                        Date <span style="color: var(--danger);">*</span>
+                    </label>
+                    {{ form.entry_date }}
+                    {% if form.entry_date.errors %}
+                        <div style="color: var(--danger); font-size: var(--font-size-xs); margin-top: 4px;">{{ form.entry_date.errors|join:", " }}</div>
+                    {% endif %}
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="{{ form.mood_tag.id_for_label }}" style="font-weight: 600;">
+                        Mood / Theme Tag
+                    </label>
+                    {{ form.mood_tag }}
+                    {% if form.mood_tag.errors %}
+                        <div style="color: var(--danger); font-size: var(--font-size-xs); margin-top: 4px;">{{ form.mood_tag.errors|join:", " }}</div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Content Area -->
+            <div class="form-group mb-4">
+                <label class="form-label" for="{{ form.content.id_for_label }}" style="font-weight: 600;">
+                    Reflection Content <span style="color: var(--danger);">*</span>
+                </label>
+                {{ form.content }}
+                {% if form.content.errors %}
+                    <div style="color: var(--danger); font-size: var(--font-size-xs); margin-top: 4px;">{{ form.content.errors|join:", " }}</div>
+                {% endif %}
+                <small style="color: var(--text-muted); font-size: var(--font-size-xs); display: block; margin-top: 4px;">
+                    Journal entries are completely private to your account and protected by strict multi-user access controls.
+                </small>
+            </div>
+
+            <!-- Action Buttons -->
+            <div style="display: flex; justify-content: flex-end; gap: var(--space-2);">
+                <a href="{% url 'personal:journal_list' %}" class="btn btn-outline">Cancel</a>
+                <button type="submit" class="btn btn-primary">
+                    {% if entry %}Save Changes{% else %}Publish Journal Entry{% endif %}
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,44 @@
+{% extends "layouts/app_layout.html" %}
+
+{% block content %}
+<div class="personal-container" style="max-width: 800px; margin: 0 auto;">
+    {% include "personal/personal_nav.html" %}
+
+    <div class="card" style="padding: var(--space-6); border-radius: var(--radius-lg);">
+        <!-- Header -->
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: var(--space-4); border-bottom: 1px solid var(--border); padding-bottom: var(--space-4); flex-wrap: wrap; gap: var(--space-3);">
+            <div>
+                <a href="{% url 'personal:journal_list' %}" style="font-size: var(--font-size-xs); color: var(--accent-primary); text-decoration: none; display: inline-block; margin-bottom: var(--space-2);">
+                    ← Back to Journal List
+                </a>
+                <h1 style="font-size: var(--font-size-2xl); font-weight: 700; color: var(--text-primary); margin: 0 0 var(--space-2) 0;">
+                    {{ entry.title }}
+                </h1>
+                <div style="display: flex; gap: var(--space-3); align-items: center; font-size: var(--font-size-xs); color: var(--text-muted); flex-wrap: wrap;">
+                    <span>📅 {{ entry.entry_date|date:"l, F j, Y" }}</span>
+                    <span>🕒 Created {{ entry.created_at|date:"g:i A" }}</span>
+                    {% if entry.updated_at != entry.created_at %}
+                        <span>• Updated {{ entry.updated_at|date:"M d, g:i A" }}</span>
+                    {% endif %}
+                    {% if entry.mood_tag %}
+                        <span class="badge badge-accent">#{{ entry.mood_tag }}</span>
+                    {% endif %}
+                </div>
+            </div>
+            <div style="display: flex; gap: var(--space-2);">
+                <a href="{% url 'personal:journal_edit' entry.pk %}" class="btn btn-outline btn-sm">
+                    Edit Entry
+                </a>
+                <a href="{% url 'personal:journal_delete' entry.pk %}" class="btn btn-outline btn-sm" style="color: var(--danger); border-color: rgba(248,113,113,0.3);">
+                    Delete
+                </a>
+            </div>
+        </div>
+
+        <!-- Body Content -->
+        <div style="color: var(--text-primary); font-size: var(--font-size-md); line-height: 1.8; white-space: pre-wrap; font-family: inherit;">
+{{ entry.content }}
+        </div>
+    </div>
+</div>
+{% endblock %}

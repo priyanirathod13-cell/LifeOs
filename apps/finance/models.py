@@ -66,7 +66,7 @@ class Transaction(models.Model):
 
     def clean(self):
         super().clean()
-        if self.category and self.category.user_id != self.user_id:
+        if self.category and self.user_id and self.category.user_id != self.user_id:
             raise ValidationError({'category': 'Cannot associate with a category belonging to another user.'})
         if self.amount is not None and self.amount <= Decimal('0.00'):
             raise ValidationError({'amount': 'Transaction amount must be strictly greater than zero.'})

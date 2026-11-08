@@ -1,0 +1,244 @@
+{% extends "layouts/app_layout.html" %}
+
+{% block content %}
+<div class="personal-container">
+    {% include "personal/personal_nav.html" %}
+
+    <!-- Top Action Bar -->
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-4); flex-wrap: wrap; gap: var(--space-3);">
+        <div>
+            <h1 style="font-size: var(--font-size-2xl); font-weight: 700; color: var(--text-primary); margin: 0 0 4px 0;">
+                Mood & Energy Tracking
+            </h1>
+            <p style="color: var(--text-secondary); margin: 0; font-size: var(--font-size-sm);">
+                Observe psychometric rhythms, cognitive energy dips, stress spikes, and emotional stability over time.
+            </p>
+        </div>
+
+        <!-- Date Range Filter Selector -->
+        <div class="card" style="padding: var(--space-1) var(--space-2); border-radius: var(--radius-full); display: flex; gap: var(--space-1);">
+            <a href="?range=7" class="btn btn-sm {% if range_param == '7' %}btn-primary{% else %}btn-outline{% endif %}" style="border-radius: var(--radius-full); font-size: 11px;">
+                7 Days
+            </a>
+            <a href="?range=14" class="btn btn-sm {% if range_param == '14' %}btn-primary{% else %}btn-outline{% endif %}" style="border-radius: var(--radius-full); font-size: 11px;">
+                14 Days
+            </a>
+            <a href="?range=30" class="btn btn-sm {% if range_param == '30' %}btn-primary{% else %}btn-outline{% endif %}" style="border-radius: var(--radius-full); font-size: 11px;">
+                30 Days
+            </a>
+            <a href="?range=all" class="btn btn-sm {% if range_param == 'all' %}btn-primary{% else %}btn-outline{% endif %}" style="border-radius: var(--radius-full); font-size: 11px;">
+                90 Days
+            </a>
+        </div>
+    </div>
+
+    <!-- Health Disclaimer Alert -->
+    <div class="card mb-4" style="padding: var(--space-2) var(--space-3); border-radius: var(--radius-md); background: rgba(129, 140, 248, 0.04); border-left: 3px solid var(--accent-primary); font-size: var(--font-size-xs); color: var(--text-muted);">
+        ℹ️ <strong>Behavioral Self-Awareness Notice:</strong> This module presents subjective self-reported personal tracking data to help discover personal routines and correlations. It does not provide medical, psychiatric, or psychological diagnoses.
+    </div>
+
+    <!-- Summary KPI Benchmark Cards -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: var(--space-3); margin-bottom: var(--space-4);">
+        <!-- Mood Weekly vs Monthly -->
+        <div class="card" style="padding: var(--space-3); border-radius: var(--radius-lg);">
+            <div style="font-size: var(--font-size-xs); color: var(--text-muted); text-transform: uppercase; font-weight: 600; margin-bottom: 4px;">
+                Mood Averages
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: baseline;">
+                <div>
+                    <span style="font-size: var(--font-size-2xl); font-weight: 700; color: var(--success);">
+                        {{ avg_mood_7d|default:"—" }}
+                    </span>
+                    <span style="font-size: 10px; color: var(--text-muted);">/ 5 (7-Day)</span>
+                </div>
+                <div style="text-align: right;">
+                    <span style="font-size: var(--font-size-md); font-weight: 600; color: var(--text-secondary);">
+                        {{ avg_mood_30d|default:"—" }}
+                    </span>
+                    <span style="font-size: 10px; color: var(--text-muted);">/ 5 (30-Day)</span>
+                </div>
+            </div>
+            <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">
+                Psychological climate
+            </div>
+        </div>
+
+        <!-- Energy Weekly vs Monthly -->
+        <div class="card" style="padding: var(--space-3); border-radius: var(--radius-lg);">
+            <div style="font-size: var(--font-size-xs); color: var(--text-muted); text-transform: uppercase; font-weight: 600; margin-bottom: 4px;">
+                Energy Averages
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: baseline;">
+                <div>
+                    <span style="font-size: var(--font-size-2xl); font-weight: 700; color: var(--accent-primary);">
+                        {{ avg_energy_7d|default:"—" }}
+                    </span>
+                    <span style="font-size: 10px; color: var(--text-muted);">/ 5 (7-Day)</span>
+                </div>
+                <div style="text-align: right;">
+                    <span style="font-size: var(--font-size-md); font-weight: 600; color: var(--text-secondary);">
+                        {{ avg_energy_30d|default:"—" }}
+                    </span>
+                    <span style="font-size: 10px; color: var(--text-muted);">/ 5 (30-Day)</span>
+                </div>
+            </div>
+            <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">
+                Vitality & focus capacity
+            </div>
+        </div>
+
+        <!-- Stress Level -->
+        <div class="card" style="padding: var(--space-3); border-radius: var(--radius-lg);">
+            <div style="font-size: var(--font-size-xs); color: var(--text-muted); text-transform: uppercase; font-weight: 600; margin-bottom: 4px;">
+                Average Stress Index
+            </div>
+            <div style="display: flex; align-items: baseline; gap: var(--space-2);">
+                <span style="font-size: var(--font-size-2xl); font-weight: 700; color: {% if avg_stress and avg_stress >= 3.5 %}var(--danger){% elif avg_stress and avg_stress >= 2.5 %}var(--warning){% elif avg_stress %}var(--success){% else %}var(--text-muted){% endif %};">
+                    {{ avg_stress|default:"—" }}
+                </span>
+                <span style="font-size: 10px; color: var(--text-muted);">/ 5.0 (Selected Period)</span>
+            </div>
+            <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">
+                {% if avg_stress and avg_stress >= 3.5 %}High cognitive friction{% elif avg_stress and avg_stress >= 2.5 %}Moderate tension{% elif avg_stress %}Low stress / Calm{% else %}No data{% endif %}
+            </div>
+        </div>
+
+        <!-- Total Days Logged -->
+        <div class="card" style="padding: var(--space-3); border-radius: var(--radius-lg);">
+            <div style="font-size: var(--font-size-xs); color: var(--text-muted); text-transform: uppercase; font-weight: 600; margin-bottom: 4px;">
+                Log Completeness
+            </div>
+            <div style="display: flex; align-items: baseline; gap: var(--space-2);">
+                <span style="font-size: var(--font-size-2xl); font-weight: 700; color: var(--text-primary);">
+                    {{ total_logged }}
+                </span>
+                <span style="font-size: 10px; color: var(--text-muted);">/ {{ days_count }} days</span>
+            </div>
+            <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">
+                Consistency score
+            </div>
+        </div>
+    </div>
+
+    <!-- Visual Charts Grid -->
+    <div style="display: grid; grid-template-columns: 1fr; gap: var(--space-4); margin-bottom: var(--space-4);">
+        <!-- 1. Daily Mood History Chart -->
+        <div class="card" style="padding: var(--space-4); border-radius: var(--radius-lg);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-3);">
+                <h3 style="font-size: var(--font-size-md); font-weight: 600; color: var(--text-primary); margin: 0;">
+                    Daily Mood History (1 to 5)
+                </h3>
+                <span style="font-size: 11px; color: var(--text-muted);">5 = Excellent, 1 = Very Bad</span>
+            </div>
+
+            <div style="display: flex; align-items: flex-end; justify-content: space-between; height: 140px; gap: 4px; padding-top: var(--space-2);">
+                {% for pt in chart_points %}
+                    <div style="flex: 1; display: flex; flex-direction: column; align-items: center; height: 100%; justify-content: flex-end;" title="{{ pt.date }}: Mood {{ pt.mood|default:'—' }}/5">
+                        {% if pt.mood %}
+                            <span style="font-size: 9px; color: var(--text-muted); margin-bottom: 2px;">{{ pt.mood }}</span>
+                            <div style="width: 100%; max-width: 22px; border-radius: var(--radius-xs); transition: height 0.3s ease; height: calc({{ pt.mood }} * 22px); background: {% if pt.mood >= 4 %}var(--success){% elif pt.mood >= 3 %}var(--accent-primary){% elif pt.mood >= 2 %}var(--warning){% else %}var(--danger){% endif %};"></div>
+                        {% else %}
+                            <div style="width: 100%; max-width: 22px; height: 4px; border-radius: var(--radius-xs); background: var(--border);"></div>
+                        {% endif %}
+                        <span style="font-size: 9px; color: var(--text-muted); margin-top: 4px;">{{ pt.day_label }}</span>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- 2. Daily Energy vs Stress Comparison -->
+        <div class="card" style="padding: var(--space-4); border-radius: var(--radius-lg);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-3);">
+                <h3 style="font-size: var(--font-size-md); font-weight: 600; color: var(--text-primary); margin: 0;">
+                    Daily Energy (Indigo) vs Stress (Rose)
+                </h3>
+                <div style="display: flex; gap: var(--space-3); font-size: 11px;">
+                    <span style="color: var(--accent-primary);">■ Energy</span>
+                    <span style="color: var(--danger);">■ Stress</span>
+                </div>
+            </div>
+
+            <div style="display: flex; align-items: flex-end; justify-content: space-between; height: 140px; gap: 6px; padding-top: var(--space-2);">
+                {% for pt in chart_points %}
+                    <div style="flex: 1; display: flex; flex-direction: column; align-items: center; height: 100%; justify-content: flex-end;" title="{{ pt.date }}: Energy {{ pt.energy|default:'—' }}/5, Stress {{ pt.stress|default:'—' }}/5">
+                        <div style="display: flex; gap: 2px; align-items: flex-end; width: 100%; justify-content: center;">
+                            <!-- Energy Bar -->
+                            {% if pt.energy %}
+                                <div style="width: 45%; max-width: 12px; height: calc({{ pt.energy }} * 20px); background: var(--accent-primary); border-radius: var(--radius-xs);"></div>
+                            {% else %}
+                                <div style="width: 45%; max-width: 12px; height: 4px; background: var(--border); border-radius: var(--radius-xs);"></div>
+                            {% endif %}
+                            <!-- Stress Bar -->
+                            {% if pt.stress %}
+                                <div style="width: 45%; max-width: 12px; height: calc({{ pt.stress }} * 20px); background: var(--danger); border-radius: var(--radius-xs);"></div>
+                            {% else %}
+                                <div style="width: 45%; max-width: 12px; height: 4px; background: var(--border); border-radius: var(--radius-xs);"></div>
+                            {% endif %}
+                        </div>
+                        <span style="font-size: 9px; color: var(--text-muted); margin-top: 4px;">{{ pt.day_label }}</span>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Data Table of Recorded Days -->
+    <div class="card" style="padding: var(--space-4); border-radius: var(--radius-lg);">
+        <h3 style="font-size: var(--font-size-md); font-weight: 600; color: var(--text-primary); margin: 0 0 var(--space-3) 0;">
+            Daily Biometric Log Table
+        </h3>
+        <div class="table-container">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Mood Rating</th>
+                        <th>Energy Score</th>
+                        <th>Stress Score</th>
+                        <th>Notes & Reflections</th>
+                        <th style="text-align: right;">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for pt in chart_points reversed %}
+                        {% if pt.mood or pt.energy or pt.stress or pt.notes %}
+                            <tr>
+                                <td style="font-weight: 600; color: var(--text-primary);">
+                                    {{ pt.date|date:"D, M d, Y" }}
+                                </td>
+                                <td>
+                                    {% if pt.mood %}
+                                        <span class="badge {% if pt.mood >= 4 %}badge-success{% elif pt.mood >= 3 %}badge-accent{% elif pt.mood >= 2 %}badge-warning{% else %}badge-danger{% endif %}">
+                                            {{ pt.mood }} / 5
+                                        </span>
+                                    {% else %}—{% endif %}
+                                </td>
+                                <td>
+                                    {% if pt.energy %}
+                                        <span class="badge badge-accent">{{ pt.energy }} / 5</span>
+                                    {% else %}—{% endif %}
+                                </td>
+                                <td>
+                                    {% if pt.stress %}
+                                        <span class="badge {% if pt.stress >= 4 %}badge-danger{% elif pt.stress >= 3 %}badge-warning{% else %}badge-neutral{% endif %}">
+                                            {{ pt.stress }} / 5
+                                        </span>
+                                    {% else %}—{% endif %}
+                                </td>
+                                <td style="font-size: var(--font-size-xs); color: var(--text-secondary); max-width: 300px;">
+                                    {{ pt.notes|default:"—" }}
+                                </td>
+                                <td style="text-align: right;">
+                                    <a href="{% url 'personal:checkin' %}?date={{ pt.date|date:'Y-m-d' }}" class="btn btn-outline btn-sm" style="font-size: 11px; padding: 2px 8px;">
+                                        Edit
+                                    </a>
+                                </td>
+                            </tr>
+                        {% endif %}
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

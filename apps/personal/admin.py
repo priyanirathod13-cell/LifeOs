@@ -6,6 +6,7 @@ from .models import (
     DecisionOutcome,
     JournalEntry,
     Mistake,
+    SleepRecord,
 )
 
 
@@ -38,8 +39,8 @@ class DecisionOutcomeAdmin(admin.ModelAdmin):
 
 @admin.register(Mistake)
 class MistakeAdmin(admin.ModelAdmin):
-    list_display = ('title', 'user', 'category', 'mistake_date', 'impact_level')
-    list_filter = ('impact_level', 'mistake_date', 'user')
+    list_display = ('title', 'user', 'category', 'mistake_date', 'impact_level', 'status')
+    list_filter = ('impact_level', 'status', 'mistake_date', 'user')
     search_fields = ('title', 'lesson_learned', 'user__username')
 
 
@@ -47,4 +48,11 @@ class MistakeAdmin(admin.ModelAdmin):
 class DailyMetricAdmin(admin.ModelAdmin):
     list_display = ('metric_date', 'user', 'mood_score', 'energy_score', 'stress_score', 'sleep_hours')
     list_filter = ('metric_date', 'user')
+    search_fields = ('notes', 'user__username')
+
+
+@admin.register(SleepRecord)
+class SleepRecordAdmin(admin.ModelAdmin):
+    list_display = ('sleep_date', 'user', 'sleep_start', 'wake_time', 'duration_hours', 'quality_rating')
+    list_filter = ('quality_rating', 'sleep_date', 'user')
     search_fields = ('notes', 'user__username')

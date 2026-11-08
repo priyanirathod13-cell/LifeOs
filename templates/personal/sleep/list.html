@@ -1,0 +1,218 @@
+{% extends "layouts/app_layout.html" %}
+
+{% block content %}
+<div class="personal-container">
+    {% include "personal/personal_nav.html" %}
+
+    <!-- Top Action Bar -->
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-4); flex-wrap: wrap; gap: var(--space-3);">
+        <div>
+            <h1 style="font-size: var(--font-size-2xl); font-weight: 700; color: var(--text-primary); margin: 0 0 4px 0;">
+                Sleep Tracking
+            </h1>
+            <p style="color: var(--text-secondary); margin: 0; font-size: var(--font-size-sm);">
+                Track sleep consistency, overnight duration, sleep quality, and physiological recovery.
+            </p>
+        </div>
+        <a href="{% url 'personal:sleep_create' %}" class="btn btn-primary">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;">
+                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+            </svg>
+            Record Sleep Session
+        </a>
+    </div>
+
+    <!-- 4 Sleep KPI Summary Cards -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: var(--space-3); margin-bottom: var(--space-4);">
+        <!-- 7-Day Average -->
+        <div class="card" style="padding: var(--space-3); border-radius: var(--radius-lg);">
+            <div style="font-size: var(--font-size-xs); color: var(--text-muted); text-transform: uppercase; font-weight: 600; margin-bottom: 4px;">
+                7-Day Average Sleep
+            </div>
+            <div style="display: flex; align-items: baseline; gap: var(--space-2);">
+                <span style="font-size: var(--font-size-2xl); font-weight: 700; color: {% if avg_sleep_7d and avg_sleep_7d >= 7.0 %}var(--success){% elif avg_sleep_7d and avg_sleep_7d >= 6.0 %}var(--warning){% elif avg_sleep_7d %}var(--danger){% else %}var(--text-muted){% endif %};">
+                    {{ avg_sleep_7d|default:"—" }}
+                </span>
+                <span style="font-size: var(--font-size-xs); color: var(--text-secondary);">hours / night</span>
+            </div>
+            <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">
+                Target: 7.0–8.5 hours
+            </div>
+        </div>
+
+        <!-- 30-Day Average -->
+        <div class="card" style="padding: var(--space-3); border-radius: var(--radius-lg);">
+            <div style="font-size: var(--font-size-xs); color: var(--text-muted); text-transform: uppercase; font-weight: 600; margin-bottom: 4px;">
+                30-Day Average Sleep
+            </div>
+            <div style="display: flex; align-items: baseline; gap: var(--space-2);">
+                <span style="font-size: var(--font-size-2xl); font-weight: 700; color: {% if avg_sleep_30d and avg_sleep_30d >= 7.0 %}var(--success){% elif avg_sleep_30d and avg_sleep_30d >= 6.0 %}var(--warning){% elif avg_sleep_30d %}var(--danger){% else %}var(--text-muted){% endif %};">
+                    {{ avg_sleep_30d|default:"—" }}
+                </span>
+                <span style="font-size: var(--font-size-xs); color: var(--text-secondary);">hours / night</span>
+            </div>
+            <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">
+                Monthly baseline
+            </div>
+        </div>
+
+        <!-- Average Quality Rating -->
+        <div class="card" style="padding: var(--space-3); border-radius: var(--radius-lg);">
+            <div style="font-size: var(--font-size-xs); color: var(--text-muted); text-transform: uppercase; font-weight: 600; margin-bottom: 4px;">
+                Average Sleep Quality
+            </div>
+            <div style="display: flex; align-items: baseline; gap: var(--space-2);">
+                <span style="font-size: var(--font-size-2xl); font-weight: 700; color: var(--accent-primary);">
+                    {{ avg_quality|default:"—" }}
+                </span>
+                <span style="font-size: var(--font-size-xs); color: var(--text-secondary);">/ 5.0 rating</span>
+            </div>
+            <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">
+                Subjective restorative depth
+            </div>
+        </div>
+
+        <!-- Total Nights Logged -->
+        <div class="card" style="padding: var(--space-3); border-radius: var(--radius-lg);">
+            <div style="font-size: var(--font-size-xs); color: var(--text-muted); text-transform: uppercase; font-weight: 600; margin-bottom: 4px;">
+                Total Nights Recorded
+            </div>
+            <div style="display: flex; align-items: baseline; gap: var(--space-2);">
+                <span style="font-size: var(--font-size-2xl); font-weight: 700; color: var(--text-primary);">
+                    {{ total_records }}
+                </span>
+                <span style="font-size: var(--font-size-xs); color: var(--text-secondary);">nights</span>
+            </div>
+            <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">
+                Historical sleep diary
+            </div>
+        </div>
+    </div>
+
+    <!-- 14-Day Sleep Duration Trend Chart with Target Benchmark -->
+    <div class="card mb-4" style="padding: var(--space-4); border-radius: var(--radius-lg);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-3);">
+            <h3 style="font-size: var(--font-size-md); font-weight: 600; color: var(--text-primary); margin: 0;">
+                14-Day Sleep Duration Trend
+            </h3>
+            <span style="font-size: 11px; color: var(--success); font-weight: 500;">
+                Optimal Benchmark: 7.0h to 8.5h
+            </span>
+        </div>
+
+        <div style="position: relative; height: 150px; padding-top: var(--space-3);">
+            <!-- Target Band Line (7h to 8.5h) -->
+            <div style="position: absolute; left: 0; right: 0; bottom: calc(7 * 12px + 24px); border-top: 1px dashed rgba(52, 211, 153, 0.4); z-index: 1;" title="7.0h Optimal Target Line"></div>
+            <div style="position: absolute; left: 0; right: 0; bottom: calc(8.5 * 12px + 24px); border-top: 1px dashed rgba(52, 211, 153, 0.4); z-index: 1;" title="8.5h Optimal Upper Bound"></div>
+
+            <div style="display: flex; align-items: flex-end; justify-content: space-between; height: 100%; gap: 6px; position: relative; z-index: 2;">
+                {% for pt in sleep_chart %}
+                    <div style="flex: 1; display: flex; flex-direction: column; align-items: center; height: 100%; justify-content: flex-end;" title="{{ pt.date }}: {{ pt.duration|default:'0' }} hours">
+                        {% if pt.duration %}
+                            <span style="font-size: 9px; color: var(--text-muted); margin-bottom: 2px;">{{ pt.duration }}h</span>
+                            <div style="width: 100%; max-width: 24px; border-radius: var(--radius-xs); height: calc({{ pt.duration }} * 12px); background: {% if pt.duration >= 7.0 and pt.duration <= 8.5 %}var(--success){% elif pt.duration >= 6.0 %}var(--warning){% else %}var(--danger){% endif %};"></div>
+                        {% else %}
+                            <div style="width: 100%; max-width: 24px; height: 4px; background: var(--border); border-radius: var(--radius-xs);"></div>
+                        {% endif %}
+                        <span style="font-size: 9px; color: var(--text-muted); margin-top: 4px;">{{ pt.day_name|slice:":1" }}</span>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+        <div style="display: flex; justify-content: space-between; font-size: 10px; color: var(--text-muted); margin-top: var(--space-2); border-top: 1px solid var(--border); padding-top: var(--space-1);">
+            <span>14 Days Ago</span>
+            <span>Sleep Duration (Hours)</span>
+            <span>Today</span>
+        </div>
+    </div>
+
+    <!-- Sleep History Table -->
+    <div class="card" style="padding: var(--space-4); border-radius: var(--radius-lg);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-3);">
+            <h3 style="font-size: var(--font-size-md); font-weight: 600; color: var(--text-primary); margin: 0;">
+                Sleep History Log
+            </h3>
+        </div>
+
+        {% if page_obj %}
+            <div class="table-container">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Wake Date</th>
+                            <th>Bedtime</th>
+                            <th>Wake Time</th>
+                            <th>Duration</th>
+                            <th>Quality</th>
+                            <th>Notes</th>
+                            <th style="text-align: right;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for r in page_obj %}
+                            <tr>
+                                <td style="font-weight: 600; color: var(--text-primary);">
+                                    {{ r.sleep_date|date:"D, M d, Y" }}
+                                </td>
+                                <td style="font-size: var(--font-size-xs); color: var(--text-secondary);">
+                                    {{ r.sleep_start|date:"M d, g:i A" }}
+                                </td>
+                                <td style="font-size: var(--font-size-xs); color: var(--text-secondary);">
+                                    {{ r.wake_time|date:"M d, g:i A" }}
+                                </td>
+                                <td>
+                                    <span class="badge {% if r.duration_hours >= 7.0 and r.duration_hours <= 8.5 %}badge-success{% elif r.duration_hours >= 6.0 %}badge-warning{% else %}badge-danger{% endif %}">
+                                        {{ r.duration_hours }} hrs
+                                    </span>
+                                </td>
+                                <td>
+                                    {% if r.quality_rating %}
+                                        <span class="badge badge-accent">
+                                            ★ {{ r.quality_rating }} / 5
+                                        </span>
+                                    {% else %}
+                                        <span style="color: var(--text-muted); font-size: var(--font-size-xs);">—</span>
+                                    {% endif %}
+                                </td>
+                                <td style="font-size: var(--font-size-xs); color: var(--text-muted); max-width: 250px;">
+                                    {{ r.notes|default:"—" }}
+                                </td>
+                                <td style="text-align: right;">
+                                    <div style="display: inline-flex; gap: var(--space-1);">
+                                        <a href="{% url 'personal:sleep_edit' r.pk %}" class="btn btn-outline btn-sm" style="font-size: 11px; padding: 2px 8px;">
+                                            Edit
+                                        </a>
+                                        <a href="{% url 'personal:sleep_delete' r.pk %}" class="btn btn-outline btn-sm" style="font-size: 11px; padding: 2px 8px; color: var(--danger); border-color: rgba(248,113,113,0.3);">
+                                            Delete
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            {% if page_obj.has_other_pages %}
+                <div style="display: flex; justify-content: center; gap: var(--space-2); margin-top: var(--space-4);">
+                    {% if page_obj.has_previous %}
+                        <a href="?page={{ page_obj.previous_page_number }}" class="btn btn-outline btn-sm">← Previous</a>
+                    {% endif %}
+                    <span class="btn btn-outline btn-sm disabled" style="color: var(--text-muted);">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+                    {% if page_obj.has_next %}
+                        <a href="?page={{ page_obj.next_page_number }}" class="btn btn-outline btn-sm">Next →</a>
+                    {% endif %}
+                </div>
+            {% endif %}
+        {% else %}
+            <div class="empty-state" style="padding: var(--space-5); text-align: center;">
+                <p style="color: var(--text-muted); font-size: var(--font-size-sm); margin-bottom: var(--space-3);">
+                    No sleep sessions logged yet. Record your bedtime and wake times to start generating sleep rhythm insights.
+                </p>
+                <a href="{% url 'personal:sleep_create' %}" class="btn btn-primary">Record First Sleep Session</a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

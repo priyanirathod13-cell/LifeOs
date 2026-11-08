@@ -15,6 +15,8 @@ urlpatterns = [
     path('', include('apps.productivity.urls', namespace='productivity')),
     path('', include('apps.planning.urls', namespace='planning')),
     path('', include('apps.study.urls', namespace='study')),
+    path('', include('apps.personal.urls', namespace='personal')),
+    path('', include('apps.finance.urls', namespace='finance')),
     path('', include('apps.core.urls', namespace='core')),
 ]
 

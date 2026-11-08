@@ -1,0 +1,92 @@
+{% extends "layouts/app_layout.html" %}
+
+{% block content %}
+<div class="personal-container" style="max-width: 650px; margin: 0 auto;">
+    {% include "personal/personal_nav.html" %}
+
+    <div class="card" style="padding: var(--space-5); border-radius: var(--radius-lg);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-4);">
+            <div>
+                <h1 style="font-size: var(--font-size-xl); font-weight: 700; color: var(--text-primary); margin: 0 0 4px 0;">
+                    {% if record %}Edit Sleep Record{% else %}Record Sleep Session{% endif %}
+                </h1>
+                <p style="color: var(--text-secondary); margin: 0; font-size: var(--font-size-sm);">
+                    Enter bedtime and wake times. Duration is calculated automatically (supports sessions crossing midnight).
+                </p>
+            </div>
+            <a href="{% url 'personal:sleep_list' %}" class="btn btn-outline btn-sm">Cancel</a>
+        </div>
+
+        <form method="post">
+            {% csrf_token %}
+            {% if form.errors %}
+                <div class="alert alert-danger mb-4">
+                    Please fix the issues indicated below.
+                </div>
+            {% endif %}
+
+            <!-- Sleep Date -->
+            <div class="form-group mb-3">
+                <label class="form-label" for="{{ form.sleep_date.id_for_label }}" style="font-weight: 600;">
+                    Wake Date <span style="color: var(--danger);">*</span>
+                </label>
+                {{ form.sleep_date }}
+                <small style="color: var(--text-muted); font-size: var(--font-size-xs); display: block; margin-top: 4px;">
+                    The date you woke up. This record will automatically synchronize with your Daily Check-in sleep hours for this date.
+                </small>
+                {% if form.sleep_date.errors %}
+                    <div style="color: var(--danger); font-size: var(--font-size-xs); margin-top: 4px;">{{ form.sleep_date.errors|join:", " }}</div>
+                {% endif %}
+            </div>
+
+            <!-- Start and Wake Time Row -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); margin-bottom: var(--space-3);">
+                <div class="form-group">
+                    <label class="form-label" for="{{ form.sleep_start.id_for_label }}" style="font-weight: 600;">
+                        Bedtime / Sleep Start <span style="color: var(--danger);">*</span>
+                    </label>
+                    {{ form.sleep_start }}
+                    {% if form.sleep_start.errors %}
+                        <div style="color: var(--danger); font-size: var(--font-size-xs); margin-top: 4px;">{{ form.sleep_start.errors|join:", " }}</div>
+                    {% endif %}
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="{{ form.wake_time.id_for_label }}" style="font-weight: 600;">
+                        Wake Time <span style="color: var(--danger);">*</span>
+                    </label>
+                    {{ form.wake_time }}
+                    {% if form.wake_time.errors %}
+                        <div style="color: var(--danger); font-size: var(--font-size-xs); margin-top: 4px;">{{ form.wake_time.errors|join:", " }}</div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Sleep Quality Rating -->
+            <div class="form-group mb-3">
+                <label class="form-label" for="{{ form.quality_rating.id_for_label }}" style="font-weight: 600;">
+                    Sleep Quality Rating (Optional)
+                </label>
+                {{ form.quality_rating }}
+                {% if form.quality_rating.errors %}
+                    <div style="color: var(--danger); font-size: var(--font-size-xs); margin-top: 4px;">{{ form.quality_rating.errors|join:", " }}</div>
+                {% endif %}
+            </div>
+
+            <!-- Notes -->
+            <div class="form-group mb-4">
+                <label class="form-label" for="{{ form.notes.id_for_label }}" style="font-weight: 600;">
+                    Notes & Observations (Optional)
+                </label>
+                {{ form.notes }}
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: var(--space-2);">
+                <a href="{% url 'personal:sleep_list' %}" class="btn btn-outline">Cancel</a>
+                <button type="submit" class="btn btn-primary">
+                    {% if record %}Save Changes{% else %}Save Sleep Record{% endif %}
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

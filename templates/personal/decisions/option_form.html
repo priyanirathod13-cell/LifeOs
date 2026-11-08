@@ -1,0 +1,77 @@
+{% extends "layouts/app_layout.html" %}
+
+{% block content %}
+<div class="personal-container" style="max-width: 700px; margin: 0 auto;">
+    {% include "personal/personal_nav.html" %}
+
+    <div class="card" style="padding: var(--space-5); border-radius: var(--radius-lg);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-4);">
+            <div>
+                <h1 style="font-size: var(--font-size-xl); font-weight: 700; color: var(--text-primary); margin: 0 0 4px 0;">
+                    {% if option %}Edit Candidate Option{% else %}Add Candidate Option{% endif %}
+                </h1>
+                <p style="color: var(--text-secondary); margin: 0; font-size: var(--font-size-sm);">
+                    Decision: <strong style="color: var(--text-primary);">{{ decision.title }}</strong>
+                </p>
+            </div>
+            <a href="{% url 'personal:decision_detail' decision.pk %}" class="btn btn-outline btn-sm">Cancel</a>
+        </div>
+
+        <form method="post">
+            {% csrf_token %}
+            {% if form.errors %}
+                <div class="alert alert-danger mb-4">Please correct the errors indicated below.</div>
+            {% endif %}
+
+            <div class="form-group mb-3">
+                <label class="form-label" for="{{ form.option_name.id_for_label }}" style="font-weight: 600;">
+                    Option Name <span style="color: var(--danger);">*</span>
+                </label>
+                {{ form.option_name }}
+                {% if form.option_name.errors %}
+                    <div style="color: var(--danger); font-size: var(--font-size-xs); margin-top: 4px;">{{ form.option_name.errors|join:", " }}</div>
+                {% endif %}
+            </div>
+
+            <div class="form-group mb-3">
+                <label class="form-label" for="{{ form.description.id_for_label }}" style="font-weight: 600;">
+                    Description & Strategy
+                </label>
+                {{ form.description }}
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); margin-bottom: var(--space-3);">
+                <div class="form-group">
+                    <label class="form-label" for="{{ form.pros.id_for_label }}" style="font-weight: 600; color: var(--success);">
+                        Pros / Upside Payoffs
+                    </label>
+                    {{ form.pros }}
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="{{ form.cons.id_for_label }}" style="font-weight: 600; color: var(--danger);">
+                        Cons / Downside Risks
+                    </label>
+                    {{ form.cons }}
+                </div>
+            </div>
+
+            <div class="form-group mb-4">
+                <label class="form-label" for="{{ form.expected_outcome.id_for_label }}" style="font-weight: 600;">
+                    Expected Outcome
+                </label>
+                {{ form.expected_outcome }}
+                <small style="color: var(--text-muted); font-size: var(--font-size-xs); display: block; margin-top: 4px;">
+                    What specifically do you expect will happen if this pathway is chosen?
+                </small>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: var(--space-2);">
+                <a href="{% url 'personal:decision_detail' decision.pk %}" class="btn btn-outline">Cancel</a>
+                <button type="submit" class="btn btn-primary">
+                    {% if option %}Save Changes{% else %}Add Option Pathway{% endif %}
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

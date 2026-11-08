@@ -1,0 +1,434 @@
+{% extends "layouts/app_layout.html" %}
+
+{% block content %}
+<div class="personal-container">
+    <!-- Sub-navigation -->
+    {% include "personal/personal_nav.html" %}
+
+    <!-- Top Action Bar -->
+    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: var(--space-4); flex-wrap: wrap; gap: var(--space-3);">
+        <div>
+            <h1 style="font-size: var(--font-size-2xl); font-weight: 700; color: var(--text-primary); margin: 0 0 var(--space-1) 0;">
+                Personal Dashboard
+            </h1>
+            <p style="color: var(--text-secondary); margin: 0; font-size: var(--font-size-sm);">
+                Self-reflection, biometric rhythms, conscious decision-making, and financial awareness.
+            </p>
+        </div>
+        <div style="display: flex; gap: var(--space-2); flex-wrap: wrap;">
+            <a href="{% url 'personal:checkin' %}" class="btn btn-primary btn-sm">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 4px;">
+                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                </svg>
+                Daily Check-in
+            </a>
+            <a href="{% url 'personal:journal_create' %}" class="btn btn-outline btn-sm">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 4px;">
+                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                </svg>
+                Write Journal
+            </a>
+            <a href="{% url 'finance:transaction_create' %}" class="btn btn-outline btn-sm">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 4px;">
+                    <line x1="12" y1="1" x2="12" y2="23"></line>
+                    <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                </svg>
+                Add Transaction
+            </a>
+        </div>
+    </div>
+
+    <!-- 8 Summary Metric Cards -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: var(--space-3); margin-bottom: var(--space-4);">
+        <!-- 1. Journal entries this month -->
+        <div class="card" style="padding: var(--space-3); border-radius: var(--radius-lg);">
+            <div style="font-size: var(--font-size-xs); color: var(--text-muted); text-transform: uppercase; font-weight: 600; letter-spacing: 0.05em; margin-bottom: 4px;">
+                Journal This Month
+            </div>
+            <div style="display: flex; align-items: baseline; gap: var(--space-2);">
+                <span style="font-size: var(--font-size-2xl); font-weight: 700; color: var(--text-primary);">
+                    {{ journal_month_count }}
+                </span>
+                <span style="font-size: var(--font-size-xs); color: var(--text-secondary);">entries</span>
+            </div>
+            <div style="font-size: var(--font-size-xs); color: var(--text-muted); margin-top: 4px;">
+                Reflections recorded
+            </div>
+        </div>
+
+        <!-- 2. Avg Mood -->
+        <div class="card" style="padding: var(--space-3); border-radius: var(--radius-lg);">
+            <div style="font-size: var(--font-size-xs); color: var(--text-muted); text-transform: uppercase; font-weight: 600; letter-spacing: 0.05em; margin-bottom: 4px;">
+                Avg Mood (Month)
+            </div>
+            <div style="display: flex; align-items: baseline; gap: var(--space-2);">
+                <span style="font-size: var(--font-size-2xl); font-weight: 700; color: {% if avg_mood and avg_mood >= 4.0 %}var(--success){% elif avg_mood and avg_mood >= 2.5 %}var(--warning){% elif avg_mood %}var(--danger){% else %}var(--text-muted){% endif %};">
+                    {{ avg_mood|default:"—" }}
+                </span>
+                <span style="font-size: var(--font-size-xs); color: var(--text-secondary);">/ 5.0</span>
+            </div>
+            <div style="font-size: var(--font-size-xs); color: var(--text-muted); margin-top: 4px;">
+                {% if avg_mood and avg_mood >= 4.0 %}Positive & Upbeat{% elif avg_mood and avg_mood >= 2.5 %}Moderate{% elif avg_mood %}Under Strain{% else %}No data{% endif %}
+            </div>
+        </div>
+
+        <!-- 3. Avg Energy -->
+        <div class="card" style="padding: var(--space-3); border-radius: var(--radius-lg);">
+            <div style="font-size: var(--font-size-xs); color: var(--text-muted); text-transform: uppercase; font-weight: 600; letter-spacing: 0.05em; margin-bottom: 4px;">
+                Avg Energy (Month)
+            </div>
+            <div style="display: flex; align-items: baseline; gap: var(--space-2);">
+                <span style="font-size: var(--font-size-2xl); font-weight: 700; color: {% if avg_energy and avg_energy >= 4.0 %}var(--accent-primary){% elif avg_energy and avg_energy >= 2.5 %}var(--warning){% elif avg_energy %}var(--danger){% else %}var(--text-muted){% endif %};">
+                    {{ avg_energy|default:"—" }}
+                </span>
+                <span style="font-size: var(--font-size-xs); color: var(--text-secondary);">/ 5.0</span>
+            </div>
+            <div style="font-size: var(--font-size-xs); color: var(--text-muted); margin-top: 4px;">
+                Vitality index
+            </div>
+        </div>
+
+        <!-- 4. Avg Sleep Duration -->
+        <div class="card" style="padding: var(--space-3); border-radius: var(--radius-lg);">
+            <div style="font-size: var(--font-size-xs); color: var(--text-muted); text-transform: uppercase; font-weight: 600; letter-spacing: 0.05em; margin-bottom: 4px;">
+                Avg Sleep (Month)
+            </div>
+            <div style="display: flex; align-items: baseline; gap: var(--space-2);">
+                <span style="font-size: var(--font-size-2xl); font-weight: 700; color: {% if avg_sleep and avg_sleep >= 7.0 %}var(--success){% elif avg_sleep and avg_sleep >= 6.0 %}var(--warning){% elif avg_sleep %}var(--danger){% else %}var(--text-muted){% endif %};">
+                    {{ avg_sleep|default:"—" }}
+                </span>
+                <span style="font-size: var(--font-size-xs); color: var(--text-secondary);">hours / night</span>
+            </div>
+            <div style="font-size: var(--font-size-xs); color: var(--text-muted); margin-top: 4px;">
+                Target: 7.0–8.5 hrs
+            </div>
+        </div>
+
+        <!-- 5. Decisions Recorded -->
+        <div class="card" style="padding: var(--space-3); border-radius: var(--radius-lg);">
+            <div style="font-size: var(--font-size-xs); color: var(--text-muted); text-transform: uppercase; font-weight: 600; letter-spacing: 0.05em; margin-bottom: 4px;">
+                Decisions Recorded
+            </div>
+            <div style="display: flex; align-items: baseline; gap: var(--space-2);">
+                <span style="font-size: var(--font-size-2xl); font-weight: 700; color: var(--text-primary);">
+                    {{ decisions_total }}
+                </span>
+                <span style="font-size: var(--font-size-xs); color: var(--text-muted);">
+                    ({{ decisions_pending }} pending)
+                </span>
+            </div>
+            <div style="font-size: var(--font-size-xs); color: var(--text-muted); margin-top: 4px;">
+                Conscious choices
+            </div>
+        </div>
+
+        <!-- 6. Monthly Income -->
+        <div class="card" style="padding: var(--space-3); border-radius: var(--radius-lg);">
+            <div style="font-size: var(--font-size-xs); color: var(--text-muted); text-transform: uppercase; font-weight: 600; letter-spacing: 0.05em; margin-bottom: 4px;">
+                Income (This Month)
+            </div>
+            <div style="display: flex; align-items: baseline; gap: var(--space-2);">
+                <span style="font-size: var(--font-size-2xl); font-weight: 700; color: var(--success);">
+                    +₹{{ month_income|floatformat:2 }}
+                </span>
+            </div>
+            <div style="font-size: var(--font-size-xs); color: var(--text-muted); margin-top: 4px;">
+                Total cash inflow
+            </div>
+        </div>
+
+        <!-- 7. Monthly Expenses -->
+        <div class="card" style="padding: var(--space-3); border-radius: var(--radius-lg);">
+            <div style="font-size: var(--font-size-xs); color: var(--text-muted); text-transform: uppercase; font-weight: 600; letter-spacing: 0.05em; margin-bottom: 4px;">
+                Expenses (This Month)
+            </div>
+            <div style="display: flex; align-items: baseline; gap: var(--space-2);">
+                <span style="font-size: var(--font-size-2xl); font-weight: 700; color: var(--danger);">
+                    -₹{{ month_expense|floatformat:2 }}
+                </span>
+            </div>
+            <div style="font-size: var(--font-size-xs); color: var(--text-muted); margin-top: 4px;">
+                Total outflows
+            </div>
+        </div>
+
+        <!-- 8. Monthly Balance -->
+        <div class="card" style="padding: var(--space-3); border-radius: var(--radius-lg);">
+            <div style="font-size: var(--font-size-xs); color: var(--text-muted); text-transform: uppercase; font-weight: 600; letter-spacing: 0.05em; margin-bottom: 4px;">
+                Monthly Net Savings
+            </div>
+            <div style="display: flex; align-items: baseline; gap: var(--space-2);">
+                <span style="font-size: var(--font-size-2xl); font-weight: 700; color: {% if month_balance >= 0 %}var(--success){% else %}var(--danger){% endif %};">
+                    {% if month_balance >= 0 %}+{% endif %}₹{{ month_balance|floatformat:2 }}
+                </span>
+            </div>
+            <div style="font-size: var(--font-size-xs); color: var(--text-muted); margin-top: 4px;">
+                Income − Expenses
+            </div>
+        </div>
+    </div>
+
+    <!-- Main 2-Column Content Grid -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: var(--space-4); margin-bottom: var(--space-4);">
+        <!-- LEFT COLUMN: Recent Activity & Logs -->
+        <div style="display: flex; flex-direction: column; gap: var(--space-4);">
+            <!-- Recent Journal Entries -->
+            <div class="card" style="padding: var(--space-4); border-radius: var(--radius-lg);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-3);">
+                    <h3 style="font-size: var(--font-size-md); font-weight: 600; color: var(--text-primary); margin: 0;">
+                        Recent Journal Entries
+                    </h3>
+                    <a href="{% url 'personal:journal_list' %}" style="font-size: var(--font-size-xs); color: var(--accent-primary); text-decoration: none;">
+                        View All →
+                    </a>
+                </div>
+
+                {% if recent_journals %}
+                    <div style="display: flex; flex-direction: column; gap: var(--space-3);">
+                        {% for j in recent_journals %}
+                            <div style="padding: var(--space-3); background: var(--bg-primary); border-radius: var(--radius-md); border-left: 3px solid var(--accent-primary);">
+                                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px;">
+                                    <a href="{% url 'personal:journal_detail' j.pk %}" style="font-weight: 600; color: var(--text-primary); text-decoration: none; font-size: var(--font-size-sm);">
+                                        {{ j.title }}
+                                    </a>
+                                    <span style="font-size: var(--font-size-xs); color: var(--text-muted);">
+                                        {{ j.entry_date|date:"M d, Y" }}
+                                    </span>
+                                </div>
+                                <p style="font-size: var(--font-size-xs); color: var(--text-secondary); margin: 0 0 var(--space-2) 0; line-height: 1.4;">
+                                    {{ j.content|truncatewords:20 }}
+                                </p>
+                                {% if j.mood_tag %}
+                                    <span class="badge badge-accent" style="font-size: 10px;">
+                                        #{{ j.mood_tag }}
+                                    </span>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="empty-state" style="padding: var(--space-4) var(--space-2);">
+                        <p style="color: var(--text-muted); font-size: var(--font-size-xs); margin-bottom: var(--space-2);">No journal entries recorded yet.</p>
+                        <a href="{% url 'personal:journal_create' %}" class="btn btn-outline btn-sm">Write First Reflection</a>
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Recent Decisions -->
+            <div class="card" style="padding: var(--space-4); border-radius: var(--radius-lg);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-3);">
+                    <h3 style="font-size: var(--font-size-md); font-weight: 600; color: var(--text-primary); margin: 0;">
+                        Recent Decisions
+                    </h3>
+                    <a href="{% url 'personal:decision_list' %}" style="font-size: var(--font-size-xs); color: var(--accent-primary); text-decoration: none;">
+                        View All →
+                    </a>
+                </div>
+
+                {% if recent_decisions %}
+                    <div style="display: flex; flex-direction: column; gap: var(--space-3);">
+                        {% for d in recent_decisions %}
+                            <div style="padding: var(--space-3); background: var(--bg-primary); border-radius: var(--radius-md);">
+                                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px;">
+                                    <a href="{% url 'personal:decision_detail' d.pk %}" style="font-weight: 600; color: var(--text-primary); text-decoration: none; font-size: var(--font-size-sm);">
+                                        {{ d.title }}
+                                    </a>
+                                    <span class="badge {% if d.status == 'REVIEWED' %}badge-success{% elif d.status == 'DECIDED' %}badge-accent{% else %}badge-warning{% endif %}" style="font-size: 10px;">
+                                        {{ d.get_status_display }}
+                                    </span>
+                                </div>
+                                <div style="font-size: var(--font-size-xs); color: var(--text-muted); margin-bottom: var(--space-1);">
+                                    Date: {{ d.decision_date|date:"M d, Y" }}
+                                    {% if d.category %} • <span style="color: {{ d.category.color }};">{{ d.category.name }}</span>{% endif %}
+                                </div>
+                                {% if d.chosen_option %}
+                                    <div style="font-size: var(--font-size-xs); color: var(--text-secondary);">
+                                        <strong style="color: var(--accent-secondary);">Chosen:</strong> {{ d.chosen_option.option_name }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="empty-state" style="padding: var(--space-4) var(--space-2);">
+                        <p style="color: var(--text-muted); font-size: var(--font-size-xs); margin-bottom: var(--space-2);">No decisions logged yet.</p>
+                        <a href="{% url 'personal:decision_create' %}" class="btn btn-outline btn-sm">Log a Decision</a>
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Recent Mistakes & Lessons -->
+            <div class="card" style="padding: var(--space-4); border-radius: var(--radius-lg);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-3);">
+                    <h3 style="font-size: var(--font-size-md); font-weight: 600; color: var(--text-primary); margin: 0;">
+                        Mistakes & Corrective Actions
+                    </h3>
+                    <a href="{% url 'personal:mistake_list' %}" style="font-size: var(--font-size-xs); color: var(--accent-primary); text-decoration: none;">
+                        View All →
+                    </a>
+                </div>
+
+                {% if recent_mistakes %}
+                    <div style="display: flex; flex-direction: column; gap: var(--space-3);">
+                        {% for m in recent_mistakes %}
+                            <div style="padding: var(--space-3); background: var(--bg-primary); border-radius: var(--radius-md);">
+                                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px;">
+                                    <a href="{% url 'personal:mistake_detail' m.pk %}" style="font-weight: 600; color: var(--text-primary); text-decoration: none; font-size: var(--font-size-sm);">
+                                        {{ m.title }}
+                                    </a>
+                                    <span class="badge {% if m.impact_level == 'SEVERE' %}badge-danger{% elif m.impact_level == 'MODERATE' %}badge-warning{% else %}badge-neutral{% endif %}" style="font-size: 10px;">
+                                        {{ m.get_impact_level_display }}
+                                    </span>
+                                </div>
+                                <div style="font-size: var(--font-size-xs); color: var(--text-secondary); margin-bottom: 4px;">
+                                    <strong>Lesson:</strong> {{ m.lesson_learned|truncatewords:15 }}
+                                </div>
+                                {% if m.corrective_action %}
+                                    <div style="font-size: var(--font-size-xs); color: var(--success);">
+                                        <strong>Action:</strong> {{ m.corrective_action|truncatewords:12 }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="empty-state" style="padding: var(--space-4) var(--space-2);">
+                        <p style="color: var(--text-muted); font-size: var(--font-size-xs); margin-bottom: var(--space-2);">No mistakes recorded.</p>
+                        <a href="{% url 'personal:mistake_create' %}" class="btn btn-outline btn-sm">Log Learning Experience</a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- RIGHT COLUMN: Biometrics, Trends & Financial Breakdown -->
+        <div style="display: flex; flex-direction: column; gap: var(--space-4);">
+            <!-- Latest Daily Check-in Card -->
+            <div class="card" style="padding: var(--space-4); border-radius: var(--radius-lg);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-3);">
+                    <h3 style="font-size: var(--font-size-md); font-weight: 600; color: var(--text-primary); margin: 0;">
+                        Latest Daily Check-in
+                    </h3>
+                    <a href="{% url 'personal:checkin' %}" class="btn btn-outline btn-sm" style="font-size: 11px;">
+                        Check-in Today
+                    </a>
+                </div>
+
+                {% if latest_checkin %}
+                    <div style="padding: var(--space-3); background: var(--bg-primary); border-radius: var(--radius-md);">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: var(--space-3);">
+                            <span style="font-size: var(--font-size-xs); color: var(--text-muted);">
+                                Date: <strong style="color: var(--text-primary);">{{ latest_checkin.metric_date|date:"l, M d, Y" }}</strong>
+                            </span>
+                            <span style="font-size: var(--font-size-xs); color: var(--text-muted);">
+                                Sleep: <strong style="color: var(--text-primary);">{{ latest_checkin.sleep_hours|default:"—" }}h</strong>
+                            </span>
+                        </div>
+                        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-2); text-align: center; margin-bottom: var(--space-3);">
+                            <div style="background: var(--bg-card); padding: var(--space-2); border-radius: var(--radius-sm);">
+                                <div style="font-size: 10px; color: var(--text-muted); text-transform: uppercase;">Mood</div>
+                                <div style="font-size: var(--font-size-lg); font-weight: 700; color: var(--text-primary);">
+                                    {{ latest_checkin.mood_score|default:"—" }}<span style="font-size: 10px; color: var(--text-muted);">/5</span>
+                                </div>
+                            </div>
+                            <div style="background: var(--bg-card); padding: var(--space-2); border-radius: var(--radius-sm);">
+                                <div style="font-size: 10px; color: var(--text-muted); text-transform: uppercase;">Energy</div>
+                                <div style="font-size: var(--font-size-lg); font-weight: 700; color: var(--accent-primary);">
+                                    {{ latest_checkin.energy_score|default:"—" }}<span style="font-size: 10px; color: var(--text-muted);">/5</span>
+                                </div>
+                            </div>
+                            <div style="background: var(--bg-card); padding: var(--space-2); border-radius: var(--radius-sm);">
+                                <div style="font-size: 10px; color: var(--text-muted); text-transform: uppercase;">Stress</div>
+                                <div style="font-size: var(--font-size-lg); font-weight: 700; color: {% if latest_checkin.stress_score and latest_checkin.stress_score >= 4 %}var(--danger){% else %}var(--success){% endif %};">
+                                    {{ latest_checkin.stress_score|default:"—" }}<span style="font-size: 10px; color: var(--text-muted);">/5</span>
+                                </div>
+                            </div>
+                        </div>
+                        {% if latest_checkin.notes %}
+                            <p style="font-size: var(--font-size-xs); color: var(--text-secondary); margin: 0; font-style: italic;">
+                                "{{ latest_checkin.notes }}"
+                            </p>
+                        {% endif %}
+                    </div>
+                {% else %}
+                    <div class="empty-state" style="padding: var(--space-3);">
+                        <p style="color: var(--text-muted); font-size: var(--font-size-xs); margin-bottom: var(--space-2);">No check-in recorded yet.</p>
+                        <a href="{% url 'personal:checkin' %}" class="btn btn-primary btn-sm">Log Today's Check-in</a>
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- 14-Day Mood & Sleep Rhythm Trend -->
+            <div class="card" style="padding: var(--space-4); border-radius: var(--radius-lg);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-3);">
+                    <h3 style="font-size: var(--font-size-md); font-weight: 600; color: var(--text-primary); margin: 0;">
+                        14-Day Mood Rhythm
+                    </h3>
+                    <a href="{% url 'personal:mood_energy' %}" style="font-size: var(--font-size-xs); color: var(--accent-primary); text-decoration: none;">
+                        Detailed Analytics →
+                    </a>
+                </div>
+
+                <div style="display: flex; align-items: flex-end; justify-content: space-between; height: 110px; gap: 4px; padding-top: var(--space-2);">
+                    {% for pt in trend_data %}
+                        <div style="flex: 1; display: flex; flex-direction: column; align-items: center; height: 100%; justify-content: flex-end;" title="{{ pt.date }}: Mood {{ pt.mood|default:'—' }}/5, Sleep {{ pt.sleep|default:'—' }}h">
+                            <div style="width: 100%; max-width: 18px; border-radius: var(--radius-xs); transition: height 0.3s ease; 
+                                {% if pt.mood %}
+                                    height: calc({{ pt.mood }} * 18px);
+                                    background: {% if pt.mood >= 4 %}var(--success){% elif pt.mood >= 3 %}var(--accent-primary){% elif pt.mood >= 2 %}var(--warning){% else %}var(--danger){% endif %};
+                                {% else %}
+                                    height: 4px; background: var(--border);
+                                {% endif %}">
+                            </div>
+                            <span style="font-size: 9px; color: var(--text-muted); margin-top: 4px;">{{ pt.day_name|slice:":1" }}</span>
+                        </div>
+                    {% endfor %}
+                </div>
+                <div style="display: flex; justify-content: space-between; font-size: 10px; color: var(--text-muted); margin-top: var(--space-2); border-top: 1px solid var(--border); padding-top: var(--space-1);">
+                    <span>14 Days Ago</span>
+                    <span>Score (1 to 5)</span>
+                    <span>Today</span>
+                </div>
+            </div>
+
+            <!-- Monthly Spending Category Breakdown -->
+            <div class="card" style="padding: var(--space-4); border-radius: var(--radius-lg);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-3);">
+                    <h3 style="font-size: var(--font-size-md); font-weight: 600; color: var(--text-primary); margin: 0;">
+                        Monthly Spending Overview
+                    </h3>
+                    <a href="{% url 'personal:finance' %}" style="font-size: var(--font-size-xs); color: var(--accent-primary); text-decoration: none;">
+                        Finance Manager →
+                    </a>
+                </div>
+
+                {% if category_spending %}
+                    <div style="display: flex; flex-direction: column; gap: var(--space-2);">
+                        {% for cat in category_spending %}
+                            <div>
+                                <div style="display: flex; justify-content: space-between; font-size: var(--font-size-xs); margin-bottom: 2px;">
+                                    <span style="color: var(--text-primary); font-weight: 500;">
+                                        <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: {{ cat.category__color|default:'#818CF8' }}; margin-right: 4px;"></span>
+                                        {{ cat.category__name|default:"Uncategorized" }}
+                                    </span>
+                                    <span style="color: var(--text-muted);">
+                                        ₹{{ cat.total|floatformat:2 }}
+                                    </span>
+                                </div>
+                                <div class="progress-bar-wrap" style="height: 6px; background: var(--bg-primary); border-radius: var(--radius-full); overflow: hidden;">
+                                    <div style="height: 100%; border-radius: var(--radius-full); background: {{ cat.category__color|default:'#818CF8' }}; width: {% widthratio cat.total month_expense 100 %}%;"></div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="empty-state" style="padding: var(--space-3);">
+                        <p style="color: var(--text-muted); font-size: var(--font-size-xs); margin-bottom: var(--space-2);">No expenses recorded this month.</p>
+                        <a href="{% url 'finance:transaction_create' %}" class="btn btn-outline btn-sm">Add Expense</a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

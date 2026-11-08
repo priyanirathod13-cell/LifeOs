@@ -1,0 +1,103 @@
+{% extends "layouts/app_layout.html" %}
+
+{% block content %}
+<div class="personal-container" style="max-width: 800px; margin: 0 auto;">
+    {% include "personal/personal_nav.html" %}
+
+    <div class="card" style="padding: var(--space-6); border-radius: var(--radius-lg);">
+        <!-- Top Breadcrumbs & Actions -->
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: var(--space-4); border-bottom: 1px solid var(--border); padding-bottom: var(--space-4); flex-wrap: wrap; gap: var(--space-2);">
+            <div>
+                <a href="{% url 'personal:mistake_list' %}" style="font-size: var(--font-size-xs); color: var(--accent-primary); text-decoration: none; display: inline-block; margin-bottom: var(--space-2);">
+                    ← Back to Mistake Tracker
+                </a>
+                <div style="display: flex; gap: var(--space-2); align-items: center; margin-bottom: var(--space-1);">
+                    <span class="badge {% if mistake.impact_level == 'SEVERE' %}badge-danger{% elif mistake.impact_level == 'MODERATE' %}badge-warning{% else %}badge-neutral{% endif %}">
+                        {{ mistake.get_impact_level_display }} Impact
+                    </span>
+                    <span class="badge {% if mistake.status == 'RESOLVED' %}badge-success{% elif mistake.status == 'RECURRING' %}badge-danger{% elif mistake.status == 'IN_PROGRESS' %}badge-accent{% else %}badge-neutral{% endif %}">
+                        {{ mistake.get_status_display }}
+                    </span>
+                    {% if mistake.category %}
+                        <span style="font-size: var(--font-size-xs); color: {{ mistake.category.color }}; font-weight: 500;">
+                            • {{ mistake.category.name }}
+                        </span>
+                    {% endif %}
+                    <span style="font-size: var(--font-size-xs); color: var(--text-muted);">
+                        • {{ mistake.mistake_date|date:"F j, Y" }}
+                    </span>
+                </div>
+                <h1 style="font-size: var(--font-size-2xl); font-weight: 700; color: var(--text-primary); margin: 0;">
+                    {{ mistake.title }}
+                </h1>
+            </div>
+            <div style="display: flex; gap: var(--space-2);">
+                <a href="{% url 'personal:mistake_edit' mistake.pk %}" class="btn btn-outline btn-sm">
+                    Edit
+                </a>
+                <a href="{% url 'personal:mistake_delete' mistake.pk %}" class="btn btn-outline btn-sm" style="color: var(--danger); border-color: rgba(248,113,113,0.3);">
+                    Delete
+                </a>
+            </div>
+        </div>
+
+        <!-- Description -->
+        {% if mistake.description %}
+            <div style="margin-bottom: var(--space-4);">
+                <div style="font-size: 11px; text-transform: uppercase; font-weight: 600; color: var(--text-muted); margin-bottom: 4px;">
+                    Context & Factual Recounting
+                </div>
+                <div style="font-size: var(--font-size-sm); color: var(--text-primary); line-height: 1.6; white-space: pre-wrap;">
+                    {{ mistake.description }}
+                </div>
+            </div>
+        {% endif %}
+
+        <!-- Root Cause / Trigger -->
+        {% if mistake.cause_or_reason %}
+            <div style="margin-bottom: var(--space-4); background: var(--bg-primary); padding: var(--space-3); border-radius: var(--radius-md);">
+                <div style="font-size: 11px; text-transform: uppercase; font-weight: 600; color: var(--warning); margin-bottom: 2px;">
+                    Root Cause & Contributing Factors
+                </div>
+                <div style="font-size: var(--font-size-xs); color: var(--text-secondary); line-height: 1.5; white-space: pre-wrap;">
+                    {{ mistake.cause_or_reason }}
+                </div>
+            </div>
+        {% endif %}
+
+        <!-- Lesson Learned -->
+        <div style="margin-bottom: var(--space-4); background: rgba(129, 140, 248, 0.06); padding: var(--space-4); border-radius: var(--radius-md); border-left: 3px solid var(--accent-primary);">
+            <div style="font-size: 11px; text-transform: uppercase; font-weight: 600; color: var(--accent-primary); margin-bottom: 2px;">
+                Key Lesson Learned
+            </div>
+            <div style="font-size: var(--font-size-sm); color: var(--text-primary); line-height: 1.6; white-space: pre-wrap;">
+                {{ mistake.lesson_learned }}
+            </div>
+        </div>
+
+        <!-- Corrective Action Protocol -->
+        {% if mistake.corrective_action %}
+            <div style="margin-bottom: var(--space-4); background: rgba(52, 211, 153, 0.06); padding: var(--space-4); border-radius: var(--radius-md); border-left: 3px solid var(--success);">
+                <div style="font-size: 11px; text-transform: uppercase; font-weight: 600; color: var(--success); margin-bottom: 2px;">
+                    Corrective Action & Preventive Guardrail
+                </div>
+                <div style="font-size: var(--font-size-sm); color: var(--text-primary); line-height: 1.6; white-space: pre-wrap;">
+                    {{ mistake.corrective_action }}
+                </div>
+            </div>
+        {% endif %}
+
+        <!-- Follow-up Notes -->
+        {% if mistake.follow_up_notes %}
+            <div style="background: var(--bg-primary); padding: var(--space-3); border-radius: var(--radius-md);">
+                <div style="font-size: 11px; text-transform: uppercase; font-weight: 600; color: var(--text-muted); margin-bottom: 2px;">
+                    Follow-up Notes & Status Updates
+                </div>
+                <div style="font-size: var(--font-size-xs); color: var(--text-secondary); line-height: 1.5; white-space: pre-wrap;">
+                    {{ mistake.follow_up_notes }}
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

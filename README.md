@@ -215,12 +215,14 @@ python manage.py test
 # Or run specific modules
 python manage.py test apps.productivity
 python manage.py test apps.study
+python manage.py test apps.personal
+python manage.py test apps.finance
 ```
 
 Expected output:
 ```
 System check identified no issues (0 silenced).
-Ran 108 tests in ~106s
+Ran 123 tests in ~122s
 
 OK
 ```
@@ -264,6 +266,14 @@ python manage.py runserver
 - **Activities & Time Tracking**: [http://127.0.0.1:8000/productivity/activities/](http://127.0.0.1:8000/productivity/activities/) or `/activities/` (Live stopwatch timer, duration aggregations, manual logs)
 - **Goals & Milestones**: [http://127.0.0.1:8000/planning/goals/](http://127.0.0.1:8000/planning/goals/) or `/goals/` (Outcome tracking, target countdowns, task linkage & progress bars)
 - **Projects**: [http://127.0.0.1:8000/planning/projects/](http://127.0.0.1:8000/planning/projects/) or `/projects/` (Initiatives portfolio, deliverable deadlines, child tasks)
+- **Personal Dashboard**: [http://127.0.0.1:8000/personal/](http://127.0.0.1:8000/personal/) (8 summary KPI cards, recent journal entries, decisions, mistakes, daily check-in snapshot, 14-day mood chart, monthly spending overview)
+- **Journal Management**: [http://127.0.0.1:8000/personal/journal/](http://127.0.0.1:8000/personal/journal/) or `/journal/` (Introspective daily reflections, full-text search, date filtering, detail reading view)
+- **Daily Check-in**: [http://127.0.0.1:8000/personal/checkin/](http://127.0.0.1:8000/personal/checkin/) or `/checkin/` (Standardized 5-point scales for mood, energy, and stress, sleep hours, 14-day historical strip, duplicate-date auto-update)
+- **Mood & Energy Analytics**: [http://127.0.0.1:8000/personal/mood-energy/](http://127.0.0.1:8000/personal/mood-energy/) (7d/14d/30d/90d filtering, mood bar chart, dual-bar energy vs stress comparison, 7d vs 30d averages, self-awareness disclaimer)
+- **Sleep Tracker**: [http://127.0.0.1:8000/personal/sleep/](http://127.0.0.1:8000/personal/sleep/) (Bedtime and wake-up logging, automated midnight-crossing duration calculation, quality ratings 1-5, 14-day duration trend with 7.0-8.5h benchmark band, DailyMetric auto-sync)
+- **Decision Journal**: [http://127.0.0.1:8000/personal/decisions/](http://127.0.0.1:8000/personal/decisions/) or `/decisions/` (Decision lifecycle Draft/Evaluating/Decided/Reviewed, candidate option comparison, chosen option selection, delayed outcome evaluations with 1-10 scores and reflections)
+- **Mistake Tracker**: [http://127.0.0.1:8000/personal/mistakes/](http://127.0.0.1:8000/personal/mistakes/) or `/mistakes/` (Anti-pattern logging, root cause triggers, severity impact, status Open/In Progress/Resolved/Recurring, lessons learned, preventive action plans)
+- **Finance Manager**: [http://127.0.0.1:8000/personal/finance/](http://127.0.0.1:8000/personal/finance/) or `/finance/` (Lifetime and monthly financial KPIs, net balance, cash flow comparison bar, category-wise spending breakdown, ledger transaction search/filter/sort, INR currency formatting)
 - **User Profile & Settings**: [http://127.0.0.1:8000/accounts/profile/](http://127.0.0.1:8000/accounts/profile/) (Update full name, bio, timezone, and change password)
 - **UI Design System Showcase**: [http://127.0.0.1:8000/ui-system/](http://127.0.0.1:8000/ui-system/) (Interactive 16-component catalog)
 - **Health-Check API Endpoint**: [http://127.0.0.1:8000/health/](http://127.0.0.1:8000/health/) (Preserved from Step 01)

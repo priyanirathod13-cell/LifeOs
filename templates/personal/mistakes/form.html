@@ -1,0 +1,119 @@
+{% extends "layouts/app_layout.html" %}
+
+{% block content %}
+<div class="personal-container" style="max-width: 750px; margin: 0 auto;">
+    {% include "personal/personal_nav.html" %}
+
+    <div class="card" style="padding: var(--space-5); border-radius: var(--radius-lg);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-4);">
+            <div>
+                <h1 style="font-size: var(--font-size-xl); font-weight: 700; color: var(--text-primary); margin: 0 0 4px 0;">
+                    {% if mistake %}Edit Mistake Log{% else %}Log Mistake & Anti-Pattern{% endif %}
+                </h1>
+                <p style="color: var(--text-secondary); margin: 0; font-size: var(--font-size-sm);">
+                    Neutral, constructive recording of errors to extract actionable principles and prevent repeat mistakes.
+                </p>
+            </div>
+            <a href="{% if mistake %}{% url 'personal:mistake_detail' mistake.pk %}{% else %}{% url 'personal:mistake_list' %}{% endif %}" class="btn btn-outline btn-sm">
+                Cancel
+            </a>
+        </div>
+
+        <form method="post">
+            {% csrf_token %}
+            {% if form.errors %}
+                <div class="alert alert-danger mb-4">Please correct the errors indicated below.</div>
+            {% endif %}
+
+            <!-- Title -->
+            <div class="form-group mb-3">
+                <label class="form-label" for="{{ form.title.id_for_label }}" style="font-weight: 600;">
+                    Title / Summary of Mistake <span style="color: var(--danger);">*</span>
+                </label>
+                {{ form.title }}
+                {% if form.title.errors %}
+                    <div style="color: var(--danger); font-size: var(--font-size-xs); margin-top: 4px;">{{ form.title.errors|join:", " }}</div>
+                {% endif %}
+            </div>
+
+            <!-- Date, Impact, Status, and Category -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); margin-bottom: var(--space-3);">
+                <div class="form-group">
+                    <label class="form-label" for="{{ form.mistake_date.id_for_label }}" style="font-weight: 600;">
+                        Date <span style="color: var(--danger);">*</span>
+                    </label>
+                    {{ form.mistake_date }}
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="{{ form.category.id_for_label }}" style="font-weight: 600;">
+                        Category
+                    </label>
+                    {{ form.category }}
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="{{ form.impact_level.id_for_label }}" style="font-weight: 600;">
+                        Impact Level
+                    </label>
+                    {{ form.impact_level }}
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="{{ form.status.id_for_label }}" style="font-weight: 600;">
+                        Status
+                    </label>
+                    {{ form.status }}
+                </div>
+            </div>
+
+            <!-- Description -->
+            <div class="form-group mb-3">
+                <label class="form-label" for="{{ form.description.id_for_label }}" style="font-weight: 600;">
+                    Factual Description
+                </label>
+                {{ form.description }}
+            </div>
+
+            <!-- Cause or Reason -->
+            <div class="form-group mb-3">
+                <label class="form-label" for="{{ form.cause_or_reason.id_for_label }}" style="font-weight: 600;">
+                    Root Cause or Contributing Triggers
+                </label>
+                {{ form.cause_or_reason }}
+            </div>
+
+            <!-- Lesson Learned -->
+            <div class="form-group mb-3">
+                <label class="form-label" for="{{ form.lesson_learned.id_for_label }}" style="font-weight: 600;">
+                    Key Lesson Learned <span style="color: var(--danger);">*</span>
+                </label>
+                {{ form.lesson_learned }}
+                {% if form.lesson_learned.errors %}
+                    <div style="color: var(--danger); font-size: var(--font-size-xs); margin-top: 4px;">{{ form.lesson_learned.errors|join:", " }}</div>
+                {% endif %}
+            </div>
+
+            <!-- Corrective Action -->
+            <div class="form-group mb-3">
+                <label class="form-label" for="{{ form.corrective_action.id_for_label }}" style="font-weight: 600;">
+                    Corrective Action & Prevention Protocol
+                </label>
+                {{ form.corrective_action }}
+            </div>
+
+            <!-- Follow-up Notes -->
+            <div class="form-group mb-4">
+                <label class="form-label" for="{{ form.follow_up_notes.id_for_label }}" style="font-weight: 600;">
+                    Follow-up Observations & Notes
+                </label>
+                {{ form.follow_up_notes }}
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: var(--space-2);">
+                <a href="{% url 'personal:mistake_list' %}" class="btn btn-outline">Cancel</a>
+                <button type="submit" class="btn btn-primary">
+                    {% if mistake %}Save Changes{% else %}Save Mistake Record{% endif %}
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,197 @@
+{% extends "layouts/app_layout.html" %}
+
+{% block content %}
+<div class="personal-container">
+    {% include "personal/personal_nav.html" %}
+
+    <!-- Top Action Bar -->
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-4); flex-wrap: wrap; gap: var(--space-3);">
+        <div>
+            <h1 style="font-size: var(--font-size-2xl); font-weight: 700; color: var(--text-primary); margin: 0 0 4px 0;">
+                Mistake Tracker & Learning Log
+            </h1>
+            <p style="color: var(--text-secondary); margin: 0; font-size: var(--font-size-sm);">
+                Transform errors into anti-pattern protocols. A non-judgmental repository of causes, lessons, and corrective actions.
+            </p>
+        </div>
+        <a href="{% url 'personal:mistake_create' %}" class="btn btn-primary">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+            Log Learning Experience
+        </a>
+    </div>
+
+    <!-- 4 KPI Summary Cards -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: var(--space-3); margin-bottom: var(--space-4);">
+        <div class="card" style="padding: var(--space-3); border-radius: var(--radius-lg);">
+            <div style="font-size: var(--font-size-xs); color: var(--text-muted); text-transform: uppercase; font-weight: 600; margin-bottom: 4px;">
+                Total Logged
+            </div>
+            <div style="font-size: var(--font-size-2xl); font-weight: 700; color: var(--text-primary);">
+                {{ total_count }}
+            </div>
+            <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">
+                Recorded learning items
+            </div>
+        </div>
+
+        <div class="card" style="padding: var(--space-3); border-radius: var(--radius-lg);">
+            <div style="font-size: var(--font-size-xs); color: var(--text-muted); text-transform: uppercase; font-weight: 600; margin-bottom: 4px;">
+                Open / In Progress
+            </div>
+            <div style="font-size: var(--font-size-2xl); font-weight: 700; color: var(--warning);">
+                {{ open_count }}
+            </div>
+            <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">
+                Active mitigation protocols
+            </div>
+        </div>
+
+        <div class="card" style="padding: var(--space-3); border-radius: var(--radius-lg);">
+            <div style="font-size: var(--font-size-xs); color: var(--text-muted); text-transform: uppercase; font-weight: 600; margin-bottom: 4px;">
+                Resolved
+            </div>
+            <div style="font-size: var(--font-size-2xl); font-weight: 700; color: var(--success);">
+                {{ resolved_count }}
+            </div>
+            <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">
+                Corrective action verified
+            </div>
+        </div>
+
+        <div class="card" style="padding: var(--space-3); border-radius: var(--radius-lg);">
+            <div style="font-size: var(--font-size-xs); color: var(--text-muted); text-transform: uppercase; font-weight: 600; margin-bottom: 4px;">
+                High / Severe Impact
+            </div>
+            <div style="font-size: var(--font-size-2xl); font-weight: 700; color: var(--danger);">
+                {{ severe_count }}
+            </div>
+            <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">
+                Crucial systemic anti-patterns
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter & Search Toolbar -->
+    <div class="card mb-4" style="padding: var(--space-3); border-radius: var(--radius-lg);">
+        <form method="get" action="{% url 'personal:mistake_list' %}" style="display: flex; gap: var(--space-3); align-items: center; flex-wrap: wrap;">
+            <div style="flex: 2; min-width: 220px;">
+                <input type="text" name="q" value="{{ q }}" class="form-control form-control-sm" placeholder="Search mistakes by title, lesson learned, root cause...">
+            </div>
+            <div style="flex: 1; min-width: 140px;">
+                <select name="impact" class="form-select form-select-sm">
+                    <option value="ALL" {% if not impact_filter or impact_filter == 'ALL' %}selected{% endif %}>All Impacts</option>
+                    <option value="MINOR" {% if impact_filter == 'MINOR' %}selected{% endif %}>Minor</option>
+                    <option value="MODERATE" {% if impact_filter == 'MODERATE' %}selected{% endif %}>Moderate</option>
+                    <option value="SEVERE" {% if impact_filter == 'SEVERE' %}selected{% endif %}>Severe</option>
+                </select>
+            </div>
+            <div style="flex: 1; min-width: 140px;">
+                <select name="status" class="form-select form-select-sm">
+                    <option value="ALL" {% if not status_filter or status_filter == 'ALL' %}selected{% endif %}>All Statuses</option>
+                    <option value="OPEN" {% if status_filter == 'OPEN' %}selected{% endif %}>Open</option>
+                    <option value="IN_PROGRESS" {% if status_filter == 'IN_PROGRESS' %}selected{% endif %}>In Progress</option>
+                    <option value="RESOLVED" {% if status_filter == 'RESOLVED' %}selected{% endif %}>Resolved</option>
+                    <option value="RECURRING" {% if status_filter == 'RECURRING' %}selected{% endif %}>Recurring</option>
+                </select>
+            </div>
+            <div style="display: flex; gap: var(--space-2);">
+                <button type="submit" class="btn btn-primary btn-sm">Filter</button>
+                {% if q or impact_filter or status_filter %}
+                    <a href="{% url 'personal:mistake_list' %}" class="btn btn-outline btn-sm">Reset</a>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+
+    <!-- Mistakes List Cards -->
+    {% if page_obj %}
+        <div style="display: flex; flex-direction: column; gap: var(--space-3);">
+            {% for m in page_obj %}
+                <div class="card" style="padding: var(--space-4); border-radius: var(--radius-lg); border-left: 4px solid {% if m.impact_level == 'SEVERE' %}var(--danger){% elif m.impact_level == 'MODERATE' %}var(--warning){% else %}var(--accent-primary){% endif %};">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: var(--space-2); flex-wrap: wrap; gap: var(--space-2);">
+                        <div>
+                            <div style="display: flex; gap: var(--space-2); align-items: center; margin-bottom: 4px;">
+                                <span class="badge {% if m.impact_level == 'SEVERE' %}badge-danger{% elif m.impact_level == 'MODERATE' %}badge-warning{% else %}badge-neutral{% endif %}" style="font-size: 11px;">
+                                    {{ m.get_impact_level_display }} Impact
+                                </span>
+                                <span class="badge {% if m.status == 'RESOLVED' %}badge-success{% elif m.status == 'RECURRING' %}badge-danger{% elif m.status == 'IN_PROGRESS' %}badge-accent{% else %}badge-neutral{% endif %}" style="font-size: 11px;">
+                                    {{ m.get_status_display }}
+                                </span>
+                                {% if m.category %}
+                                    <span style="font-size: var(--font-size-xs); color: {{ m.category.color }}; font-weight: 500;">
+                                        • {{ m.category.name }}
+                                    </span>
+                                {% endif %}
+                                <span style="font-size: var(--font-size-xs); color: var(--text-muted);">
+                                    • {{ m.mistake_date|date:"M d, Y" }}
+                                </span>
+                            </div>
+                            <h2 style="font-size: var(--font-size-md); font-weight: 600; margin: 0;">
+                                <a href="{% url 'personal:mistake_detail' m.pk %}" style="color: var(--text-primary); text-decoration: none;">
+                                    {{ m.title }}
+                                </a>
+                            </h2>
+                        </div>
+                        <div style="display: flex; gap: var(--space-2);">
+                            <a href="{% url 'personal:mistake_edit' m.pk %}" class="btn btn-outline btn-sm" style="font-size: 11px; padding: 2px 8px;">
+                                Edit
+                            </a>
+                            <a href="{% url 'personal:mistake_delete' m.pk %}" class="btn btn-outline btn-sm" style="font-size: 11px; padding: 2px 8px; color: var(--danger); border-color: rgba(248,113,113,0.3);">
+                                Delete
+                            </a>
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: var(--space-3); margin-top: var(--space-2);">
+                        <div style="background: var(--bg-primary); padding: var(--space-2) var(--space-3); border-radius: var(--radius-sm);">
+                            <div style="font-size: 10px; text-transform: uppercase; font-weight: 600; color: var(--text-muted); margin-bottom: 2px;">
+                                Lesson Learned
+                            </div>
+                            <div style="font-size: var(--font-size-xs); color: var(--text-primary); line-height: 1.5;">
+                                {{ m.lesson_learned|truncatewords:25 }}
+                            </div>
+                        </div>
+                        {% if m.corrective_action %}
+                            <div style="background: var(--bg-primary); padding: var(--space-2) var(--space-3); border-radius: var(--radius-sm); border-left: 2px solid var(--success);">
+                                <div style="font-size: 10px; text-transform: uppercase; font-weight: 600; color: var(--success); margin-bottom: 2px;">
+                                    Corrective Action Protocol
+                                </div>
+                                <div style="font-size: var(--font-size-xs); color: var(--text-primary); line-height: 1.5;">
+                                    {{ m.corrective_action|truncatewords:25 }}
+                                </div>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+
+        <!-- Pagination -->
+        {% if page_obj.has_other_pages %}
+            <div style="display: flex; justify-content: center; gap: var(--space-2); margin-top: var(--space-4);">
+                {% if page_obj.has_previous %}
+                    <a href="?page={{ page_obj.previous_page_number }}{% if q %}&q={{ q }}{% endif %}{% if impact_filter %}&impact={{ impact_filter }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}" class="btn btn-outline btn-sm">← Previous</a>
+                {% endif %}
+                <span class="btn btn-outline btn-sm disabled" style="color: var(--text-muted);">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+                {% if page_obj.has_next %}
+                    <a href="?page={{ page_obj.next_page_number }}{% if q %}&q={{ q }}{% endif %}{% if impact_filter %}&impact={{ impact_filter }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}" class="btn btn-outline btn-sm">Next →</a>
+                {% endif %}
+            </div>
+        {% endif %}
+    {% else %}
+        <div class="card empty-state" style="padding: var(--space-6); text-align: center; border-radius: var(--radius-lg);">
+            <div style="font-size: 36px; margin-bottom: var(--space-2);">🎯</div>
+            <h3 style="font-size: var(--font-size-lg); font-weight: 600; color: var(--text-primary); margin-bottom: var(--space-1);">
+                No Mistakes Logged
+            </h3>
+            <p style="color: var(--text-secondary); font-size: var(--font-size-sm); max-width: 440px; margin: 0 auto var(--space-4) auto;">
+                "Failure is simply the opportunity to begin again, this time more intelligently." Log your first learning retrospective.
+            </p>
+            <a href="{% url 'personal:mistake_create' %}" class="btn btn-primary">Log First Mistake</a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

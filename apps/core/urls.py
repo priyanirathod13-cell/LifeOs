@@ -1,4 +1,12 @@
 from django.urls import path
+from apps.finance.views import finance_dashboard_view
+from apps.personal.views import (
+    daily_checkin_view,
+    decision_list_view,
+    journal_list_view,
+    mistake_list_view,
+    personal_dashboard_view,
+)
 from apps.planning.views import goal_list_view, project_list_view
 from apps.productivity.views import (
     activity_list_view,
@@ -11,21 +19,14 @@ from apps.productivity.views import (
 from apps.study.views import study_analytics_view, study_dashboard_view
 from .views import (
     behavioral_insights_view,
-    checkin_view,
     dashboard,
-    decisions_view,
-    financial_analytics_view,
     health_check,
-    journal_view,
     landing_view,
-    mistakes_view,
     productivity_analytics_view,
     quick_add_task_view,
     quick_checkin_view,
     recommendations_view,
-    routines_view,
     settings_view,
-    timetable_view,
     toggle_habit_view,
     toggle_task_view,
     ui_system,
@@ -57,21 +58,22 @@ urlpatterns = [
     path('categories/', category_list_view, name='categories'),
     path('habits/', habit_list_view, name='habits'),
     path('activities/', activity_list_view, name='activities'),
-    path('checkin/', checkin_view, name='checkin'),
+    path('checkin/', daily_checkin_view, name='checkin'),
 
-    # MY GROWTH (Protected)
+    # MY PERSONAL & GROWTH (Protected)
+    path('personal/', personal_dashboard_view, name='personal'),
     path('study/', study_dashboard_view, name='study'),
     path('goals/', goal_list_view, name='goals'),
     path('projects/', project_list_view, name='projects'),
-    path('journal/', journal_view, name='journal'),
-    path('decisions/', decisions_view, name='decisions'),
-    path('mistakes/', mistakes_view, name='mistakes'),
+    path('journal/', journal_list_view, name='journal'),
+    path('decisions/', decision_list_view, name='decisions'),
+    path('mistakes/', mistake_list_view, name='mistakes'),
 
     # MY INTELLIGENCE (Protected)
     path('analytics/productivity/', productivity_analytics_view, name='productivity_analytics'),
     path('analytics/study/', study_analytics_view, name='study_analytics'),
     path('analytics/behavioral/', behavioral_insights_view, name='behavioral_insights'),
-    path('analytics/financial/', financial_analytics_view, name='financial_analytics'),
+    path('analytics/financial/', finance_dashboard_view, name='financial_analytics'),
     path('recommendations/', recommendations_view, name='recommendations'),
 
     # SETTINGS (Protected)

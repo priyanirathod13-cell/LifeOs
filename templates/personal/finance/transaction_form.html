@@ -1,0 +1,97 @@
+{% extends "layouts/app_layout.html" %}
+
+{% block content %}
+<div class="personal-container" style="max-width: 650px; margin: 0 auto;">
+    {% include "personal/personal_nav.html" %}
+
+    <div class="card" style="padding: var(--space-5); border-radius: var(--radius-lg);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-4);">
+            <div>
+                <h1 style="font-size: var(--font-size-xl); font-weight: 700; color: var(--text-primary); margin: 0 0 4px 0;">
+                    {% if tx %}Edit Transaction{% else %}Add Transaction{% endif %}
+                </h1>
+                <p style="color: var(--text-secondary); margin: 0; font-size: var(--font-size-sm);">
+                    Record manual monetary activity. Amounts are stored with full decimal precision.
+                </p>
+            </div>
+            <a href="{% url 'personal:finance' %}" class="btn btn-outline btn-sm">Cancel</a>
+        </div>
+
+        <form method="post">
+            {% csrf_token %}
+            {% if form.errors %}
+                <div class="alert alert-danger mb-4">Please correct the errors indicated below.</div>
+            {% endif %}
+
+            <!-- Description -->
+            <div class="form-group mb-3">
+                <label class="form-label" for="{{ form.description.id_for_label }}" style="font-weight: 600;">
+                    Description / Item <span style="color: var(--danger);">*</span>
+                </label>
+                {{ form.description }}
+                {% if form.description.errors %}
+                    <div style="color: var(--danger); font-size: var(--font-size-xs); margin-top: 4px;">{{ form.description.errors|join:", " }}</div>
+                {% endif %}
+            </div>
+
+            <!-- Amount and Type Row -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); margin-bottom: var(--space-3);">
+                <div class="form-group">
+                    <label class="form-label" for="{{ form.amount.id_for_label }}" style="font-weight: 600;">
+                        Amount (₹ INR) <span style="color: var(--danger);">*</span>
+                    </label>
+                    {{ form.amount }}
+                    {% if form.amount.errors %}
+                        <div style="color: var(--danger); font-size: var(--font-size-xs); margin-top: 4px;">{{ form.amount.errors|join:", " }}</div>
+                    {% endif %}
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="{{ form.transaction_type.id_for_label }}" style="font-weight: 600;">
+                        Transaction Type <span style="color: var(--danger);">*</span>
+                    </label>
+                    {{ form.transaction_type }}
+                </div>
+            </div>
+
+            <!-- Category, Date, and Payment Method Row -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); margin-bottom: var(--space-3);">
+                <div class="form-group">
+                    <label class="form-label" for="{{ form.category.id_for_label }}" style="font-weight: 600;">
+                        Category
+                    </label>
+                    {{ form.category }}
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="{{ form.transaction_date.id_for_label }}" style="font-weight: 600;">
+                        Date <span style="color: var(--danger);">*</span>
+                    </label>
+                    {{ form.transaction_date }}
+                </div>
+            </div>
+
+            <!-- Payment Method -->
+            <div class="form-group mb-3">
+                <label class="form-label" for="{{ form.payment_method.id_for_label }}" style="font-weight: 600;">
+                    Payment Method
+                </label>
+                {{ form.payment_method }}
+            </div>
+
+            <!-- Notes -->
+            <div class="form-group mb-4">
+                <label class="form-label" for="{{ form.notes.id_for_label }}" style="font-weight: 600;">
+                    Notes / Reference Details
+                </label>
+                {{ form.notes }}
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: var(--space-2);">
+                <a href="{% url 'personal:finance' %}" class="btn btn-outline">Cancel</a>
+                <button type="submit" class="btn btn-primary">
+                    {% if tx %}Save Changes{% else %}Add Transaction{% endif %}
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

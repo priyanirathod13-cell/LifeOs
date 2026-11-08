@@ -1,0 +1,131 @@
+{% extends "layouts/app_layout.html" %}
+
+{% block content %}
+<div class="personal-container">
+    {% include "personal/personal_nav.html" %}
+
+    <!-- Top Action Bar -->
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-4); flex-wrap: wrap; gap: var(--space-3);">
+        <div>
+            <h1 style="font-size: var(--font-size-2xl); font-weight: 700; color: var(--text-primary); margin: 0 0 var(--space-1) 0;">
+                Personal Journal
+            </h1>
+            <p style="color: var(--text-secondary); margin: 0; font-size: var(--font-size-sm);">
+                Capture daily thoughts, subjective observations, cognitive clarity logs, and honest self-reflections.
+            </p>
+        </div>
+        <a href="{% url 'personal:journal_create' %}" class="btn btn-primary">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+            New Journal Entry
+        </a>
+    </div>
+
+    <!-- Filter & Search Toolbar -->
+    <div class="card mb-4" style="padding: var(--space-3); border-radius: var(--radius-lg);">
+        <form method="get" action="{% url 'personal:journal_list' %}" style="display: flex; gap: var(--space-3); align-items: center; flex-wrap: wrap;">
+            <!-- Search -->
+            <div style="flex: 2; min-width: 200px;">
+                <input type="text" name="q" value="{{ q }}" class="form-control form-control-sm" placeholder="Search entries, keywords, mood tags...">
+            </div>
+            <!-- Date From -->
+            <div style="flex: 1; min-width: 140px;">
+                <input type="date" name="date_from" value="{{ date_from }}" class="form-control form-control-sm" title="From Date">
+            </div>
+            <!-- Date To -->
+            <div style="flex: 1; min-width: 140px;">
+                <input type="date" name="date_to" value="{{ date_to }}" class="form-control form-control-sm" title="To Date">
+            </div>
+            <!-- Sort -->
+            <div style="flex: 1; min-width: 130px;">
+                <select name="sort" class="form-select form-select-sm">
+                    <option value="newest" {% if sort == 'newest' %}selected{% endif %}>Newest First</option>
+                    <option value="oldest" {% if sort == 'oldest' %}selected{% endif %}>Oldest First</option>
+                </select>
+            </div>
+            <!-- Submit & Reset -->
+            <div style="display: flex; gap: var(--space-2);">
+                <button type="submit" class="btn btn-primary btn-sm">Filter</button>
+                {% if q or date_from or date_to or sort != 'newest' %}
+                    <a href="{% url 'personal:journal_list' %}" class="btn btn-outline btn-sm">Reset</a>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+
+    <!-- Journal Entries List -->
+    {% if page_obj %}
+        <div style="display: flex; flex-direction: column; gap: var(--space-3);">
+            {% for entry in page_obj %}
+                <div class="card" style="padding: var(--space-4); border-radius: var(--radius-lg); transition: border-color 0.2s ease;">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: var(--space-2); flex-wrap: wrap; gap: var(--space-2);">
+                        <div>
+                            <h2 style="font-size: var(--font-size-lg); font-weight: 600; margin: 0 0 4px 0;">
+                                <a href="{% url 'personal:journal_detail' entry.pk %}" style="color: var(--text-primary); text-decoration: none;">
+                                    {{ entry.title }}
+                                </a>
+                            </h2>
+                            <div style="display: flex; gap: var(--space-3); align-items: center; font-size: var(--font-size-xs); color: var(--text-muted);">
+                                <span>📅 {{ entry.entry_date|date:"l, F j, Y" }}</span>
+                                {% if entry.mood_tag %}
+                                    <span class="badge badge-accent">#{{ entry.mood_tag }}</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: var(--space-2);">
+                            <a href="{% url 'personal:journal_edit' entry.pk %}" class="btn btn-outline btn-sm" style="font-size: var(--font-size-xs); padding: 4px 8px;">
+                                Edit
+                            </a>
+                            <a href="{% url 'personal:journal_delete' entry.pk %}" class="btn btn-outline btn-sm" style="font-size: var(--font-size-xs); padding: 4px 8px; color: var(--danger); border-color: rgba(248,113,113,0.3);">
+                                Delete
+                            </a>
+                        </div>
+                    </div>
+                    <p style="color: var(--text-secondary); font-size: var(--font-size-sm); line-height: 1.6; margin: 0; white-space: pre-line;">
+                        {{ entry.content|truncatewords:45 }}
+                    </p>
+                    <div style="margin-top: var(--space-3); text-align: right;">
+                        <a href="{% url 'personal:journal_detail' entry.pk %}" style="font-size: var(--font-size-xs); color: var(--accent-primary); text-decoration: none; font-weight: 500;">
+                            Read Full Entry →
+                        </a>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+
+        <!-- Pagination -->
+        {% if page_obj.has_other_pages %}
+            <div style="display: flex; justify-content: center; gap: var(--space-2); margin-top: var(--space-4);">
+                {% if page_obj.has_previous %}
+                    <a href="?page={{ page_obj.previous_page_number }}{% if q %}&q={{ q }}{% endif %}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}&sort={{ sort }}" class="btn btn-outline btn-sm">← Previous</a>
+                {% endif %}
+                <span class="btn btn-outline btn-sm disabled" style="color: var(--text-muted);">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+                {% if page_obj.has_next %}
+                    <a href="?page={{ page_obj.next_page_number }}{% if q %}&q={{ q }}{% endif %}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}&sort={{ sort }}" class="btn btn-outline btn-sm">Next →</a>
+                {% endif %}
+            </div>
+        {% endif %}
+    {% else %}
+        <div class="card empty-state" style="padding: var(--space-6); text-align: center; border-radius: var(--radius-lg);">
+            <div style="font-size: 36px; margin-bottom: var(--space-2);">📖</div>
+            <h3 style="font-size: var(--font-size-lg); font-weight: 600; color: var(--text-primary); margin-bottom: var(--space-1);">
+                No Journal Entries Found
+            </h3>
+            <p style="color: var(--text-secondary); font-size: var(--font-size-sm); max-width: 420px; margin: 0 auto var(--space-4) auto;">
+                {% if q or date_from or date_to %}
+                    No entries match your search and filter criteria. Try resetting your search.
+                {% else %}
+                    You have not recorded any journal entries yet. Writing helps untangle cognitive noise and builds high self-awareness.
+                {% endif %}
+            </p>
+            {% if q or date_from or date_to %}
+                <a href="{% url 'personal:journal_list' %}" class="btn btn-outline">Clear Filters</a>
+            {% else %}
+                <a href="{% url 'personal:journal_create' %}" class="btn btn-primary">Write First Entry</a>
+            {% endif %}
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

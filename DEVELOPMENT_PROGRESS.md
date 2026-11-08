@@ -12,6 +12,7 @@
 | **06** | **Productivity Management** | **Completed** | Full Productivity Management system across 6 sub-modules: Tasks (CRUD, multi-filter, sort, search, pagination, duration tracking), Categories (color-coded, duplicate prevention, safe unlinking), Habits (CRUD, pause/active toggle, 30-day matrix, daily/weekly streak engine), Activities (manual logging, live start/stop timer, duration aggregation), Goals (CRUD, target countdowns, task linkage, progress calculation), Projects (CRUD, child tasks, completion progress), 79 automated tests (100% passing). |
 | **07** | **Study Management & Syllabi** | **Completed** | Full multi-user Study Management module across 9 functional domains: Subjects (CRUD, chapter grouping, cascade warnings), Topics (chapter units, priority, completion toggle), Syllabus Tracker (dynamic progress bars, behind-schedule alerts), Study Planner (commitments, temporal tabs, status transitions), Study Sessions (live stopwatch timer, auto-closing dangling sessions, manual logs), Revision Planner (spaced revision iterations, quick reschedule), Exams & Assessments (deadlines, countdowns, score tracking), Study Analytics (14-day rhythm chart, subject time share, syllabus velocity, plan adherence), 19 study tests, 94 total system tests (100% passing). |
 | **08** | **Timetable & Daily Scheduling** | **Completed** | Smart Routine & Timetable Generator across 7 core functional areas: Daily Timetable (chronological timeline, date navigation, status actions, reschedule, KPI cards), Weekly Timetable (7-day calendar overview, backlog sidebar), Routine Management (recurring commitments, weekday filtering, overlap prevention), Availability Management (productive windows per weekday), Smart Generator Engine (deterministic rule-based scheduling, study + task prioritization, break insertion, workload cap, unscheduled item diagnostics), Generation History (audit logs with metrics and unscheduled reasons), Scheduling Preferences (customizable work bounds, break lengths, buffers, fatigue limit), 31 productivity tests, 108 total system tests (100% passing). |
+| **09** | **Personal Management Module** | **Completed** | Full Personal Management module across 8 functional areas: Personal Dashboard (8 summary KPI cards, recent journal/decisions/mistakes streams, 14-day mood trend, spending share), Journal (CRUD, date filters, search, newest/oldest sorting), Daily Check-in (standardized 1-5 scales, duplicate date prevention, 14-day history strip), Mood & Energy Tracking (7d/14d/30d/90d ranges, mood bar chart, energy vs stress comparison), Sleep Tracking (bedtime and wake-up timestamps, overnight duration calculation, 7.0–8.5h benchmark band, DailyMetric sync), Decision Journal (DRAFT/EVALUATING/DECIDED/REVIEWED lifecycle, options analysis, post-mortem outcome scoring), Mistake Tracker (anti-pattern logs, root causes, severity impacts, corrective protocols), Finance Manager (positive decimal transactions in ₹ INR, lifetime & monthly net balance/savings, category breakdowns, ledger search/filters), 22 tests in personal & finance, 123 total system tests (100% passing). |
 
 ---
 
@@ -366,4 +367,93 @@
 - **108 Automated Tests** across the entire application:
   - 31 dedicated tests in `apps.productivity` verifying models, validation rules, availability services, collision detection, timetable generator engine, rescheduling, views, and multi-user IDOR isolation.
   - 100% pass rate (`Ran 108 tests in 106.975s — OK`).
+
+---
+
+## Detailed Step 09 Deliverables
+
+### 1. Personal Dashboard
+- **Route**: `personal:dashboard` (`GET /personal/`)
+- **Features**:
+  - 8 Summary KPI Cards: Journal This Month, Avg Mood (Month), Avg Energy (Month), Avg Sleep Duration (Month), Decisions Recorded (Total & Pending), Monthly Income, Monthly Expenses, Monthly Net Balance / Savings.
+  - Recent Streams: Last 3 journal entries with snippets, last 3 decisions with status badges, last 3 mistakes with lessons learned, and latest daily check-in snapshot.
+  - Visual Rhythm: 14-day daily mood bar chart (1 to 5 scale with color indicators).
+  - Monthly Spending Distribution: Category share progress bars and amounts.
+
+### 2. Journal Management
+- **Routes**:
+  - `personal:journal_list` (`GET /personal/journal/`): Searchable, date-filterable, sortable (newest/oldest) journal catalog.
+  - `personal:journal_create` (`GET/POST /personal/journal/create/`): Form for new reflections with title, date, mood tag, and comfortable textarea.
+  - `personal:journal_detail` (`GET /personal/journal/<pk>/`): Full reading interface with formatted paragraphs.
+  - `personal:journal_edit` (`GET/POST /personal/journal/<pk>/edit/`): Edit existing entry.
+  - `personal:journal_delete` (`GET/POST /personal/journal/<pk>/delete/`): Safe delete with confirmation dialog.
+
+### 3. Daily Check-in
+- **Route**: `personal:checkin` (`GET/POST /personal/checkin/`)
+- **Features**:
+  - Standardized 5-point rating scales with explicit explanations:
+    - Mood: 1 (Very Bad) to 5 (Excellent).
+    - Energy: 1 (Very Low / Depleted) to 5 (Very High / Vibrant).
+    - Stress: 1 (Very Low / Relaxed) to 5 (Very High / Overwhelmed).
+  - Sleep duration input (hours, step 0.25).
+  - Freeform somatic and daily notes.
+  - Duplicate date prevention: automatically updates existing entry for the user and target date without duplicate key collisions.
+  - Interactive date selector and 14-day history strip.
+
+### 4. Mood & Energy Tracking
+- **Route**: `personal:mood_energy` (`GET /personal/mood-energy/`)
+- **Features**:
+  - Date range filters: 7 Days, 14 Days, 30 Days, 90 Days.
+  - Averages: 7-day vs 30-day mood and energy comparison, stress index.
+  - Visualizations: Daily Mood History bar chart (1–5) and dual-bar Energy (Indigo) vs Stress (Rose) daily comparison.
+  - Dense history data table with quick edit links.
+  - Non-diagnostic behavioral self-awareness disclaimer notice.
+
+### 5. Sleep Tracking
+- **Routes**:
+  - `personal:sleep_list` (`GET /personal/sleep/`): Log history, 7-day and 30-day sleep duration averages, average sleep quality rating, and total nights recorded.
+  - `personal:sleep_create` (`GET/POST /personal/sleep/create/`): Record bedtime and wake time with automatic duration calculation (supporting overnight sessions crossing midnight), quality rating (1–5), notes, and automatic synchronization with `DailyMetric.sleep_hours`.
+  - `personal:sleep_edit` (`GET/POST /personal/sleep/<pk>/edit/`): Edit sleep record and re-sync `DailyMetric`.
+  - `personal:sleep_delete` (`GET/POST /personal/sleep/<pk>/delete/`): Safe delete with confirmation.
+  - Visualization: 14-day sleep duration bar chart with an optimal sleep target band (7.0h to 8.5h).
+
+### 6. Decision Journal
+- **Routes**:
+  - `personal:decision_list` (`GET /personal/decisions/`): Decision catalog with status filters (`ALL`, `DRAFT`, `EVALUATING`, `DECIDED`, `REVIEWED`), search, and 4 KPI counters.
+  - `personal:decision_create` (`GET/POST /personal/decisions/create/`): Record decision title, context, date, status, category, and rationale.
+  - `personal:decision_detail` (`GET /personal/decisions/<pk>/`): Comprehensive view of decision context, candidate options, chosen option, and post-mortem outcome.
+  - `personal:decision_edit` (`GET/POST /personal/decisions/<pk>/edit/`): Update decision context.
+  - `personal:decision_delete` (`GET/POST /personal/decisions/<pk>/delete/`): Delete decision and cascade child options/outcomes.
+  - `personal:decision_option_add` (`GET/POST /personal/decisions/<pk>/options/add/`): Add candidate pathways with pros, cons, and expected outcomes.
+  - `personal:decision_option_edit` (`GET/POST /personal/decisions/<pk>/options/<opt_pk>/edit/`): Edit option details.
+  - `personal:decision_option_delete` (`GET/POST /personal/decisions/<pk>/options/<opt_pk>/delete/`): Delete option.
+  - `personal:decision_select_option` (`POST /personal/decisions/<pk>/options/<opt_pk>/select/`): Select chosen pathway, advancing status to `DECIDED`.
+  - `personal:decision_outcome` (`GET/POST /personal/decisions/<pk>/outcome/`): Record post-mortem evaluation with outcome score (1–10), actual outcome, lessons learned, and reflection notes, advancing status to `REVIEWED`.
+
+### 7. Mistake Tracker
+- **Routes**:
+  - `personal:mistake_list` (`GET /personal/mistakes/`): Learning log catalog with impact filters (`MINOR`, `MODERATE`, `SEVERE`), status filters (`OPEN`, `IN_PROGRESS`, `RESOLVED`, `RECURRING`), category filter, and search.
+  - `personal:mistake_create` (`GET/POST /personal/mistakes/create/`): Log error, factual description, root cause triggers, lesson learned, and corrective action protocol.
+  - `personal:mistake_detail` (`GET /personal/mistakes/<pk>/`): Full view of mistake reflection and preventive guardrails.
+  - `personal:mistake_edit` (`GET/POST /personal/mistakes/<pk>/edit/`): Update mistake record.
+  - `personal:mistake_delete` (`GET/POST /personal/mistakes/<pk>/delete/`): Safe delete with confirmation.
+
+### 8. Finance Manager
+- **Routes**:
+  - `personal:finance` / `finance:dashboard` (`GET /personal/finance/` or `GET /finance/`):
+    - Lifetime & Monthly Financial KPIs: Total Income, Total Expenses, Net Balance (Income − Expenses), Month Income, Month Expenses, Monthly Savings.
+    - Cash flow ratio comparison bar.
+    - Category-wise spending breakdown with percentages and ₹ amounts.
+    - Searchable, type-filterable (`INCOME`, `EXPENSE`), category-filterable, date-filterable, sortable (by date or amount) transaction ledger.
+  - `finance:transaction_create` (`GET/POST /finance/transactions/create/`): Add transaction with positive decimal amount, type, user category, date, payment method, and notes.
+  - `finance:transaction_edit` (`GET/POST /finance/transactions/<pk>/edit/`): Update transaction.
+  - `finance:transaction_delete` (`GET/POST /finance/transactions/<pk>/delete/`): Safe delete with confirmation.
+  - `finance:category_create` (`GET/POST /finance/categories/create/`): Quick creation of dedicated finance categories.
+
+### Automated Test Suite
+- **123 Automated Tests** across the entire application:
+  - 14 dedicated tests in `apps.personal` verifying models, overnight sleep duration calculations, check-in deduplication, journal search/filters, decision lifecycle, mistake workflows, and IDOR isolation.
+  - 8 dedicated tests in `apps.finance` verifying positive decimal validation, lifetime & monthly calculations, category ownership, ledger search/filters, and IDOR isolation.
+  - 100% pass rate (`Ran 123 tests in 122.946s — OK`).
+
 

@@ -1,0 +1,330 @@
+{% extends "layouts/app_layout.html" %}
+
+{% block content %}
+<div class="personal-container">
+    {% include "personal/personal_nav.html" %}
+
+    <!-- Top Action Bar -->
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-4); flex-wrap: wrap; gap: var(--space-3);">
+        <div>
+            <h1 style="font-size: var(--font-size-2xl); font-weight: 700; color: var(--text-primary); margin: 0 0 4px 0;">
+                Finance Manager
+            </h1>
+            <p style="color: var(--text-secondary); margin: 0; font-size: var(--font-size-sm);">
+                Track cash inflows, recurring outflows, category allocations, and monthly savings discipline.
+            </p>
+        </div>
+        <div style="display: flex; gap: var(--space-2); flex-wrap: wrap;">
+            <a href="{% url 'finance:category_create' %}" class="btn btn-outline">
+                + New Category
+            </a>
+            <a href="{% url 'finance:transaction_create' %}" class="btn btn-primary">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;">
+                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                </svg>
+                Add Transaction
+            </a>
+        </div>
+    </div>
+
+    <!-- 6 Financial KPI Cards -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: var(--space-3); margin-bottom: var(--space-4);">
+        <!-- 1. Total Lifetime Income -->
+        <div class="card" style="padding: var(--space-3); border-radius: var(--radius-lg);">
+            <div style="font-size: var(--font-size-xs); color: var(--text-muted); text-transform: uppercase; font-weight: 600; margin-bottom: 4px;">
+                Total Income (All-Time)
+            </div>
+            <div style="font-size: var(--font-size-2xl); font-weight: 700; color: var(--success);">
+                +₹{{ total_income|floatformat:2 }}
+            </div>
+            <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">
+                Cumulative inflows
+            </div>
+        </div>
+
+        <!-- 2. Total Lifetime Expense -->
+        <div class="card" style="padding: var(--space-3); border-radius: var(--radius-lg);">
+            <div style="font-size: var(--font-size-xs); color: var(--text-muted); text-transform: uppercase; font-weight: 600; margin-bottom: 4px;">
+                Total Expenses (All-Time)
+            </div>
+            <div style="font-size: var(--font-size-2xl); font-weight: 700; color: var(--danger);">
+                -₹{{ total_expense|floatformat:2 }}
+            </div>
+            <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">
+                Cumulative outflows
+            </div>
+        </div>
+
+        <!-- 3. Net Balance -->
+        <div class="card" style="padding: var(--space-3); border-radius: var(--radius-lg);">
+            <div style="font-size: var(--font-size-xs); color: var(--text-muted); text-transform: uppercase; font-weight: 600; margin-bottom: 4px;">
+                Net Balance (Cumulative)
+            </div>
+            <div style="font-size: var(--font-size-2xl); font-weight: 700; color: {% if net_balance >= 0 %}var(--success){% else %}var(--danger){% endif %};">
+                {% if net_balance >= 0 %}+{% endif %}₹{{ net_balance|floatformat:2 }}
+            </div>
+            <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">
+                Total Income − Total Expenses
+            </div>
+        </div>
+
+        <!-- 4. Month Income -->
+        <div class="card" style="padding: var(--space-3); border-radius: var(--radius-lg);">
+            <div style="font-size: var(--font-size-xs); color: var(--text-muted); text-transform: uppercase; font-weight: 600; margin-bottom: 4px;">
+                Month Income
+            </div>
+            <div style="font-size: var(--font-size-2xl); font-weight: 700; color: var(--success);">
+                +₹{{ month_income|floatformat:2 }}
+            </div>
+            <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">
+                This month's earnings
+            </div>
+        </div>
+
+        <!-- 5. Month Expenses -->
+        <div class="card" style="padding: var(--space-3); border-radius: var(--radius-lg);">
+            <div style="font-size: var(--font-size-xs); color: var(--text-muted); text-transform: uppercase; font-weight: 600; margin-bottom: 4px;">
+                Month Expenses
+            </div>
+            <div style="font-size: var(--font-size-2xl); font-weight: 700; color: var(--danger);">
+                -₹{{ month_expense|floatformat:2 }}
+            </div>
+            <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">
+                This month's spending
+            </div>
+        </div>
+
+        <!-- 6. Monthly Savings -->
+        <div class="card" style="padding: var(--space-3); border-radius: var(--radius-lg);">
+            <div style="font-size: var(--font-size-xs); color: var(--text-muted); text-transform: uppercase; font-weight: 600; margin-bottom: 4px;">
+                Monthly Net Savings
+            </div>
+            <div style="font-size: var(--font-size-2xl); font-weight: 700; color: {% if monthly_savings >= 0 %}var(--success){% else %}var(--danger){% endif %};">
+                {% if monthly_savings >= 0 %}+{% endif %}₹{{ monthly_savings|floatformat:2 }}
+            </div>
+            <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">
+                Month Income − Month Expense
+            </div>
+        </div>
+    </div>
+
+    <!-- Visualizations: Monthly Comparison & Category Spending -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: var(--space-4); margin-bottom: var(--space-4);">
+        <!-- Monthly Inflow vs Outflow Visualizer -->
+        <div class="card" style="padding: var(--space-4); border-radius: var(--radius-lg);">
+            <h3 style="font-size: var(--font-size-md); font-weight: 600; color: var(--text-primary); margin: 0 0 var(--space-3) 0;">
+                Monthly Cash Flow Ratio
+            </h3>
+            <div style="display: flex; flex-direction: column; gap: var(--space-3);">
+                <div>
+                    <div style="display: flex; justify-content: space-between; font-size: var(--font-size-xs); margin-bottom: 4px;">
+                        <span style="color: var(--success); font-weight: 600;">Income Inflows</span>
+                        <span style="color: var(--text-primary); font-weight: 600;">₹{{ month_income|floatformat:2 }}</span>
+                    </div>
+                    <div class="progress-bar-wrap" style="height: 10px; background: var(--bg-primary); border-radius: var(--radius-full); overflow: hidden;">
+                        <div style="height: 100%; border-radius: var(--radius-full); background: var(--success); width: {% if month_income > 0 %}100{% else %}0{% endif %}%;"></div>
+                    </div>
+                </div>
+                <div>
+                    <div style="display: flex; justify-content: space-between; font-size: var(--font-size-xs); margin-bottom: 4px;">
+                        <span style="color: var(--danger); font-weight: 600;">Expenses Outflow</span>
+                        <span style="color: var(--text-primary); font-weight: 600;">₹{{ month_expense|floatformat:2 }}</span>
+                    </div>
+                    <div class="progress-bar-wrap" style="height: 10px; background: var(--bg-primary); border-radius: var(--radius-full); overflow: hidden;">
+                        <div style="height: 100%; border-radius: var(--radius-full); background: var(--danger); width: {% if month_income > 0 %}{% widthratio month_expense month_income 100 %}{% elif month_expense > 0 %}100{% else %}0{% endif %}%;"></div>
+                    </div>
+                </div>
+            </div>
+            <div style="font-size: 11px; color: var(--text-muted); margin-top: var(--space-3); border-top: 1px solid var(--border); padding-top: var(--space-2);">
+                ℹ️ Net balance represents tracking ledger data, not real-time banking integrations.
+            </div>
+        </div>
+
+        <!-- Category Spending Share -->
+        <div class="card" style="padding: var(--space-4); border-radius: var(--radius-lg);">
+            <h3 style="font-size: var(--font-size-md); font-weight: 600; color: var(--text-primary); margin: 0 0 var(--space-3) 0;">
+                Category-wise Spending (This Month)
+            </h3>
+            {% if category_breakdown %}
+                <div style="display: flex; flex-direction: column; gap: var(--space-2);">
+                    {% for cat in category_breakdown %}
+                        <div>
+                            <div style="display: flex; justify-content: space-between; font-size: var(--font-size-xs); margin-bottom: 2px;">
+                                <span style="color: var(--text-primary); font-weight: 500;">
+                                    <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: {{ cat.color }}; margin-right: 4px;"></span>
+                                    {{ cat.name }} ({{ cat.percentage }}%)
+                                </span>
+                                <span style="color: var(--text-secondary); font-weight: 600;">₹{{ cat.amount|floatformat:2 }}</span>
+                            </div>
+                            <div class="progress-bar-wrap" style="height: 6px; background: var(--bg-primary); border-radius: var(--radius-full); overflow: hidden;">
+                                <div style="height: 100%; border-radius: var(--radius-full); background: {{ cat.color }}; width: {{ cat.percentage }}%;"></div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="empty-state" style="padding: var(--space-4); text-align: center;">
+                    <p style="color: var(--text-muted); font-size: var(--font-size-xs); margin: 0;">No categorized expenses recorded this month.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Filter & Search Toolbar -->
+    <div class="card mb-4" style="padding: var(--space-3); border-radius: var(--radius-lg);">
+        <form method="get" action="{% url 'personal:finance' %}" style="display: flex; gap: var(--space-3); align-items: center; flex-wrap: wrap;">
+            <!-- Search -->
+            <div style="flex: 2; min-width: 180px;">
+                <input type="text" name="q" value="{{ q }}" class="form-control form-control-sm" placeholder="Search description, notes...">
+            </div>
+            <!-- Type Filter -->
+            <div style="flex: 1; min-width: 120px;">
+                <select name="type" class="form-select form-select-sm">
+                    <option value="ALL" {% if not type_filter or type_filter == 'ALL' %}selected{% endif %}>All Types</option>
+                    <option value="INCOME" {% if type_filter == 'INCOME' %}selected{% endif %}>Income (+)</option>
+                    <option value="EXPENSE" {% if type_filter == 'EXPENSE' %}selected{% endif %}>Expense (−)</option>
+                </select>
+            </div>
+            <!-- Category Filter -->
+            <div style="flex: 1; min-width: 130px;">
+                <select name="category" class="form-select form-select-sm">
+                    <option value="">All Categories</option>
+                    {% for c in user_categories %}
+                        <option value="{{ c.id }}" {% if cat_id == c.id|stringformat:"s" %}selected{% endif %}>{{ c.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <!-- Date Range -->
+            <div style="flex: 1; min-width: 120px;">
+                <input type="date" name="date_from" value="{{ date_from }}" class="form-control form-control-sm" title="From Date">
+            </div>
+            <div style="flex: 1; min-width: 120px;">
+                <input type="date" name="date_to" value="{{ date_to }}" class="form-control form-control-sm" title="To Date">
+            </div>
+            <!-- Sort -->
+            <div style="flex: 1; min-width: 130px;">
+                <select name="sort" class="form-select form-select-sm">
+                    <option value="-date" {% if sort == '-date' %}selected{% endif %}>Date: Newest</option>
+                    <option value="date" {% if sort == 'date' %}selected{% endif %}>Date: Oldest</option>
+                    <option value="amount_desc" {% if sort == 'amount_desc' %}selected{% endif %}>Amount: High to Low</option>
+                    <option value="amount_asc" {% if sort == 'amount_asc' %}selected{% endif %}>Amount: Low to High</option>
+                </select>
+            </div>
+            <!-- Submit & Reset -->
+            <div style="display: flex; gap: var(--space-2);">
+                <button type="submit" class="btn btn-primary btn-sm">Filter</button>
+                {% if q or type_filter or cat_id or date_from or date_to or sort != '-date' %}
+                    <a href="{% url 'personal:finance' %}" class="btn btn-outline btn-sm">Reset</a>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+
+    <!-- Transaction Ledger Table -->
+    <div class="card" style="padding: var(--space-4); border-radius: var(--radius-lg);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-3);">
+            <h3 style="font-size: var(--font-size-md); font-weight: 600; color: var(--text-primary); margin: 0;">
+                Transaction Ledger
+            </h3>
+        </div>
+
+        {% if page_obj %}
+            <div class="table-container">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Description</th>
+                            <th>Type</th>
+                            <th>Category</th>
+                            <th>Payment Method</th>
+                            <th>Amount</th>
+                            <th style="text-align: right;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for tx in page_obj %}
+                            <tr>
+                                <td style="font-size: var(--font-size-xs); color: var(--text-secondary); white-space: nowrap;">
+                                    {{ tx.transaction_date|date:"M d, Y" }}
+                                </td>
+                                <td>
+                                    <div style="font-weight: 600; color: var(--text-primary); font-size: var(--font-size-sm);">
+                                        {{ tx.description }}
+                                    </div>
+                                    {% if tx.notes %}
+                                        <div style="font-size: 11px; color: var(--text-muted);">{{ tx.notes|truncatechars:40 }}</div>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <span class="badge {% if tx.transaction_type == 'INCOME' %}badge-success{% else %}badge-danger{% endif %}">
+                                        {{ tx.get_transaction_type_display }}
+                                    </span>
+                                </td>
+                                <td>
+                                    {% if tx.category %}
+                                        <span class="badge" style="background: rgba(255,255,255,0.06); color: {{ tx.category.color }}; border: 1px solid {{ tx.category.color }};">
+                                            {{ tx.category.name }}
+                                        </span>
+                                    {% else %}
+                                        <span style="color: var(--text-muted); font-size: var(--font-size-xs);">—</span>
+                                    {% endif %}
+                                </td>
+                                <td style="font-size: var(--font-size-xs); color: var(--text-muted);">
+                                    {{ tx.payment_method }}
+                                </td>
+                                <td style="font-weight: 700; font-size: var(--font-size-sm); color: {% if tx.transaction_type == 'INCOME' %}var(--success){% else %}var(--danger){% endif %}; white-space: nowrap;">
+                                    {% if tx.transaction_type == 'INCOME' %}+{% else %}−{% endif %}₹{{ tx.amount|floatformat:2 }}
+                                </td>
+                                <td style="text-align: right; white-space: nowrap;">
+                                    <div style="display: inline-flex; gap: var(--space-1);">
+                                        <a href="{% url 'finance:transaction_edit' tx.pk %}" class="btn btn-outline btn-sm" style="font-size: 11px; padding: 2px 8px;">
+                                            Edit
+                                        </a>
+                                        <a href="{% url 'finance:transaction_delete' tx.pk %}" class="btn btn-outline btn-sm" style="font-size: 11px; padding: 2px 8px; color: var(--danger); border-color: rgba(248,113,113,0.3);">
+                                            Delete
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            {% if page_obj.has_other_pages %}
+                <div style="display: flex; justify-content: center; gap: var(--space-2); margin-top: var(--space-4);">
+                    {% if page_obj.has_previous %}
+                        <a href="?page={{ page_obj.previous_page_number }}{% if q %}&q={{ q }}{% endif %}{% if type_filter %}&type={{ type_filter }}{% endif %}{% if cat_id %}&category={{ cat_id }}{% endif %}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}&sort={{ sort }}" class="btn btn-outline btn-sm">← Previous</a>
+                    {% endif %}
+                    <span class="btn btn-outline btn-sm disabled" style="color: var(--text-muted);">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+                    {% if page_obj.has_next %}
+                        <a href="?page={{ page_obj.next_page_number }}{% if q %}&q={{ q }}{% endif %}{% if type_filter %}&type={{ type_filter }}{% endif %}{% if cat_id %}&category={{ cat_id }}{% endif %}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}&sort={{ sort }}" class="btn btn-outline btn-sm">Next →</a>
+                    {% endif %}
+                </div>
+            {% endif %}
+        {% else %}
+            <div class="empty-state" style="padding: var(--space-6); text-align: center;">
+                <div style="font-size: 36px; margin-bottom: var(--space-2);">💳</div>
+                <h3 style="font-size: var(--font-size-lg); font-weight: 600; color: var(--text-primary); margin-bottom: var(--space-1);">
+                    No Transactions Found
+                </h3>
+                <p style="color: var(--text-secondary); font-size: var(--font-size-sm); max-width: 420px; margin: 0 auto var(--space-4) auto;">
+                    {% if q or type_filter or cat_id or date_from or date_to %}
+                        No transactions match your current filters. Try resetting the criteria.
+                    {% else %}
+                        Record your expenses and earnings to gain clarity over your financial habits and cash flow.
+                    {% endif %}
+                </p>
+                {% if q or type_filter or cat_id or date_from or date_to %}
+                    <a href="{% url 'personal:finance' %}" class="btn btn-outline">Reset Filters</a>
+                {% else %}
+                    <a href="{% url 'finance:transaction_create' %}" class="btn btn-primary">Add First Transaction</a>
+                {% endif %}
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

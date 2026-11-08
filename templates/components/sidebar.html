@@ -70,6 +70,68 @@
             </a>
         </div>
 
+        <!-- MY PERSONAL -->
+        <div class="nav-group">
+            <div class="nav-group-title">Personal</div>
+            <a href="{% url 'personal:dashboard' %}" class="nav-item {% if active_nav == 'personal' and personal_tab == 'dashboard' %}active{% endif %}">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="12" cy="7" r="4"></circle>
+                </svg>
+                <span class="nav-label">Personal Overview</span>
+            </a>
+            <a href="{% url 'personal:checkin' %}" class="nav-item {% if active_nav == 'personal' and personal_tab == 'checkin' %}active{% endif %}">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                </svg>
+                <span class="nav-label">Daily Check-in</span>
+            </a>
+            <a href="{% url 'personal:journal_list' %}" class="nav-item {% if active_nav == 'personal' and personal_tab == 'journal' %}active{% endif %}">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                    <polyline points="14 2 14 8 20 8"></polyline>
+                    <line x1="16" y1="13" x2="8" y2="13"></line>
+                    <line x1="16" y1="17" x2="8" y2="17"></line>
+                </svg>
+                <span class="nav-label">Journal</span>
+            </a>
+            <a href="{% url 'personal:mood_energy' %}" class="nav-item {% if active_nav == 'personal' and personal_tab == 'mood_energy' %}active{% endif %}">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+                </svg>
+                <span class="nav-label">Mood & Energy</span>
+            </a>
+            <a href="{% url 'personal:sleep_list' %}" class="nav-item {% if active_nav == 'personal' and personal_tab == 'sleep' %}active{% endif %}">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                </svg>
+                <span class="nav-label">Sleep Tracking</span>
+            </a>
+            <a href="{% url 'personal:decision_list' %}" class="nav-item {% if active_nav == 'personal' and personal_tab == 'decisions' %}active{% endif %}">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <polyline points="6 9 12 15 18 9"></polyline>
+                    <path d="M18 15l-6-6-6 6"></path>
+                    <line x1="12" y1="3" x2="12" y2="21"></line>
+                </svg>
+                <span class="nav-label">Decisions</span>
+            </a>
+            <a href="{% url 'personal:mistake_list' %}" class="nav-item {% if active_nav == 'personal' and personal_tab == 'mistakes' %}active{% endif %}">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                    <line x1="12" y1="9" x2="12" y2="13"></line>
+                    <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                </svg>
+                <span class="nav-label">Mistakes & Learning</span>
+            </a>
+            <a href="{% url 'personal:finance' %}" class="nav-item {% if active_nav == 'personal' and personal_tab == 'finance' %}active{% endif %}">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <line x1="12" y1="1" x2="12" y2="23"></line>
+                    <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                </svg>
+                <span class="nav-label">Finance Manager</span>
+            </a>
+        </div>
+
         <!-- MY GROWTH -->
         <div class="nav-group">
             <div class="nav-group-title">My Growth</div>
@@ -94,31 +156,6 @@
                     <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
                 </svg>
                 <span class="nav-label">Projects</span>
-            </a>
-            <a href="{% url 'core:journal' %}" class="nav-item {% if active_nav == 'journal' %}active{% endif %}">
-                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                    <polyline points="14 2 14 8 20 8"></polyline>
-                    <line x1="16" y1="13" x2="8" y2="13"></line>
-                    <line x1="16" y1="17" x2="8" y2="17"></line>
-                </svg>
-                <span class="nav-label">Journal</span>
-            </a>
-            <a href="{% url 'core:decisions' %}" class="nav-item {% if active_nav == 'decisions' %}active{% endif %}">
-                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                    <polyline points="6 9 12 15 18 9"></polyline>
-                    <path d="M18 15l-6-6-6 6"></path>
-                    <line x1="12" y1="3" x2="12" y2="21"></line>
-                </svg>
-                <span class="nav-label">Decisions</span>
-            </a>
-            <a href="{% url 'core:mistakes' %}" class="nav-item {% if active_nav == 'mistakes' %}active{% endif %}">
-                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
-                    <line x1="12" y1="9" x2="12" y2="13"></line>
-                    <line x1="12" y1="17" x2="12.01" y2="17"></line>
-                </svg>
-                <span class="nav-label">Mistakes & Learning</span>
             </a>
         </div>
 

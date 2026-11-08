@@ -1,3 +1,4 @@
+from decimal import Decimal
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
@@ -15,6 +16,13 @@ class MistakeImpact(models.TextChoices):
     MINOR = 'MINOR', 'Minor'
     MODERATE = 'MODERATE', 'Moderate'
     SEVERE = 'SEVERE', 'Severe'
+
+
+class MistakeStatus(models.TextChoices):
+    OPEN = 'OPEN', 'Open'
+    IN_PROGRESS = 'IN_PROGRESS', 'In Progress'
+    RESOLVED = 'RESOLVED', 'Resolved'
+    RECURRING = 'RECURRING', 'Recurring'
 
 
 class JournalEntry(models.Model):
@@ -76,6 +84,11 @@ class Decision(models.Model):
         on_delete=models.SET_NULL,
         related_name='chosen_for_decisions'
     )
+    reason_for_choosing = models.TextField(
+        blank=True,
+        default='',
+        help_text='Rationale and motivation for selecting chosen option'
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -90,7 +103,7 @@ class Decision(models.Model):
 
     def clean(self):
         super().clean()
-        if self.category and self.category.user_id != self.user_id:
+        if self.category and self.user_id and self.category.user_id != self.user_id:
             raise ValidationError({'category': 'Cannot associate with a category belonging to another user.'})
         if self.chosen_option and self.chosen_option.decision_id != self.id and self.id:
             raise ValidationError({'chosen_option': 'Chosen option must belong to this specific decision.'})
@@ -144,7 +157,12 @@ class DecisionOutcome(models.Model):
     outcome_score = models.PositiveSmallIntegerField(
         help_text='Rating from 1 (disastrous) to 10 (ideal success)'
     )
-    lessons_learned = models.TextField(blank=True)
+    lessons_learned = models.TextField(blank=True, default='')
+    reflection_notes = models.TextField(
+        blank=True,
+        default='',
+        help_text='Retrospective evaluation notes and thoughts'
+    )
     outcome_date = models.DateField()
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -161,7 +179,7 @@ class DecisionOutcome(models.Model):
 
     def clean(self):
         super().clean()
-        if self.option and self.option.decision_id != self.decision_id:
+        if self.option and self.decision_id and self.option.decision_id != self.decision_id:
             raise ValidationError({'option': 'Evaluated option must belong to the exact same decision.'})
         if self.outcome_score is not None and not (1 <= self.outcome_score <= 10):
             raise ValidationError({'outcome_score': 'Outcome score must be between 1 and 10.'})
@@ -194,8 +212,23 @@ class Mistake(models.Model):
         choices=MistakeImpact.choices,
         default=MistakeImpact.MODERATE
     )
+    status = models.CharField(
+        max_length=20,
+        choices=MistakeStatus.choices,
+        default=MistakeStatus.OPEN
+    )
+    cause_or_reason = models.TextField(
+        blank=True,
+        default='',
+        help_text='Root causes, cognitive triggers, or contributing circumstances'
+    )
     lesson_learned = models.TextField()
-    corrective_action = models.TextField(blank=True)
+    corrective_action = models.TextField(blank=True, default='')
+    follow_up_notes = models.TextField(
+        blank=True,
+        default='',
+        help_text='Post-mitigation observations, checks, or status updates'
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -209,7 +242,7 @@ class Mistake(models.Model):
 
     def clean(self):
         super().clean()
-        if self.category and self.category.user_id != self.user_id:
+        if self.category and self.user_id and self.category.user_id != self.user_id:
             raise ValidationError({'category': 'Cannot associate with a category belonging to another user.'})
 
     def __str__(self):
@@ -295,3 +328,85 @@ class DailyMetric(models.Model):
 
     def __str__(self):
         return f"{self.user.username or self.user.email} - {self.metric_date}"
+
+
+class SleepRecord(models.Model):
+    """
+    Dedicated sleep session log tracking sleep start, wake time, duration, and quality.
+    """
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='sleep_records'
+    )
+    sleep_date = models.DateField(
+        help_text='Primary date for the sleep session (typically wake date)'
+    )
+    sleep_start = models.DateTimeField(
+        help_text='Exact timestamp when user went to sleep'
+    )
+    wake_time = models.DateTimeField(
+        help_text='Exact timestamp when user woke up'
+    )
+    duration_hours = models.DecimalField(
+        max_digits=4,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text='Calculated sleep duration in hours'
+    )
+    quality_rating = models.PositiveSmallIntegerField(
+        null=True,
+        blank=True,
+        help_text='Sleep quality rating from 1 (Very Poor) to 5 (Excellent)'
+    )
+    notes = models.TextField(blank=True, default='')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = 'Sleep Record'
+        verbose_name_plural = 'Sleep Records'
+        ordering = ['-sleep_date', '-wake_time']
+        indexes = [
+            models.Index(fields=['user', 'sleep_date']),
+        ]
+        constraints = [
+            models.CheckConstraint(
+                check=Q(duration_hours__gt=Decimal('0.00')) & Q(duration_hours__lte=Decimal('24.00')),
+                name='sleep_duration_between_0_and_24'
+            ),
+            models.CheckConstraint(
+                check=Q(quality_rating__isnull=True) | (Q(quality_rating__gte=1) & Q(quality_rating__lte=5)),
+                name='sleep_quality_between_1_and_5'
+            ),
+        ]
+
+    def clean(self):
+        super().clean()
+        if self.sleep_start and self.wake_time:
+            if self.wake_time <= self.sleep_start:
+                raise ValidationError({'wake_time': 'Wake-up time must be strictly after sleep start time.'})
+            diff = self.wake_time - self.sleep_start
+            hours = Decimal(str(round(diff.total_seconds() / 3600, 2)))
+            if hours > Decimal('24.00'):
+                raise ValidationError({'wake_time': 'Sleep duration cannot exceed 24 hours.'})
+            self.duration_hours = hours
+        if self.quality_rating is not None and not (1 <= self.quality_rating <= 5):
+            raise ValidationError({'quality_rating': 'Sleep quality must be between 1 and 5.'})
+
+    def save(self, *args, **kwargs):
+        if self.sleep_start and self.wake_time:
+            diff = self.wake_time - self.sleep_start
+            self.duration_hours = Decimal(str(round(diff.total_seconds() / 3600, 2)))
+        super().save(*args, **kwargs)
+        # Synchronize with DailyMetric for this date
+        DailyMetric.objects.update_or_create(
+            user=self.user,
+            metric_date=self.sleep_date,
+            defaults={'sleep_hours': self.duration_hours}
+        )
+
+    def __str__(self):
+        return f"{self.user.username or self.user.email} - {self.sleep_date}: {self.duration_hours}h"
+

@@ -1,0 +1,30 @@
+{% extends "layouts/app_layout.html" %}
+
+{% block content %}
+<div class="personal-container" style="max-width: 600px; margin: var(--space-6) auto;">
+    {% include "personal/personal_nav.html" %}
+
+    <div class="card" style="padding: var(--space-5); border-radius: var(--radius-lg); text-align: center;">
+        <div style="font-size: 40px; margin-bottom: var(--space-2);">⚠️</div>
+        <h2 style="font-size: var(--font-size-xl); font-weight: 700; color: var(--text-primary); margin-bottom: var(--space-2);">
+            Delete Mistake Log?
+        </h2>
+        <p style="color: var(--text-secondary); font-size: var(--font-size-sm); margin-bottom: var(--space-4);">
+            Are you sure you want to delete <strong style="color: var(--text-primary);">"{{ mistake.title }}"</strong>?
+            This will permanently remove the root cause analysis and corrective action notes.
+        </p>
+
+        <form method="post">
+            {% csrf_token %}
+            <div style="display: flex; justify-content: center; gap: var(--space-3);">
+                <a href="{% url 'personal:mistake_detail' mistake.pk %}" class="btn btn-outline">
+                    Cancel
+                </a>
+                <button type="submit" class="btn btn-primary" style="background: var(--danger); border-color: var(--danger);">
+                    Yes, Delete Record
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

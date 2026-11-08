@@ -1,0 +1,231 @@
+{% extends "layouts/app_layout.html" %}
+
+{% block content %}
+<div class="personal-container" style="max-width: 900px; margin: 0 auto;">
+    {% include "personal/personal_nav.html" %}
+
+    <!-- Top Breadcrumb & Actions -->
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-4); flex-wrap: wrap; gap: var(--space-2);">
+        <a href="{% url 'personal:decision_list' %}" style="font-size: var(--font-size-xs); color: var(--accent-primary); text-decoration: none;">
+            ← Back to Decisions List
+        </a>
+        <div style="display: flex; gap: var(--space-2);">
+            <a href="{% url 'personal:decision_edit' decision.pk %}" class="btn btn-outline btn-sm">
+                Edit Decision
+            </a>
+            <a href="{% url 'personal:decision_delete' decision.pk %}" class="btn btn-outline btn-sm" style="color: var(--danger); border-color: rgba(248,113,113,0.3);">
+                Delete
+            </a>
+        </div>
+    </div>
+
+    <!-- Decision Header Card -->
+    <div class="card mb-4" style="padding: var(--space-5); border-radius: var(--radius-lg);">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: var(--space-3); flex-wrap: wrap; gap: var(--space-2);">
+            <div>
+                <div style="display: flex; gap: var(--space-2); align-items: center; margin-bottom: var(--space-1);">
+                    <span class="badge {% if decision.status == 'REVIEWED' %}badge-success{% elif decision.status == 'DECIDED' %}badge-accent{% elif decision.status == 'EVALUATING' %}badge-warning{% else %}badge-neutral{% endif %}">
+                        {{ decision.get_status_display }}
+                    </span>
+                    {% if decision.category %}
+                        <span style="font-size: var(--font-size-xs); font-weight: 500; color: {{ decision.category.color }};">
+                            • {{ decision.category.name }}
+                        </span>
+                    {% endif %}
+                    <span style="font-size: var(--font-size-xs); color: var(--text-muted);">
+                        • {{ decision.decision_date|date:"F j, Y" }}
+                    </span>
+                </div>
+                <h1 style="font-size: var(--font-size-2xl); font-weight: 700; color: var(--text-primary); margin: 0;">
+                    {{ decision.title }}
+                </h1>
+            </div>
+        </div>
+
+        {% if decision.description %}
+            <div style="color: var(--text-secondary); font-size: var(--font-size-sm); line-height: 1.6; margin-bottom: var(--space-3); white-space: pre-line;">
+                {{ decision.description }}
+            </div>
+        {% endif %}
+
+        {% if decision.reason_for_choosing %}
+            <div style="background: rgba(129, 140, 248, 0.06); padding: var(--space-3); border-radius: var(--radius-md); border-left: 3px solid var(--accent-primary); margin-top: var(--space-3);">
+                <div style="font-size: 11px; text-transform: uppercase; font-weight: 600; color: var(--accent-primary); margin-bottom: 2px;">
+                    Chosen Direction Rationale
+                </div>
+                <div style="font-size: var(--font-size-xs); color: var(--text-primary); line-height: 1.5;">
+                    {{ decision.reason_for_choosing }}
+                </div>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Section 1: Candidate Options Analysis -->
+    <div class="card mb-4" style="padding: var(--space-5); border-radius: var(--radius-lg);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-4);">
+            <div>
+                <h2 style="font-size: var(--font-size-lg); font-weight: 600; color: var(--text-primary); margin: 0 0 2px 0;">
+                    Candidate Options & Pathways
+                </h2>
+                <p style="color: var(--text-muted); font-size: var(--font-size-xs); margin: 0;">
+                    Compare alternative pathways, asymmetric risk/reward profiles, and expected outcomes.
+                </p>
+            </div>
+            <a href="{% url 'personal:decision_option_add' decision.pk %}" class="btn btn-outline btn-sm">
+                + Add Option
+            </a>
+        </div>
+
+        {% if options %}
+            <div style="display: flex; flex-direction: column; gap: var(--space-3);">
+                {% for opt in options %}
+                    <div style="padding: var(--space-4); background: var(--bg-primary); border-radius: var(--radius-md); border: 1px solid {% if decision.chosen_option_id == opt.id %}var(--accent-primary){% else %}var(--border){% endif %};">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: var(--space-2); flex-wrap: wrap; gap: var(--space-2);">
+                            <div style="display: flex; align-items: center; gap: var(--space-2);">
+                                <h3 style="font-size: var(--font-size-md); font-weight: 600; color: var(--text-primary); margin: 0;">
+                                    {{ opt.option_name }}
+                                </h3>
+                                {% if decision.chosen_option_id == opt.id %}
+                                    <span class="badge badge-accent" style="font-size: 10px;">★ Selected Pathway</span>
+                                {% endif %}
+                            </div>
+                            <div style="display: flex; gap: var(--space-2); align-items: center;">
+                                {% if decision.chosen_option_id != opt.id %}
+                                    <form method="post" action="{% url 'personal:decision_select_option' decision.pk opt.pk %}">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-outline btn-sm" style="font-size: 11px; padding: 2px 8px;">
+                                            Select as Chosen
+                                        </button>
+                                    </form>
+                                {% endif %}
+                                <a href="{% url 'personal:decision_option_edit' decision.pk opt.pk %}" class="btn btn-outline btn-sm" style="font-size: 11px; padding: 2px 8px;">
+                                    Edit
+                                </a>
+                                <a href="{% url 'personal:decision_option_delete' decision.pk opt.pk %}" class="btn btn-outline btn-sm" style="font-size: 11px; padding: 2px 8px; color: var(--danger); border-color: rgba(248,113,113,0.3);">
+                                    Delete
+                                </a>
+                            </div>
+                        </div>
+
+                        {% if opt.description %}
+                            <p style="font-size: var(--font-size-xs); color: var(--text-secondary); margin: 0 0 var(--space-3) 0;">
+                                {{ opt.description }}
+                            </p>
+                        {% endif %}
+
+                        <!-- Pros & Cons Grid -->
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); margin-bottom: var(--space-2);">
+                            <div style="background: rgba(52, 211, 153, 0.05); padding: var(--space-2) var(--space-3); border-radius: var(--radius-sm); border-left: 2px solid var(--success);">
+                                <div style="font-size: 10px; font-weight: 600; color: var(--success); text-transform: uppercase; margin-bottom: 2px;">
+                                    Pros & Upside
+                                </div>
+                                <div style="font-size: var(--font-size-xs); color: var(--text-primary); white-space: pre-line;">
+                                    {{ opt.pros|default:"None specified." }}
+                                </div>
+                            </div>
+                            <div style="background: rgba(248, 113, 113, 0.05); padding: var(--space-2) var(--space-3); border-radius: var(--radius-sm); border-left: 2px solid var(--danger);">
+                                <div style="font-size: 10px; font-weight: 600; color: var(--danger); text-transform: uppercase; margin-bottom: 2px;">
+                                    Cons & Downside Risk
+                                </div>
+                                <div style="font-size: var(--font-size-xs); color: var(--text-primary); white-space: pre-line;">
+                                    {{ opt.cons|default:"None specified." }}
+                                </div>
+                            </div>
+                        </div>
+
+                        {% if opt.expected_outcome %}
+                            <div style="font-size: var(--font-size-xs); color: var(--text-muted); margin-top: var(--space-2);">
+                                <strong style="color: var(--text-secondary);">Projected Expectation:</strong> {{ opt.expected_outcome }}
+                            </div>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="empty-state" style="padding: var(--space-4); text-align: center;">
+                <p style="color: var(--text-muted); font-size: var(--font-size-xs); margin-bottom: var(--space-3);">
+                    No options added yet. Add at least two alternatives to compare expected payoffs and downsides.
+                </p>
+                <a href="{% url 'personal:decision_option_add' decision.pk %}" class="btn btn-outline btn-sm">Add Option A</a>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Section 2: Real-World Outcome & Post-Mortem Evaluation -->
+    <div class="card" style="padding: var(--space-5); border-radius: var(--radius-lg);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-3);">
+            <div>
+                <h2 style="font-size: var(--font-size-lg); font-weight: 600; color: var(--text-primary); margin: 0 0 2px 0;">
+                    Outcome Evaluation & Post-Mortem
+                </h2>
+                <p style="color: var(--text-muted); font-size: var(--font-size-xs); margin: 0;">
+                    Measure actual real-world results against expectations once outcomes materialize.
+                </p>
+            </div>
+            <a href="{% url 'personal:decision_outcome' decision.pk %}" class="btn btn-primary btn-sm">
+                {% if latest_outcome %}Update Evaluation{% else %}Record Outcome{% endif %}
+            </a>
+        </div>
+
+        {% if latest_outcome %}
+            <div style="padding: var(--space-4); background: var(--bg-primary); border-radius: var(--radius-md); border-left: 4px solid {% if latest_outcome.outcome_score >= 8 %}var(--success){% elif latest_outcome.outcome_score >= 5 %}var(--accent-primary){% else %}var(--danger){% endif %};">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-3); flex-wrap: wrap; gap: var(--space-2);">
+                    <div style="display: flex; gap: var(--space-2); align-items: center;">
+                        <span class="badge {% if latest_outcome.outcome_score >= 8 %}badge-success{% elif latest_outcome.outcome_score >= 5 %}badge-accent{% else %}badge-danger{% endif %}" style="font-size: 13px; font-weight: 700;">
+                            Rating: {{ latest_outcome.outcome_score }} / 10
+                        </span>
+                        <span style="font-size: var(--font-size-xs); color: var(--text-muted);">
+                            Evaluated on {{ latest_outcome.outcome_date|date:"F j, Y" }}
+                        </span>
+                    </div>
+                    {% if latest_outcome.option %}
+                        <span style="font-size: var(--font-size-xs); color: var(--accent-secondary);">
+                            Evaluated: <strong>{{ latest_outcome.option.option_name }}</strong>
+                        </span>
+                    {% endif %}
+                </div>
+
+                <div style="margin-bottom: var(--space-3);">
+                    <div style="font-size: 11px; text-transform: uppercase; font-weight: 600; color: var(--text-muted); margin-bottom: 2px;">
+                        Actual Real-World Outcome
+                    </div>
+                    <div style="font-size: var(--font-size-sm); color: var(--text-primary); line-height: 1.6; white-space: pre-wrap;">
+                        {{ latest_outcome.actual_outcome }}
+                    </div>
+                </div>
+
+                {% if latest_outcome.lessons_learned %}
+                    <div style="margin-bottom: var(--space-3);">
+                        <div style="font-size: 11px; text-transform: uppercase; font-weight: 600; color: var(--text-muted); margin-bottom: 2px;">
+                            Lessons Learned & Mental Models Validated
+                        </div>
+                        <div style="font-size: var(--font-size-xs); color: var(--text-secondary); line-height: 1.5; white-space: pre-wrap;">
+                            {{ latest_outcome.lessons_learned }}
+                        </div>
+                    </div>
+                {% endif %}
+
+                {% if latest_outcome.reflection_notes %}
+                    <div>
+                        <div style="font-size: 11px; text-transform: uppercase; font-weight: 600; color: var(--text-muted); margin-bottom: 2px;">
+                            Retrospective Reflection Notes
+                        </div>
+                        <div style="font-size: var(--font-size-xs); color: var(--text-secondary); line-height: 1.5; white-space: pre-wrap;">
+                            {{ latest_outcome.reflection_notes }}
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        {% else %}
+            <div class="empty-state" style="padding: var(--space-4); text-align: center;">
+                <p style="color: var(--text-muted); font-size: var(--font-size-xs); margin-bottom: var(--space-3);">
+                    Outcome has not been recorded yet. Decisions can remain open indefinitely until you observe real-world consequences.
+                </p>
+                <a href="{% url 'personal:decision_outcome' decision.pk %}" class="btn btn-outline btn-sm">
+                    Record Outcome Now
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

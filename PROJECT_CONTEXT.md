@@ -183,4 +183,32 @@ Established in Step 08:
   - Service layer functions require `user` argument and query exclusively within `user` scope.
   - Forms validate foreign keys and prevent cross-user item manipulation with HTTP 404 responses.
 
+---
+
+## 10. Personal Management Architecture (Step 09)
+
+Established in Step 09:
+- **Module Structure (`apps.personal` & `apps.finance`)**:
+  - `JournalEntry`: Private introspective reflections, cognitive logs, and freeform writing tagged by date and mood.
+  - `DailyMetric`: Quantitative psychometric and somatic indicators (mood 1–5, energy 1–5, stress 1–5, sleep hours, daily notes). Strictly enforces 1 record per user per date.
+  - `SleepRecord`: Precise sleep session tracking with sleep start and wake datetimes (supporting overnight sleep crossing midnight), automatic duration calculation, quality ratings (1–5), and automated synchronization with `DailyMetric.sleep_hours`.
+  - `Decision`: Strategic decision analysis documenting context, decision date, chosen option, and rationale (`reason_for_choosing`).
+  - `DecisionOption`: Explicit candidate pathways with pros, cons, descriptions, and expected outcomes.
+  - `DecisionOutcome`: Retrospective post-mortem evaluation rating actual real-world consequences (score 1–10), lessons learned, and reflection notes, advancing decision status to `REVIEWED`.
+  - `Mistake`: Learning log cataloging errors, root causes, severity impact (`MINOR`, `MODERATE`, `SEVERE`), status (`OPEN`, `IN_PROGRESS`, `RESOLVED`, `RECURRING`), lessons learned, and preventive corrective action protocols.
+  - `Transaction`: Manual cash flow ledger capturing income and expenses with positive decimal precision, user-scoped categories, payment methods, and notes.
+- **8 Core Functional Sections**:
+  1. Personal Dashboard (`/personal/`): 8 summary KPI cards (monthly journal volume, average mood, average energy, average sleep, decisions count, monthly income, monthly expenses, monthly net balance), recent journal streams, recent decisions, recent mistakes, latest check-in, 14-day mood rhythm bar chart, and monthly spending category shares.
+  2. Journal Management (`/personal/journal/`): Searchable, filterable by date, and sortable personal diary with comfortable writing interface and strict private ownership.
+  3. Daily Check-in (`/personal/checkin/`): Standardized 5-point subjective check-in (Mood, Energy, Stress, Sleep Duration, Notes) with duplicate date prevention and 14-day history strip.
+  4. Mood & Energy Tracking (`/personal/mood-energy/`): 7d/14d/30d/90d range analytics, daily mood bar charts, dual-bar Energy vs Stress comparison, and behavioral self-awareness disclaimer.
+  5. Sleep Tracking (`/personal/sleep/`): Bedtime and wake-up logging, overnight duration calculation, 14-day duration trend with 7.0–8.5h optimal benchmark band, 7-day and 30-day sleep averages, and automatic DailyMetric sync.
+  6. Decision Journal (`/personal/decisions/`): Decision lifecycle (`DRAFT` → `EVALUATING` → `DECIDED` → `REVIEWED`), multi-option comparative analysis, chosen option selection, and delayed post-mortem outcome evaluation.
+  7. Mistake Tracker (`/personal/mistakes/`): Non-judgmental error analysis with root causes, impact levels, status transitions, and corrective guardrails.
+  8. Finance Manager (`/personal/finance/`): Lifetime and monthly cash flow metrics (Income, Expense, Net Balance, Monthly Savings), category spending distribution, search and filtering, and positive decimal transaction recording in ₹ INR.
+- **Data Isolation & IDOR Protection**:
+  - All views enforce `@login_required` and query exclusively within `request.user`.
+  - Cross-user foreign key references (categories, decisions, options) are rejected in forms and models with HTTP 404 responses.
+
+
 

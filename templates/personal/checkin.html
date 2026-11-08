@@ -1,0 +1,174 @@
+{% extends "layouts/app_layout.html" %}
+
+{% block content %}
+<div class="personal-container" style="max-width: 960px; margin: 0 auto;">
+    {% include "personal/personal_nav.html" %}
+
+    <!-- Header & Date Navigation -->
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-4); flex-wrap: wrap; gap: var(--space-3);">
+        <div>
+            <h1 style="font-size: var(--font-size-2xl); font-weight: 700; color: var(--text-primary); margin: 0 0 4px 0;">
+                Daily Check-in
+            </h1>
+            <p style="color: var(--text-secondary); margin: 0; font-size: var(--font-size-sm);">
+                Structured daily tracking of mood, somatic energy, cognitive stress, and sleep duration.
+            </p>
+        </div>
+
+        <!-- Date Selector -->
+        <div class="card" style="padding: var(--space-2) var(--space-3); border-radius: var(--radius-md);">
+            <form method="get" action="{% url 'personal:checkin' %}" style="display: flex; align-items: center; gap: var(--space-2);">
+                <label for="checkin_date" style="font-size: var(--font-size-xs); color: var(--text-muted); font-weight: 600;">Date:</label>
+                <input type="date" id="checkin_date" name="date" value="{{ target_date|date:'Y-m-d' }}" class="form-control form-control-sm" style="width: auto;">
+                <button type="submit" class="btn btn-primary btn-sm">Go</button>
+                {% if target_date != today %}
+                    <a href="{% url 'personal:checkin' %}" class="btn btn-outline btn-sm">Today</a>
+                {% endif %}
+            </form>
+        </div>
+    </div>
+
+    <!-- Rating Scales Explanation Banner -->
+    <div class="card mb-4" style="padding: var(--space-3) var(--space-4); border-radius: var(--radius-lg); background: rgba(129, 140, 248, 0.05); border-left: 4px solid var(--accent-primary);">
+        <div style="font-size: var(--font-size-xs); font-weight: 600; color: var(--accent-primary); text-transform: uppercase; margin-bottom: 4px;">
+            Standardized 5-Point Psychological & Somatic Scales
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: var(--space-3); font-size: var(--font-size-xs); color: var(--text-secondary);">
+            <div>
+                <strong style="color: var(--text-primary);">Mood Scale:</strong><br>
+                1: Very Bad • 2: Bad • 3: Neutral • 4: Good • 5: Excellent
+            </div>
+            <div>
+                <strong style="color: var(--text-primary);">Energy Scale:</strong><br>
+                1: Very Low (Depleted) • 2: Low • 3: Moderate • 4: High • 5: Very High (Vibrant)
+            </div>
+            <div>
+                <strong style="color: var(--text-primary);">Stress Scale:</strong><br>
+                1: Very Low (Relaxed) • 2: Low • 3: Moderate • 4: High • 5: Very High (Overwhelmed)
+            </div>
+        </div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 1.2fr 0.8fr; gap: var(--space-4); align-items: flex-start;">
+        <!-- Left: Check-in Form -->
+        <div class="card" style="padding: var(--space-5); border-radius: var(--radius-lg);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-4);">
+                <h2 style="font-size: var(--font-size-lg); font-weight: 600; color: var(--text-primary); margin: 0;">
+                    Log for {{ target_date|date:"l, F j, Y" }}
+                </h2>
+                {% if metric %}
+                    <span class="badge badge-success">Saved / Updating</span>
+                {% else %}
+                    <span class="badge badge-warning">Pending Entry</span>
+                {% endif %}
+            </div>
+
+            <form method="post">
+                {% csrf_token %}
+                {% if form.errors %}
+                    <div class="alert alert-danger mb-3">
+                        Please correct the form errors indicated below.
+                    </div>
+                {% endif %}
+
+                <!-- Date (hidden / disabled display) -->
+                <input type="hidden" name="metric_date" value="{{ target_date|date:'Y-m-d' }}">
+
+                <!-- Mood Score -->
+                <div class="form-group mb-4">
+                    <label class="form-label" for="{{ form.mood_score.id_for_label }}" style="font-weight: 600;">
+                        1. Mood Rating
+                    </label>
+                    {{ form.mood_score }}
+                    <small style="color: var(--text-muted); font-size: var(--font-size-xs); display: block; margin-top: 4px;">
+                        How did your mind and emotional climate feel overall today?
+                    </small>
+                </div>
+
+                <!-- Energy Score -->
+                <div class="form-group mb-4">
+                    <label class="form-label" for="{{ form.energy_score.id_for_label }}" style="font-weight: 600;">
+                        2. Energy & Vitality Level
+                    </label>
+                    {{ form.energy_score }}
+                    <small style="color: var(--text-muted); font-size: var(--font-size-xs); display: block; margin-top: 4px;">
+                        Physical battery, focus capacity, alertness, and stamina.
+                    </small>
+                </div>
+
+                <!-- Stress Score -->
+                <div class="form-group mb-4">
+                    <label class="form-label" for="{{ form.stress_score.id_for_label }}" style="font-weight: 600;">
+                        3. Perceived Stress & Tension
+                    </label>
+                    {{ form.stress_score }}
+                    <small style="color: var(--text-muted); font-size: var(--font-size-xs); display: block; margin-top: 4px;">
+                        Degree of internal pressure, cognitive friction, anxiety, or overwhelm.
+                    </small>
+                </div>
+
+                <!-- Sleep Hours -->
+                <div class="form-group mb-4">
+                    <label class="form-label" for="{{ form.sleep_hours.id_for_label }}" style="font-weight: 600;">
+                        4. Sleep Duration (Hours)
+                    </label>
+                    {{ form.sleep_hours }}
+                    <small style="color: var(--text-muted); font-size: var(--font-size-xs); display: block; margin-top: 4px;">
+                        Hours slept last night. (Can also be logged in detail via <a href="{% url 'personal:sleep_create' %}" style="color: var(--accent-primary);">Sleep Tracker</a>).
+                    </small>
+                </div>
+
+                <!-- Notes -->
+                <div class="form-group mb-4">
+                    <label class="form-label" for="{{ form.notes.id_for_label }}" style="font-weight: 600;">
+                        5. Somatic & Daily Notes (Optional)
+                    </label>
+                    {{ form.notes }}
+                </div>
+
+                <div style="display: flex; justify-content: flex-end; gap: var(--space-2);">
+                    <button type="submit" class="btn btn-primary">
+                        {% if metric %}Save Updated Check-in{% else %}Submit Daily Check-in{% endif %}
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Right: Recent Check-in History -->
+        <div style="display: flex; flex-direction: column; gap: var(--space-3);">
+            <div class="card" style="padding: var(--space-4); border-radius: var(--radius-lg);">
+                <h3 style="font-size: var(--font-size-md); font-weight: 600; color: var(--text-primary); margin: 0 0 var(--space-3) 0;">
+                    Recent Check-in Logs
+                </h3>
+
+                {% if recent_checkins %}
+                    <div style="display: flex; flex-direction: column; gap: var(--space-2);">
+                        {% for chk in recent_checkins %}
+                            <div style="padding: var(--space-2) var(--space-3); background: var(--bg-primary); border-radius: var(--radius-md); display: flex; justify-content: space-between; align-items: center; {% if chk.metric_date == target_date %}border: 1px solid var(--accent-primary);{% endif %}">
+                                <div>
+                                    <div style="font-weight: 600; font-size: var(--font-size-xs); color: var(--text-primary);">
+                                        {{ chk.metric_date|date:"D, M d" }}
+                                        {% if chk.metric_date == today %}<span class="badge badge-accent" style="font-size: 9px; margin-left: 4px;">Today</span>{% endif %}
+                                    </div>
+                                    <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">
+                                        Mood: <strong style="color: var(--text-primary);">{{ chk.mood_score|default:"—" }}/5</strong> •
+                                        Energy: <strong style="color: var(--accent-primary);">{{ chk.energy_score|default:"—" }}/5</strong> •
+                                        Stress: <strong style="color: {% if chk.stress_score and chk.stress_score >= 4 %}var(--danger){% else %}var(--success){% endif %};">{{ chk.stress_score|default:"—" }}/5</strong>
+                                    </div>
+                                </div>
+                                <a href="{% url 'personal:checkin' %}?date={{ chk.metric_date|date:'Y-m-d' }}" class="btn btn-outline btn-sm" style="font-size: 11px; padding: 2px 8px;">
+                                    View / Edit
+                                </a>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p style="color: var(--text-muted); font-size: var(--font-size-xs); margin: 0;">
+                        No previous check-in records found.
+                    </p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

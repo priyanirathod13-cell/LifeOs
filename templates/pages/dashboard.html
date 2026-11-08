@@ -1,0 +1,293 @@
+{% extends 'layouts/app_layout.html' %}
+
+{% block title %}Dashboard — LifeOS{% endblock %}
+{% block header_breadcrumb %}Dashboard{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="page-header">
+    <div class="page-header-info">
+        <h1 class="page-title">Behavioral Dashboard</h1>
+        <p class="page-subtitle">Unified view of your daily routines, deep work focus, and behavioral rhythm.</p>
+    </div>
+    <div class="page-actions">
+        <a href="{% url 'core:ui_system' %}" class="btn btn-secondary">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+                <polyline points="2 17 12 22 22 17"></polyline>
+                <polyline points="2 12 12 17 22 12"></polyline>
+            </svg>
+            Explore Design System
+        </a>
+        <button type="button" class="btn btn-primary" data-modal-target="quickCheckinModal">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+            Quick Check-in
+        </button>
+    </div>
+</div>
+
+<!-- Key Performance Metrics Row -->
+<div class="grid grid-cols-4 gap-4" style="margin-bottom: var(--space-8);">
+    <div class="metric-card">
+        <div class="metric-header">
+            <span class="metric-label">Daily Focus Index</span>
+            <div class="metric-icon-wrap">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                </svg>
+            </div>
+        </div>
+        <div class="metric-value">91%</div>
+        <div class="metric-trend trend-up">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
+                <polyline points="17 6 23 6 23 12"></polyline>
+            </svg>
+            <span>+6% over 7-day baseline</span>
+        </div>
+    </div>
+
+    <div class="metric-card">
+        <div class="metric-header">
+            <span class="metric-label">Habits Completed</span>
+            <div class="metric-icon-wrap" style="background-color: var(--success-subtle); color: var(--success);">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                    <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                </svg>
+            </div>
+        </div>
+        <div class="metric-value">6 / 8</div>
+        <div class="metric-trend trend-up">
+            <span>75% completion rate</span>
+        </div>
+    </div>
+
+    <div class="metric-card">
+        <div class="metric-header">
+            <span class="metric-label">Deep Work Hours</span>
+            <div class="metric-icon-wrap" style="background-color: var(--accent-secondary-subtle); color: var(--accent-secondary);">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <polyline points="12 6 12 12 16 14"></polyline>
+                </svg>
+            </div>
+        </div>
+        <div class="metric-value">5.2 hrs</div>
+        <div class="metric-trend trend-neutral">
+            <span>Goal: 6.0 hrs / day</span>
+        </div>
+    </div>
+
+    <div class="metric-card">
+        <div class="metric-header">
+            <span class="metric-label">Energy Rating</span>
+            <div class="metric-icon-wrap" style="background-color: var(--warning-subtle); color: var(--warning);">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                </svg>
+            </div>
+        </div>
+        <div class="metric-value">8.2 / 10</div>
+        <div class="metric-trend trend-up">
+            <span>High subjective vigor</span>
+        </div>
+    </div>
+</div>
+
+<!-- Main Two-Column Layout -->
+<div class="grid grid-cols-3 gap-6">
+    <!-- Left Column: Priority Focus & Habit Tracker (2 cols wide) -->
+    <div style="grid-column: span 2; display: flex; flex-direction: column; gap: var(--space-6);">
+        <!-- Priority Tasks Card -->
+        <div class="card">
+            <div class="card-header">
+                <div>
+                    <h2 class="card-title">Today's Priority Focus</h2>
+                    <p class="card-subtitle">Highest leverage tasks aligned with current goals</p>
+                </div>
+                <a href="{% url 'core:tasks' %}" class="btn btn-ghost btn-sm">View All Tasks →</a>
+            </div>
+            <div class="card-body flex flex-col gap-3">
+                <div class="flex items-center justify-between p-3" style="background-color: var(--bg-input); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); padding: var(--space-3);">
+                    <label class="custom-checkbox">
+                        <input type="checkbox" checked>
+                        <div>
+                            <span style="font-weight: var(--font-weight-medium); color: var(--text-primary);">Architect LifeOS UI & Design System Component Modules</span>
+                            <div style="font-size: var(--font-size-xs); color: var(--text-muted);">Step 02 Frontend Architecture • 2 hrs</div>
+                        </div>
+                    </label>
+                    <span class="badge badge-success">Completed</span>
+                </div>
+
+                <div class="flex items-center justify-between p-3" style="background-color: var(--bg-input); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); padding: var(--space-3);">
+                    <label class="custom-checkbox">
+                        <input type="checkbox">
+                        <div>
+                            <span style="font-weight: var(--font-weight-medium); color: var(--text-primary);">Review Distributed Consensus & Raft Protocols</span>
+                            <div style="font-size: var(--font-size-xs); color: var(--text-muted);">Study Management • 1.5 hrs</div>
+                        </div>
+                    </label>
+                    <span class="badge badge-warning">In Progress</span>
+                </div>
+
+                <div class="flex items-center justify-between p-3" style="background-color: var(--bg-input); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); padding: var(--space-3);">
+                    <label class="custom-checkbox">
+                        <input type="checkbox">
+                        <div>
+                            <span style="font-weight: var(--font-weight-medium); color: var(--text-primary);">Evening Energy & Cognitive Load Reflection</span>
+                            <div style="font-size: var(--font-size-xs); color: var(--text-muted);">Journal & Biometrics • 20 mins</div>
+                        </div>
+                    </label>
+                    <span class="badge badge-neutral">Scheduled 21:00</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Habits Consistency Tracker -->
+        <div class="card">
+            <div class="card-header">
+                <div>
+                    <h2 class="card-title">Daily Habit Consistency</h2>
+                    <p class="card-subtitle">Active streaks and behavioral momentum</p>
+                </div>
+                <a href="{% url 'core:habits' %}" class="btn btn-ghost btn-sm">Manage Habits →</a>
+            </div>
+            <div class="card-body flex flex-col gap-4">
+                <div class="progress-bar-wrap">
+                    <div class="progress-header">
+                        <span class="progress-label">Morning Hydration & Sunlight (21-day streak)</span>
+                        <span class="progress-value">100%</span>
+                    </div>
+                    <div class="progress-track">
+                        <div class="progress-fill success" style="width: 100%;"></div>
+                    </div>
+                </div>
+
+                <div class="progress-bar-wrap">
+                    <div class="progress-header">
+                        <span class="progress-label">Continuous Reading & Technical Synthesis (14-day streak)</span>
+                        <span class="progress-value">80%</span>
+                    </div>
+                    <div class="progress-track">
+                        <div class="progress-fill" style="width: 80%;"></div>
+                    </div>
+                </div>
+
+                <div class="progress-bar-wrap">
+                    <div class="progress-header">
+                        <span class="progress-label">Physical Conditioning (3-day streak)</span>
+                        <span class="progress-value">60%</span>
+                    </div>
+                    <div class="progress-track">
+                        <div class="progress-fill warning" style="width: 60%;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Column: Intelligence & Timetable Preview (1 col wide) -->
+    <div style="display: flex; flex-direction: column; gap: var(--space-6);">
+        <!-- Intelligence Insights Card -->
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">Behavioral Insight</h2>
+                <span class="badge badge-accent">AI Pattern</span>
+            </div>
+            <div class="card-body flex flex-col gap-3">
+                <p style="font-size: var(--font-size-sm); color: var(--text-primary); line-height: 1.6;">
+                    Deep work sessions started before <strong>10:00 AM</strong> have an <strong>82% higher completion rate</strong> and report lower subjective fatigue compared to afternoon sessions.
+                </p>
+                <div style="padding: var(--space-3); background-color: var(--accent-primary-subtle); border-radius: var(--radius-sm); border-left: 3px solid var(--accent-primary); font-size: var(--font-size-xs); color: var(--accent-secondary);">
+                    Recommendation: Protect the 08:30 - 11:30 block tomorrow from administrative tasks.
+                </div>
+            </div>
+        </div>
+
+        <!-- Schedule Preview -->
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">Schedule Blocks</h2>
+                <a href="{% url 'core:timetable' %}" class="btn btn-ghost btn-sm">Full View</a>
+            </div>
+            <div class="card-body flex flex-col gap-3">
+                <div class="flex items-center justify-between" style="font-size: var(--font-size-sm); padding-bottom: var(--space-2); border-bottom: 1px solid var(--border-subtle);">
+                    <div>
+                        <div style="color: var(--text-primary); font-weight: var(--font-weight-medium);">08:30 — 11:30</div>
+                        <div style="color: var(--text-muted); font-size: var(--font-size-xs);">Deep Architecture Block</div>
+                    </div>
+                    <span class="badge badge-success">Done</span>
+                </div>
+
+                <div class="flex items-center justify-between" style="font-size: var(--font-size-sm); padding-bottom: var(--space-2); border-bottom: 1px solid var(--border-subtle);">
+                    <div>
+                        <div style="color: var(--text-primary); font-weight: var(--font-weight-medium);">14:00 — 16:00</div>
+                        <div style="color: var(--text-muted); font-size: var(--font-size-xs);">Algorithm Studies & Practice</div>
+                    </div>
+                    <span class="badge badge-warning">Next Up</span>
+                </div>
+
+                <div class="flex items-center justify-between" style="font-size: var(--font-size-sm);">
+                    <div>
+                        <div style="color: var(--text-primary); font-weight: var(--font-weight-medium);">20:30 — 21:00</div>
+                        <div style="color: var(--text-muted); font-size: var(--font-size-xs);">Day-end Retrospective & Journal</div>
+                    </div>
+                    <span class="badge badge-neutral">Scheduled</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block modals %}
+<!-- Quick Check-in Modal -->
+<div class="modal-backdrop" id="quickCheckinModal" role="dialog" aria-labelledby="checkinModalTitle" aria-modal="true">
+    <div class="modal-dialog">
+        <div class="modal-header">
+            <h3 class="modal-title" id="checkinModalTitle">Daily Quick Check-in</h3>
+            <button type="button" class="modal-close-btn" data-modal-close aria-label="Close modal">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+        </div>
+        <div class="modal-body flex flex-col gap-4">
+            <div class="form-group">
+                <label class="form-label" for="energySlider">Energy Level (1 to 10)</label>
+                <input type="range" id="energySlider" min="1" max="10" value="8" style="width: 100%; accent-color: var(--accent-primary);">
+                <div class="flex justify-between" style="font-size: var(--font-size-xs); color: var(--text-muted);">
+                    <span>1 (Depleted)</span>
+                    <span>5 (Moderate)</span>
+                    <span>10 (Peak Vigor)</span>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="moodSelect">Mood Classification</label>
+                <select id="moodSelect" class="form-select">
+                    <option value="calm_focused">Calm & Focused</option>
+                    <option value="energetic">Energetic & Driven</option>
+                    <option value="neutral">Neutral & Balanced</option>
+                    <option value="fatigued">Fatigued / Low Bandwidth</option>
+                    <option value="stressed">Overwhelmed / Frustrated</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="checkinNote">Quick One-line Reflection</label>
+                <input type="text" id="checkinNote" class="form-control" placeholder="What dominated your attention today?">
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-modal-close>Cancel</button>
+            <button type="button" class="btn btn-primary" data-modal-close onclick="alert('Check-in logged for today.');">Record Check-in</button>
+        </div>
+    </div>
+</div>
+{% endblock %}

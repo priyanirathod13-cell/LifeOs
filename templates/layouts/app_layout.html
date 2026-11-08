@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+
+{% block body %}
+<div class="app-shell">
+    <!-- Left Navigation Sidebar -->
+    {% include 'components/sidebar.html' %}
+
+    <!-- Main Content Flow Area -->
+    <div class="main-wrapper">
+        <!-- Top Sticky Header -->
+        {% include 'components/header.html' %}
+
+        <!-- Scrollable Main Container -->
+        <main class="main-content" id="mainContent" role="main">
+            <!-- Global Flash Messages -->
+            {% include 'components/messages.html' %}
+
+            <!-- Page Specific Content -->
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+</div>
+
+<!-- Modal Dialog Slots -->
+{% block modals %}{% endblock %}
+{% endblock %}

@@ -1,0 +1,196 @@
+{% load static %}
+<!-- Sidebar Overlay Backdrop for Mobile -->
+<div class="sidebar-backdrop" id="sidebarBackdrop"></div>
+
+<!-- Left Sidebar Navigation -->
+<aside class="sidebar" id="sidebar" aria-label="Main Navigation">
+    <!-- Brand Header -->
+    <div class="sidebar-brand">
+        <a href="{% url 'core:dashboard' %}" class="brand-link">
+            <img src="{% static 'images/logo.svg' %}" alt="LifeOS Logo" class="brand-logo">
+            <div class="brand-info">
+                <span class="brand-title">LifeOS</span>
+                <span class="brand-tag">Intelligence</span>
+            </div>
+        </a>
+    </div>
+
+    <!-- Navigation Groups -->
+    <nav class="sidebar-nav">
+        <!-- MY DAY -->
+        <div class="nav-group">
+            <div class="nav-group-title">My Day</div>
+            <a href="{% url 'core:dashboard' %}" class="nav-item {% if active_nav == 'dashboard' %}active{% endif %}">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <rect x="3" y="3" width="7" height="7" rx="1.5"></rect>
+                    <rect x="14" y="3" width="7" height="7" rx="1.5"></rect>
+                    <rect x="14" y="14" width="7" height="7" rx="1.5"></rect>
+                    <rect x="3" y="14" width="7" height="7" rx="1.5"></rect>
+                </svg>
+                <span class="nav-label">Dashboard</span>
+            </a>
+            <a href="{% url 'core:timetable' %}" class="nav-item {% if active_nav == 'timetable' %}active{% endif %}">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <polyline points="12 6 12 12 16 14"></polyline>
+                </svg>
+                <span class="nav-label">Daily Timetable</span>
+            </a>
+            <a href="{% url 'core:routines' %}" class="nav-item {% if active_nav == 'routines' %}active{% endif %}">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path>
+                </svg>
+                <span class="nav-label">Daily Routines</span>
+            </a>
+            <a href="{% url 'core:tasks' %}" class="nav-item {% if active_nav == 'tasks' %}active{% endif %}">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <path d="M9 11l3 3L22 4"></path>
+                    <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+                </svg>
+                <span class="nav-label">Tasks</span>
+                <span class="nav-badge">4</span>
+            </a>
+            <a href="{% url 'core:habits' %}" class="nav-item {% if active_nav == 'habits' %}active{% endif %}">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                </svg>
+                <span class="nav-label">Habits</span>
+            </a>
+            <a href="{% url 'core:activities' %}" class="nav-item {% if active_nav == 'activities' %}active{% endif %}">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                </svg>
+                <span class="nav-label">Activities</span>
+            </a>
+            <a href="{% url 'core:checkin' %}" class="nav-item {% if active_nav == 'checkin' %}active{% endif %}">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                </svg>
+                <span class="nav-label">Daily Check-in</span>
+            </a>
+        </div>
+
+        <!-- MY GROWTH -->
+        <div class="nav-group">
+            <div class="nav-group-title">My Growth</div>
+            <a href="{% url 'core:study' %}" class="nav-item {% if active_nav == 'study' %}active{% endif %}">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                </svg>
+                <span class="nav-label">Study</span>
+            </a>
+            <a href="{% url 'core:goals' %}" class="nav-item {% if active_nav == 'goals' %}active{% endif %}">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <circle cx="12" cy="12" r="6"></circle>
+                    <circle cx="12" cy="12" r="2"></circle>
+                </svg>
+                <span class="nav-label">Goals</span>
+            </a>
+            <a href="{% url 'core:projects' %}" class="nav-item {% if active_nav == 'projects' %}active{% endif %}">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+                    <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+                </svg>
+                <span class="nav-label">Projects</span>
+            </a>
+            <a href="{% url 'core:journal' %}" class="nav-item {% if active_nav == 'journal' %}active{% endif %}">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                    <polyline points="14 2 14 8 20 8"></polyline>
+                    <line x1="16" y1="13" x2="8" y2="13"></line>
+                    <line x1="16" y1="17" x2="8" y2="17"></line>
+                </svg>
+                <span class="nav-label">Journal</span>
+            </a>
+            <a href="{% url 'core:decisions' %}" class="nav-item {% if active_nav == 'decisions' %}active{% endif %}">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <polyline points="6 9 12 15 18 9"></polyline>
+                    <path d="M18 15l-6-6-6 6"></path>
+                    <line x1="12" y1="3" x2="12" y2="21"></line>
+                </svg>
+                <span class="nav-label">Decisions</span>
+            </a>
+            <a href="{% url 'core:mistakes' %}" class="nav-item {% if active_nav == 'mistakes' %}active{% endif %}">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                    <line x1="12" y1="9" x2="12" y2="13"></line>
+                    <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                </svg>
+                <span class="nav-label">Mistakes & Learning</span>
+            </a>
+        </div>
+
+        <!-- MY INTELLIGENCE -->
+        <div class="nav-group">
+            <div class="nav-group-title">My Intelligence</div>
+            <a href="{% url 'core:productivity_analytics' %}" class="nav-item {% if active_nav == 'productivity_analytics' %}active{% endif %}">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <line x1="18" y1="20" x2="18" y2="10"></line>
+                    <line x1="12" y1="20" x2="12" y2="4"></line>
+                    <line x1="6" y1="20" x2="6" y2="14"></line>
+                </svg>
+                <span class="nav-label">Productivity Analytics</span>
+            </a>
+            <a href="{% url 'core:study_analytics' %}" class="nav-item {% if active_nav == 'study_analytics' %}active{% endif %}">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
+                </svg>
+                <span class="nav-label">Study Analytics</span>
+            </a>
+            <a href="{% url 'core:behavioral_insights' %}" class="nav-item {% if active_nav == 'behavioral_insights' %}active{% endif %}">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <path d="M12 16v-4"></path>
+                    <path d="M12 8h.01"></path>
+                </svg>
+                <span class="nav-label">Behavioral Insights</span>
+            </a>
+            <a href="{% url 'core:financial_analytics' %}" class="nav-item {% if active_nav == 'financial_analytics' %}active{% endif %}">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <line x1="12" y1="1" x2="12" y2="23"></line>
+                    <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                </svg>
+                <span class="nav-label">Financial Analytics</span>
+            </a>
+            <a href="{% url 'core:recommendations' %}" class="nav-item {% if active_nav == 'recommendations' %}active{% endif %}">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                </svg>
+                <span class="nav-label">Recommendations</span>
+            </a>
+        </div>
+
+        <!-- SETTINGS & SHOWCASE -->
+        <div class="nav-group">
+            <div class="nav-group-title">Settings & System</div>
+            <a href="{% url 'core:settings' %}" class="nav-item {% if active_nav == 'settings' %}active{% endif %}">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <circle cx="12" cy="12" r="3"></circle>
+                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                </svg>
+                <span class="nav-label">Settings</span>
+            </a>
+            <a href="{% url 'core:ui_system' %}" class="nav-item {% if active_nav == 'ui_system' %}active{% endif %}">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+                    <polyline points="2 17 12 22 22 17"></polyline>
+                    <polyline points="2 12 12 17 22 12"></polyline>
+                </svg>
+                <span class="nav-label">UI Design System</span>
+                <span class="badge badge-accent">Demo</span>
+            </a>
+        </div>
+    </nav>
+
+    <!-- Sidebar Footer / Collapse Toggle -->
+    <div class="sidebar-footer">
+        <span class="text-muted" style="font-size: var(--font-size-xs);">LifeOS v0.2</span>
+        <button class="sidebar-toggle-btn" id="desktopCollapseBtn" title="Toggle Sidebar Width" aria-label="Toggle Sidebar Width">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="15 18 9 12 15 6"></polyline>
+            </svg>
+        </button>
+    </div>
+</aside>

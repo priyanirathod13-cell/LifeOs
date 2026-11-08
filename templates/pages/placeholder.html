@@ -1,0 +1,43 @@
+{% extends 'layouts/app_layout.html' %}
+
+{% block title %}{{ page_title }} — LifeOS{% endblock %}
+{% block header_breadcrumb %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="page-header-info">
+        <h1 class="page-title">{{ page_title }}</h1>
+        <p class="page-subtitle">{{ page_description|default:"Module interface foundation and behavioral management workflow." }}</p>
+    </div>
+    <div class="page-actions">
+        <a href="{% url 'core:ui_system' %}" class="btn btn-secondary">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+                <polyline points="2 17 12 22 22 17"></polyline>
+                <polyline points="2 12 12 17 22 12"></polyline>
+            </svg>
+            Design System Components
+        </a>
+        <a href="{% url 'core:dashboard' %}" class="btn btn-primary">
+            Back to Dashboard
+        </a>
+    </div>
+</div>
+
+<div class="empty-state" style="padding: var(--space-12) var(--space-6);">
+    <svg class="empty-state-icon" style="width: 56px; height: 56px;" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+        <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+        <line x1="8" y1="21" x2="16" y2="21"></line>
+        <line x1="12" y1="17" x2="12" y2="21"></line>
+    </svg>
+    <h2 class="empty-state-title">{{ page_title }} Module</h2>
+    <p class="empty-state-desc">
+        The design system, layout, and navigation routing for this section are fully integrated.
+        Its specific business logic, data models, and analytical pipelines will be implemented in subsequent development milestones.
+    </p>
+    <div class="flex items-center gap-3">
+        <a href="{% url 'core:dashboard' %}" class="btn btn-secondary btn-sm">Return to Dashboard</a>
+        <a href="{% url 'core:ui_system' %}" class="btn btn-outline btn-sm">Inspect Component Library</a>
+    </div>
+</div>
+{% endblock %}

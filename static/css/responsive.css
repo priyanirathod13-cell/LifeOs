@@ -1,0 +1,154 @@
+/**
+ * LifeOS Design System — Responsive Styles
+ * Breakpoints:
+ * - Desktop: >= 1200px
+ * - Laptop / Small Desktop: 992px - 1199px
+ * - Tablet: 768px - 991px
+ * - Mobile: < 768px
+ */
+
+/* ==========================================================================
+   LAPTOP / COMPACT DESKTOP (max-width: 1199px)
+   ========================================================================== */
+@media (max-width: 1199px) {
+  .grid-cols-4 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* ==========================================================================
+   TABLET (max-width: 991px)
+   ========================================================================== */
+@media (max-width: 991px) {
+  :root {
+    --sidebar-width: 240px;
+  }
+
+  .sidebar {
+    transform: translateX(-100%);
+    box-shadow: var(--shadow-lg);
+  }
+
+  .sidebar.open {
+    transform: translateX(0);
+  }
+
+  .main-wrapper {
+    margin-left: 0 !important;
+  }
+
+  .header {
+    left: 0 !important;
+    padding: 0 var(--space-4);
+  }
+
+  .header-menu-btn {
+    display: inline-flex;
+  }
+
+  .main-content {
+    padding: var(--space-5);
+  }
+
+  .grid-cols-3 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* ==========================================================================
+   MOBILE (max-width: 767px)
+   ========================================================================== */
+@media (max-width: 767px) {
+  :root {
+    --sidebar-width: 280px;
+    --font-size-2xl: 1.5rem;
+    --font-size-xl: 1.25rem;
+  }
+
+  .main-content {
+    padding: var(--space-4);
+  }
+
+  .page-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--space-3);
+  }
+
+  .page-actions {
+    width: 100%;
+    justify-content: stretch;
+  }
+
+  .page-actions .btn {
+    flex: 1;
+  }
+
+  .grid-cols-2,
+  .grid-cols-3,
+  .grid-cols-4 {
+    grid-template-columns: repeat(1, minmax(0, 1fr));
+  }
+
+  .status-pill {
+    display: none; /* Conserve header space on small mobile */
+  }
+
+  .user-info {
+    display: none; /* Only avatar shown on mobile */
+  }
+
+  .header-breadcrumbs {
+    display: none;
+  }
+
+  .card-header,
+  .card-body,
+  .card-footer {
+    padding: var(--space-4);
+  }
+
+  .modal-dialog {
+    margin: var(--space-3);
+    max-height: 85vh;
+  }
+
+  .table th,
+  .table td {
+    padding: var(--space-3);
+  }
+}
+
+/* ==========================================================================
+   DESKTOP COLLAPSED SIDEBAR STATE
+   ========================================================================== */
+body.sidebar-collapsed .sidebar {
+  width: var(--sidebar-collapsed-width);
+}
+
+body.sidebar-collapsed .brand-info,
+body.sidebar-collapsed .nav-label,
+body.sidebar-collapsed .nav-badge,
+body.sidebar-collapsed .nav-group-title {
+  display: none;
+}
+
+body.sidebar-collapsed .nav-item {
+  justify-content: center;
+  padding: 0.7rem;
+  border-left: none;
+  border-radius: var(--radius-sm);
+}
+
+body.sidebar-collapsed .sidebar-brand {
+  padding: 0;
+  justify-content: center;
+}
+
+body.sidebar-collapsed .main-wrapper {
+  margin-left: var(--sidebar-collapsed-width);
+}
+
+body.sidebar-collapsed .header {
+  left: var(--sidebar-collapsed-width);
+}

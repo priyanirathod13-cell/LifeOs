@@ -114,21 +114,46 @@ Time-tracked activity with start time and optional end time (NULL indicates acti
 - **Indexes**: `['user', 'start_time']`
 
 #### 6. `productivity_routine`
-Recurring personal routine or fixed daily commitment (sleep, morning routine, focus block).
+Recurring personal routine or fixed daily commitment (sleep, morning routine, college lectures, meals).
 - **Primary Key**: `id` (`BIGINT`)
 - **Foreign Keys**: `user_id` -> `accounts_user(id)` ON DELETE CASCADE
-- **Columns**: `title` (`VARCHAR(150)`), `description` (`LONGTEXT`), `start_time` (`TIME(6)`), `end_time` (`TIME(6)`), `days_of_week` (`VARCHAR(50)`), `is_active` (`TINYINT(1)`), `created_at`, `updated_at`
+- **Columns**: `title` (`VARCHAR(150)`), `routine_type` (`VARCHAR(20)`: MORNING/EVENING/WORK/MEAL/EXERCISE/SLEEP/CHORE/OTHER), `description` (`LONGTEXT`), `start_time` (`TIME(6)`), `end_time` (`TIME(6)`), `days_of_week` (`VARCHAR(50)`: comma-separated `MON,TUE...`), `start_date` (`DATE`, NULLABLE), `end_date` (`DATE`, NULLABLE), `is_active` (`TINYINT(1)`, DEFAULT 1), `created_at`, `updated_at`
+- **Validation**: Enforces `start_time < end_time` for single-day commitments, `start_date <= end_date`, and non-overlapping routine collisions across shared active weekdays.
+- **Indexes**: `['user', 'is_active']`
 
-#### 7. `productivity_scheduleblock`
-Daily calendar block linking scheduled focus slots to actionable tasks or recurring routines.
+#### 7. `productivity_availabilitywindow`
+Configurable available time blocks during which user is available for productive work.
+- **Primary Key**: `id` (`BIGINT`)
+- **Foreign Keys**: `user_id` -> `accounts_user(id)` ON DELETE CASCADE
+- **Columns**: `day_of_week` (`VARCHAR(3)`: MON..SUN), `start_time` (`TIME(6)`), `end_time` (`TIME(6)`), `is_active` (`TINYINT(1)`, DEFAULT 1), `created_at`, `updated_at`
+- **Validation**: Enforces `start_time < end_time` and non-overlapping window intervals on the same weekday for that user.
+- **Indexes**: `['user', 'day_of_week', 'is_active']`
+
+#### 8. `productivity_scheduleblock`
+Daily calendar block linking scheduled focus slots to actionable tasks, recurring routines, or study plans.
 - **Primary Key**: `id` (`BIGINT`)
 - **Foreign Keys**:
   - `user_id` -> `accounts_user(id)` ON DELETE CASCADE
   - `related_task_id` -> `productivity_task(id)` ON DELETE SET_NULL (NULLABLE)
   - `related_routine_id` -> `productivity_routine(id)` ON DELETE SET_NULL (NULLABLE)
-- **Columns**: `title` (`VARCHAR(150)`), `description` (`LONGTEXT`), `block_date` (`DATE`), `start_time` (`TIME(6)`), `end_time` (`TIME(6)`), `block_type` (`VARCHAR(20)`), `status` (`VARCHAR(20)`), `created_at`, `updated_at`
-- **Validation**: `related_task.user_id == user_id`, `related_routine.user_id == user_id`
+  - `related_study_plan_id` -> `study_studyplan(id)` ON DELETE SET_NULL (NULLABLE)
+- **Columns**: `title` (`VARCHAR(150)`), `description` (`LONGTEXT`), `block_date` (`DATE`), `start_time` (`TIME(6)`), `end_time` (`TIME(6)`), `block_type` (`VARCHAR(20)`: TASK/ROUTINE/STUDY/BREAK/ACTIVITY/FREE), `status` (`VARCHAR(20)`: SCHEDULED/IN_PROGRESS/COMPLETED/SKIPPED/RESCHEDULED/CANCELLED), `priority` (`VARCHAR(20)`: LOW/MEDIUM/HIGH/URGENT), `is_fixed` (`TINYINT(1)`, DEFAULT 0), `created_at`, `updated_at`
+- **Validation**: Strict multi-user ownership check (`related_task.user_id == user_id`, `related_routine.user_id == user_id`, `related_study_plan.user_id == user_id`).
 - **Indexes**: `['user', 'block_date', 'start_time']`, `['user', 'status']`
+
+#### 9. `productivity_schedulingpreference`
+User-specific configuration parameters governing the heuristic timetable generator engine.
+- **Primary Key**: `id` (`BIGINT`)
+- **Foreign Keys**: `user_id` -> `accounts_user(id)` ON DELETE CASCADE (OneToOne)
+- **Columns**: `day_start_time` (`TIME(6)`, DEFAULT 08:00), `day_end_time` (`TIME(6)`, DEFAULT 22:00), `default_break_minutes` (`INT UNSIGNED`, DEFAULT 15), `max_continuous_work_minutes` (`INT UNSIGNED`, DEFAULT 90), `buffer_minutes` (`INT UNSIGNED`, DEFAULT 10), `auto_insert_breaks` (`TINYINT(1)`, DEFAULT 1), `max_daily_work_minutes` (`INT UNSIGNED`, DEFAULT 480), `created_at`, `updated_at`
+- **Validation**: Enforces `day_start_time < day_end_time`.
+
+#### 10. `productivity_schedulegenerationhistory`
+Audit log recording every execution of the Smart Timetable Generator for diagnostic tracking and review.
+- **Primary Key**: `id` (`BIGINT`)
+- **Foreign Keys**: `user_id` -> `accounts_user(id)` ON DELETE CASCADE
+- **Columns**: `generation_date` (`DATE`), `generated_at` (`DATETIME(6)`), `total_work_minutes` (`INT UNSIGNED`, DEFAULT 0), `tasks_scheduled_count` (`INT UNSIGNED`, DEFAULT 0), `study_blocks_scheduled_count` (`INT UNSIGNED`, DEFAULT 0), `routines_scheduled_count` (`INT UNSIGNED`, DEFAULT 0), `breaks_scheduled_count` (`INT UNSIGNED`, DEFAULT 0), `unscheduled_items_json` (`LONGTEXT`, DEFAULT '[]'), `status` (`VARCHAR(20)`: DRAFT/APPLIED/DISCARDED), `created_at`
+- **Indexes**: `['user', 'generation_date']`
 
 ---
 

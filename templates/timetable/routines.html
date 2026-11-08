@@ -1,0 +1,156 @@
+{% extends 'layouts/app_layout.html' %}
+
+{% block title %}Daily Routines — LifeOS{% endblock %}
+{% block header_breadcrumb %}My Day / Routines{% endblock %}
+
+{% block content %}
+<div class="content-container animate-fade-in">
+    <!-- Header -->
+    <div class="page-header" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: var(--space-4); flex-wrap: wrap; gap: var(--space-4);">
+        <div class="header-left">
+            <h1 class="page-title" style="font-size: var(--font-size-2xl); font-weight: 700; color: var(--color-text-primary); margin-bottom: var(--space-1);">Daily Routines &amp; Fixed Commitments</h1>
+            <p class="text-secondary" style="font-size: var(--font-size-sm); color: var(--color-text-muted);">
+                Define non-negotiable habitual sequences, office hours, college lectures, meals, and sleep blocks.
+            </p>
+        </div>
+        <div class="header-actions">
+            <a href="{% url 'productivity:routine_create' %}" class="btn btn-primary" style="display: inline-flex; align-items: center; gap: var(--space-2);">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                </svg>
+                Add Daily Routine
+            </a>
+        </div>
+    </div>
+
+    <!-- Sub-navigation Pills -->
+    {% include 'timetable/timetable_nav.html' %}
+
+    <!-- Filter Bar -->
+    <div class="card" style="padding: var(--space-3) var(--space-4); background: var(--color-bg-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); margin-bottom: var(--space-5);">
+        <form method="get" style="display: flex; gap: var(--space-3); align-items: center; flex-wrap: wrap;">
+            <!-- Weekday Filter -->
+            <div style="display: flex; align-items: center; gap: var(--space-2);">
+                <label style="font-size: var(--font-size-xs); color: var(--color-text-muted); font-weight: 500;">Weekday:</label>
+                <select name="day" class="form-select" style="font-size: var(--font-size-xs); padding: 4px 8px; width: 120px;" onchange="this.form.submit()">
+                    <option value="">All Weekdays</option>
+                    {% for code, name in days %}
+                        <option value="{{ code }}" {% if day_filter == code %}selected{% endif %}>{{ name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Routine Type Filter -->
+            <div style="display: flex; align-items: center; gap: var(--space-2);">
+                <label style="font-size: var(--font-size-xs); color: var(--color-text-muted); font-weight: 500;">Type:</label>
+                <select name="type" class="form-select" style="font-size: var(--font-size-xs); padding: 4px 8px; width: 140px;" onchange="this.form.submit()">
+                    <option value="">All Types</option>
+                    {% for code, name in routine_types %}
+                        <option value="{{ code }}" {% if type_filter == code %}selected{% endif %}>{{ name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Status Filter -->
+            <div style="display: flex; align-items: center; gap: var(--space-2);">
+                <label style="font-size: var(--font-size-xs); color: var(--color-text-muted); font-weight: 500;">Status:</label>
+                <select name="status" class="form-select" style="font-size: var(--font-size-xs); padding: 4px 8px; width: 110px;" onchange="this.form.submit()">
+                    <option value="">All</option>
+                    <option value="active" {% if status_filter == 'active' %}selected{% endif %}>Active</option>
+                    <option value="inactive" {% if status_filter == 'inactive' %}selected{% endif %}>Paused</option>
+                </select>
+            </div>
+
+            {% if day_filter or type_filter or status_filter %}
+                <a href="{% url 'productivity:routine_list' %}" class="btn btn-ghost btn-sm" style="font-size: var(--font-size-xs); color: var(--color-text-muted);">
+                    Reset Filters
+                </a>
+            {% endif %}
+        </form>
+    </div>
+
+    <!-- Routines Grid -->
+    {% if routines %}
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: var(--space-4);">
+            {% for r in routines %}
+                <div class="card" style="padding: var(--space-4); background: var(--color-bg-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); opacity: {% if not r.is_active %}0.65{% else %}1.0{% endif %}; display: flex; flex-direction: column; justify-content: space-between;">
+                    <div>
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: var(--space-2); gap: var(--space-2);">
+                            <span class="badge" style="background: rgba(99, 102, 241, 0.12); color: #818cf8; border: 1px solid rgba(99, 102, 241, 0.25); font-size: 11px;">
+                                {{ r.get_routine_type_display }}
+                            </span>
+                            <div style="display: flex; align-items: center; gap: var(--space-2);">
+                                <span class="badge {% if r.is_active %}badge-success{% else %}badge-neutral{% endif %}" style="font-size: 10px;">
+                                    {% if r.is_active %}Active{% else %}Paused{% endif %}
+                                </span>
+                            </div>
+                        </div>
+
+                        <h3 style="font-size: var(--font-size-base); font-weight: 700; color: var(--color-text-primary); margin: 0 0 4px 0;">
+                            {{ r.title }}
+                        </h3>
+
+                        <!-- Timing info -->
+                        <div style="font-size: var(--font-size-xs); color: var(--color-text-secondary); margin-bottom: var(--space-2); font-family: monospace;">
+                            <strong>{{ r.start_time|time:"H:i" }} – {{ r.end_time|time:"H:i" }}</strong>
+                            <span style="font-family: inherit; color: var(--color-text-muted);">({{ r.duration_minutes }}m)</span>
+                        </div>
+
+                        {% if r.description %}
+                            <p style="font-size: var(--font-size-xs); color: var(--color-text-muted); margin-bottom: var(--space-3); line-height: 1.4;">
+                                {{ r.description }}
+                            </p>
+                        {% endif %}
+
+                        <!-- Weekday Chips -->
+                        <div style="display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: var(--space-4);">
+                            {% for day_code in r.days_list %}
+                                <span style="font-size: 10px; font-weight: 600; padding: 2px 6px; border-radius: 4px; background: rgba(255,255,255,0.06); color: var(--color-text-primary);">
+                                    {{ day_code }}
+                                </span>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <!-- Actions -->
+                    <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--color-border); padding-top: var(--space-3); margin-top: var(--space-2);">
+                        <form method="post" action="{% url 'productivity:routine_toggle_active' r.pk %}">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-ghost btn-sm" style="font-size: 11px; padding: 2px 6px; color: {% if r.is_active %}var(--color-text-muted){% else %}#10b981{% endif %};">
+                                {% if r.is_active %}Pause{% else %}Activate{% endif %}
+                            </button>
+                        </form>
+
+                        <div style="display: flex; gap: var(--space-2);">
+                            <a href="{% url 'productivity:routine_update' r.pk %}" class="btn btn-secondary btn-sm" style="font-size: 11px;">
+                                Edit
+                            </a>
+                            <a href="{% url 'productivity:routine_delete' r.pk %}" class="btn btn-ghost btn-sm" style="font-size: 11px; color: #ef4444;">
+                                Delete
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="card" style="padding: var(--space-8); background: var(--color-bg-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); text-align: center;">
+            <div style="width: 52px; height: 52px; border-radius: 50%; background: rgba(99, 102, 241, 0.1); color: var(--color-primary); display: flex; align-items: center; justify-content: center; margin: 0 auto var(--space-4);">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path>
+                </svg>
+            </div>
+            <h3 style="font-size: var(--font-size-base); font-weight: 700; color: var(--color-text-primary); margin-bottom: var(--space-1);">
+                No Daily Routines Defined
+            </h3>
+            <p style="font-size: var(--font-size-xs); color: var(--color-text-muted); max-width: 440px; margin: 0 auto var(--space-4);">
+                Define your fixed recurring routines (sleep, morning rituals, classes, office hours, meals) so the smart scheduler can work around them.
+            </p>
+            <a href="{% url 'productivity:routine_create' %}" class="btn btn-primary btn-sm">
+                + Create Routine
+            </a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

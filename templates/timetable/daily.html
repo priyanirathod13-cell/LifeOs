@@ -1,0 +1,278 @@
+{% extends 'layouts/app_layout.html' %}
+
+{% block title %}Daily Timetable — LifeOS{% endblock %}
+{% block header_breadcrumb %}My Day / Timetable{% endblock %}
+
+{% block content %}
+<div class="content-container animate-fade-in">
+    <!-- Header -->
+    <div class="page-header" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: var(--space-4); flex-wrap: wrap; gap: var(--space-4);">
+        <div class="header-left">
+            <h1 class="page-title" style="font-size: var(--font-size-2xl); font-weight: 700; color: var(--color-text-primary); margin-bottom: var(--space-1);">Daily Timetable</h1>
+            <p class="text-secondary" style="font-size: var(--font-size-sm); color: var(--color-text-muted);">
+                Chronological timeline of fixed routines, study commitments, tasks, and breaks.
+            </p>
+        </div>
+        <div class="header-actions" style="display: flex; gap: var(--space-2); align-items: center; flex-wrap: wrap;">
+            <a href="{% url 'productivity:generator' %}?date={{ target_date|date:'Y-m-d' }}" class="btn btn-primary" style="display: inline-flex; align-items: center; gap: var(--space-2);">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                </svg>
+                Smart Generator
+            </a>
+            <a href="{% url 'productivity:block_create' %}?date={{ target_date|date:'Y-m-d' }}" class="btn btn-secondary" style="display: inline-flex; align-items: center; gap: var(--space-2);">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                </svg>
+                Add Block
+            </a>
+        </div>
+    </div>
+
+    <!-- Navigation Pills -->
+    {% include 'timetable/timetable_nav.html' %}
+
+    <!-- Date Navigation Banner -->
+    <div class="card" style="padding: var(--space-3) var(--space-4); background: var(--color-bg-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); margin-bottom: var(--space-5); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: var(--space-3);">
+        <div style="display: flex; align-items: center; gap: var(--space-2);">
+            <a href="?date={{ prev_date|date:'Y-m-d' }}" class="btn btn-ghost btn-sm" title="Previous Day ({{ prev_date|date:'M d' }})">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="15 18 9 12 15 6"></polyline>
+                </svg>
+            </a>
+            <a href="?date={{ today|date:'Y-m-d' }}" class="btn {% if is_today %}btn-primary{% else %}btn-ghost{% endif %} btn-sm" style="font-weight: 600;">
+                Today
+            </a>
+            <a href="?date={{ next_date|date:'Y-m-d' }}" class="btn btn-ghost btn-sm" title="Next Day ({{ next_date|date:'M d' }})">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="9 18 15 12 9 6"></polyline>
+                </svg>
+            </a>
+            <span style="font-size: var(--font-size-base); font-weight: 700; color: var(--color-text-primary); margin-left: var(--space-2);">
+                {{ target_date|date:"l, F d, Y" }}
+            </span>
+            {% if is_today %}
+                <span class="badge badge-success" style="font-size: 11px;">Active Today</span>
+            {% endif %}
+        </div>
+
+        <form method="get" style="display: flex; gap: var(--space-2); align-items: center;">
+            <input type="date" name="date" value="{{ target_date|date:'Y-m-d' }}" class="form-control" style="padding: 4px 8px; font-size: var(--font-size-xs); width: 140px;">
+            <button type="submit" class="btn btn-secondary btn-sm" style="font-size: var(--font-size-xs);">Go</button>
+        </form>
+    </div>
+
+    <!-- Summary KPI Grid -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: var(--space-4); margin-bottom: var(--space-6);">
+        <div class="card" style="padding: var(--space-4); background: var(--color-bg-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg);">
+            <div style="font-size: var(--font-size-xs); color: var(--color-text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;">Planned Focus &amp; Study</div>
+            <div style="font-size: var(--font-size-2xl); font-weight: 700; color: var(--color-text-primary);">{{ total_work_str }}</div>
+            <div style="font-size: var(--font-size-xs); color: var(--color-text-muted); margin-top: 2px;">{{ total_blocks }} scheduled blocks</div>
+        </div>
+        <div class="card" style="padding: var(--space-4); background: var(--color-bg-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg);">
+            <div style="font-size: var(--font-size-xs); color: var(--color-text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;">Completed Blocks</div>
+            <div style="font-size: var(--font-size-2xl); font-weight: 700; color: #10b981;">{{ completed_count }}</div>
+            <div style="font-size: var(--font-size-xs); color: var(--color-text-muted); margin-top: 2px;">Executed on schedule</div>
+        </div>
+        <div class="card" style="padding: var(--space-4); background: var(--color-bg-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg);">
+            <div style="font-size: var(--font-size-xs); color: var(--color-text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;">Pending / In Progress</div>
+            <div style="font-size: var(--font-size-2xl); font-weight: 700; color: #6366f1;">{{ scheduled_count }}</div>
+            <div style="font-size: var(--font-size-xs); color: var(--color-text-muted); margin-top: 2px;">Remaining action items</div>
+        </div>
+        <div class="card" style="padding: var(--space-4); background: var(--color-bg-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg);">
+            <div style="font-size: var(--font-size-xs); color: var(--color-text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;">Remaining Free Time</div>
+            <div style="font-size: var(--font-size-2xl); font-weight: 700; color: #f59e0b;">{{ total_free_minutes }}m</div>
+            <div style="font-size: var(--font-size-xs); color: var(--color-text-muted); margin-top: 2px;">Unallocated buffer</div>
+        </div>
+    </div>
+
+    <!-- Timeline Schedule -->
+    <div style="display: flex; flex-direction: column; gap: var(--space-6);">
+        {% if blocks %}
+            <div class="card" style="padding: var(--space-5); background: var(--color-bg-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-4); border-bottom: 1px solid var(--color-border); padding-bottom: var(--space-3);">
+                    <h2 style="font-size: var(--font-size-lg); font-weight: 700; color: var(--color-text-primary); margin: 0;">Timeline Schedule</h2>
+                    <span style="font-size: var(--font-size-xs); color: var(--color-text-muted);">
+                        Sorted chronologically
+                    </span>
+                </div>
+
+                <div style="display: flex; flex-direction: column; gap: var(--space-3);">
+                    {% for block in blocks %}
+                        <div class="card" style="padding: var(--space-4); background: {% if block.status == 'COMPLETED' %}rgba(16, 185, 129, 0.04){% elif block.status == 'SKIPPED' %}rgba(255,255,255,0.02){% else %}var(--color-bg-main){% endif %}; border: 1px solid {% if block.status == 'COMPLETED' %}rgba(16, 185, 129, 0.25){% elif block.is_fixed %}rgba(99, 102, 241, 0.35){% else %}var(--color-border){% endif %}; border-left: 4px solid {% if block.status == 'COMPLETED' %}#10b981{% elif block.block_type == 'BREAK' %}#f59e0b{% elif block.block_type == 'STUDY' %}#818cf8{% elif block.is_fixed %}#6366f1{% else %}#a78bfa{% endif %}; border-radius: var(--radius-md);">
+                            
+                            <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: var(--space-3);">
+                                <!-- Left: Timing & Details -->
+                                <div style="flex: 1; min-width: 260px;">
+                                    <div style="display: flex; align-items: center; gap: var(--space-2); margin-bottom: 4px; flex-wrap: wrap;">
+                                        <!-- Time Badge -->
+                                        <span class="badge" style="background: rgba(255,255,255,0.08); color: var(--color-text-primary); font-family: monospace; font-size: 12px; font-weight: 600;">
+                                            {{ block.start_time|time:"H:i" }} – {{ block.end_time|time:"H:i" }}
+                                        </span>
+                                        <span style="font-size: var(--font-size-xs); color: var(--color-text-muted);">
+                                            ({{ block.duration_minutes }}m)
+                                        </span>
+
+                                        <!-- Type Badge -->
+                                        <span class="badge {% if block.block_type == 'FOCUS' %}badge-primary{% elif block.block_type == 'STUDY' %}badge-secondary{% elif block.block_type == 'BREAK' %}badge-warning{% elif block.block_type == 'ROUTINE' %}badge-neutral{% else %}badge-neutral{% endif %}" style="font-size: 11px;">
+                                            {{ block.get_block_type_display }}
+                                        </span>
+
+                                        {% if block.is_fixed %}
+                                            <span class="badge badge-neutral" style="background: rgba(99,102,241,0.15); color: #818cf8; border: 1px solid rgba(99,102,241,0.3); font-size: 10px;">
+                                                Fixed Commitment
+                                            </span>
+                                        {% endif %}
+
+                                        <!-- Status Badge -->
+                                        {% if block.status == 'COMPLETED' %}
+                                            <span class="badge badge-success" style="font-size: 11px;">✓ Completed</span>
+                                        {% elif block.status == 'SKIPPED' %}
+                                            <span class="badge badge-neutral" style="font-size: 11px; opacity: 0.7;">Skipped</span>
+                                        {% elif block.status == 'IN_PROGRESS' %}
+                                            <span class="badge badge-warning" style="font-size: 11px;">In Progress</span>
+                                        {% else %}
+                                            <span class="badge badge-neutral" style="font-size: 11px;">Scheduled</span>
+                                        {% endif %}
+                                    </div>
+
+                                    <!-- Block Title -->
+                                    <h3 style="font-size: var(--font-size-base); font-weight: 700; color: var(--color-text-primary); margin: 4px 0 {% if block.description or block.related_task or block.related_study_plan %}4px{% else %}0{% endif %} 0; {% if block.status == 'COMPLETED' %}text-decoration: line-through; opacity: 0.85;{% endif %}">
+                                        {{ block.title }}
+                                    </h3>
+
+                                    {% if block.description %}
+                                        <p style="font-size: var(--font-size-xs); color: var(--color-text-secondary); margin: 2px 0 6px 0; line-height: 1.4;">
+                                            {{ block.description }}
+                                        </p>
+                                    {% endif %}
+
+                                    <!-- Related Entity Links -->
+                                    <div style="display: flex; gap: var(--space-2); align-items: center; flex-wrap: wrap; margin-top: 4px;">
+                                        {% if block.related_task %}
+                                            <a href="{% url 'productivity:task_detail' block.related_task.pk %}" style="font-size: 11px; color: var(--color-primary); text-decoration: none; display: inline-flex; align-items: center; gap: 4px; background: rgba(99,102,241,0.08); padding: 2px 8px; border-radius: 4px;">
+                                                <span>📋 Task:</span> {{ block.related_task.title|truncatechars:35 }}
+                                            </a>
+                                        {% endif %}
+                                        {% if block.related_study_plan %}
+                                            <span style="font-size: 11px; color: #a78bfa; background: rgba(167,139,250,0.1); padding: 2px 8px; border-radius: 4px;">
+                                                📚 Study Plan: {{ block.related_study_plan.subject.name }}
+                                            </span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+
+                                <!-- Right: Interactive Actions -->
+                                <div style="display: flex; gap: var(--space-2); align-items: center; flex-wrap: wrap;">
+                                    {% if block.status != 'COMPLETED' %}
+                                        <form method="post" action="{% url 'productivity:block_status' block.pk %}">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="status" value="COMPLETED">
+                                            <button type="submit" class="btn btn-secondary btn-sm" style="font-size: 11px; color: #10b981; border-color: rgba(16,185,129,0.3);">
+                                                ✓ Complete
+                                            </button>
+                                        </form>
+
+                                        {% if not block.is_fixed %}
+                                            <form method="post" action="{% url 'productivity:block_status' block.pk %}">
+                                                {% csrf_token %}
+                                                <input type="hidden" name="status" value="SKIPPED">
+                                                <button type="submit" class="btn btn-ghost btn-sm" style="font-size: 11px; color: var(--color-text-muted);">
+                                                    Skip
+                                                </button>
+                                            </form>
+                                            <a href="{% url 'productivity:block_reschedule' block.pk %}" class="btn btn-ghost btn-sm" style="font-size: 11px; color: #f59e0b;">
+                                                Reschedule
+                                            </a>
+                                        {% endif %}
+                                    {% else %}
+                                        <form method="post" action="{% url 'productivity:block_status' block.pk %}">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="status" value="SCHEDULED">
+                                            <button type="submit" class="btn btn-ghost btn-sm" style="font-size: 11px; color: var(--color-text-muted);">
+                                                Reopen
+                                            </button>
+                                        </form>
+                                    {% endif %}
+
+                                    <a href="{% url 'productivity:block_update' block.pk %}" class="btn btn-ghost btn-sm" style="font-size: 11px;">
+                                        Edit
+                                    </a>
+                                    <a href="{% url 'productivity:block_delete' block.pk %}" class="btn btn-ghost btn-sm" style="font-size: 11px; color: #ef4444;">
+                                        ✕
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        {% else %}
+            <!-- Empty State -->
+            <div class="card" style="padding: var(--space-8); background: var(--color-bg-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); text-align: center;">
+                <div style="width: 56px; height: 56px; border-radius: 50%; background: rgba(99, 102, 241, 0.1); color: var(--color-primary); display: flex; align-items: center; justify-content: center; margin: 0 auto var(--space-4);">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <polyline points="12 6 12 12 16 14"></polyline>
+                    </svg>
+                </div>
+                <h3 style="font-size: var(--font-size-lg); font-weight: 700; color: var(--color-text-primary); margin-bottom: var(--space-1);">
+                    No Timetable Generated for {{ target_date|date:"l, M d" }}
+                </h3>
+                <p style="font-size: var(--font-size-sm); color: var(--color-text-muted); max-width: 480px; margin: 0 auto var(--space-5); line-height: 1.5;">
+                    Automatically generate a realistic schedule allocating your pending tasks, study plans, and daily routines into your free working windows.
+                </p>
+                <div style="display: flex; justify-content: center; gap: var(--space-3); flex-wrap: wrap;">
+                    <a href="{% url 'productivity:generator' %}?date={{ target_date|date:'Y-m-d' }}" class="btn btn-primary" style="display: inline-flex; align-items: center; gap: var(--space-2);">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                        </svg>
+                        Generate Smart Timetable
+                    </a>
+                    <a href="{% url 'productivity:block_create' %}?date={{ target_date|date:'Y-m-d' }}" class="btn btn-secondary">
+                        Add Block Manually
+                    </a>
+                </div>
+            </div>
+        {% endif %}
+
+        <!-- Active Recurring Routines on this Date -->
+        {% if routines %}
+            <div class="card" style="padding: var(--space-5); background: var(--color-bg-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-3);">
+                    <div>
+                        <h3 style="font-size: var(--font-size-base); font-weight: 700; color: var(--color-text-primary); margin: 0 0 2px 0;">
+                            Recurring Daily Routines for {{ target_date|date:"l" }}
+                        </h3>
+                        <p style="font-size: var(--font-size-xs); color: var(--color-text-muted); margin: 0;">
+                            Fixed habitual sequences and commitments applied automatically on this weekday.
+                        </p>
+                    </div>
+                    <a href="{% url 'productivity:routine_list' %}" class="btn btn-ghost btn-sm" style="font-size: var(--font-size-xs);">
+                        Manage Routines →
+                    </a>
+                </div>
+
+                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: var(--space-3);">
+                    {% for r in routines %}
+                        <div style="background: var(--color-bg-main); border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: var(--space-3); display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <div style="font-size: var(--font-size-sm); font-weight: 600; color: var(--color-text-primary);">
+                                    {{ r.title }}
+                                </div>
+                                <div style="font-size: var(--font-size-xs); color: var(--color-text-muted);">
+                                    {{ r.get_routine_type_display }} &bull; {{ r.duration_minutes }}m
+                                </div>
+                            </div>
+                            <span class="badge" style="background: rgba(99, 102, 241, 0.12); color: #818cf8; font-family: monospace; font-size: 11px;">
+                                {{ r.start_time|time:"H:i" }} – {{ r.end_time|time:"H:i" }}
+                            </span>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

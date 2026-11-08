@@ -213,13 +213,14 @@ python manage.py check
 python manage.py test
 
 # Or run specific modules
+python manage.py test apps.productivity
 python manage.py test apps.study
 ```
 
 Expected output:
 ```
 System check identified no issues (0 silenced).
-Ran 94 tests in ~93s
+Ran 108 tests in ~106s
 
 OK
 ```
@@ -241,6 +242,13 @@ python manage.py runserver
 - **User Login**: [http://127.0.0.1:8000/accounts/login/](http://127.0.0.1:8000/accounts/login/) (Sign in with email, password, and Remember Me toggle)
 - **Password Reset**: [http://127.0.0.1:8000/accounts/password-reset/](http://127.0.0.1:8000/accounts/password-reset/) (Console email delivery in development)
 - **Executive Dashboard**: [http://127.0.0.1:8000/dashboard/](http://127.0.0.1:8000/dashboard/) (Central control panel with live tasks, habits, study duration, goals, schedule blocks, recent activity, and quick actions)
+- **Daily Timetable**: [http://127.0.0.1:8000/timetable/](http://127.0.0.1:8000/timetable/) (Chronological day timeline, date navigation, 4 KPI cards, block status actions, reschedule, manual block modal)
+- **Weekly Timetable**: [http://127.0.0.1:8000/timetable/weekly/](http://127.0.0.1:8000/timetable/weekly/) (7-day Monday–Sunday visual calendar grid, today indicator, pending backlog sidebar)
+- **Daily Routine Management**: [http://127.0.0.1:8000/routines/](http://127.0.0.1:8000/routines/) (Recurring fixed commitments, weekday filter pills, active toggles, overlap prevention)
+- **Availability Management**: [http://127.0.0.1:8000/availability/](http://127.0.0.1:8000/availability/) (Productive time windows per weekday, weekly overview cards)
+- **Smart Timetable Generator**: [http://127.0.0.1:8000/timetable/generator/](http://127.0.0.1:8000/timetable/generator/) (Deterministic rule-based scheduling simulation, study + task prioritization, rest break insertion, daily workload cap, unscheduled diagnostic reasons, apply confirmation)
+- **Schedule History**: [http://127.0.0.1:8000/timetable/history/](http://127.0.0.1:8000/timetable/history/) (Audit log table of generator runs with metrics and unscheduled tags)
+- **Scheduling Preferences**: [http://127.0.0.1:8000/timetable/preferences/](http://127.0.0.1:8000/timetable/preferences/) (Day bounds, continuous work threshold, break duration, buffer, daily fatigue cap)
 - **Study Dashboard**: [http://127.0.0.1:8000/study/](http://127.0.0.1:8000/study/) (7 summary KPI metrics, active timer banner, today's planned sessions, upcoming exams, weekly study rhythm)
 - **Subjects & Courses**: [http://127.0.0.1:8000/study/subjects/](http://127.0.0.1:8000/study/subjects/) (Course catalog, chapter grouping, progress bars, and cascade warnings)
 - **Topics & Chapters**: [http://127.0.0.1:8000/study/topics/](http://127.0.0.1:8000/study/topics/) (Curriculum breakdown, duration tracking, priority, instant completion toggle)

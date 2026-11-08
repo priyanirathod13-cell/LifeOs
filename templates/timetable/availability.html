@@ -1,0 +1,126 @@
+{% extends 'layouts/app_layout.html' %}
+
+{% block title %}Availability Management — LifeOS{% endblock %}
+{% block header_breadcrumb %}My Day / Availability{% endblock %}
+
+{% block content %}
+<div class="content-container animate-fade-in">
+    <!-- Header -->
+    <div class="page-header" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: var(--space-4); flex-wrap: wrap; gap: var(--space-4);">
+        <div class="header-left">
+            <h1 class="page-title" style="font-size: var(--font-size-2xl); font-weight: 700; color: var(--color-text-primary); margin-bottom: var(--space-1);">Productive Availability Windows</h1>
+            <p class="text-secondary" style="font-size: var(--font-size-sm); color: var(--color-text-muted);">
+                Specify when you are available for focused study and tasks. The smart scheduler only plans work during these windows.
+            </p>
+        </div>
+    </div>
+
+    <!-- Navigation Pills -->
+    {% include 'timetable/timetable_nav.html' %}
+
+    <div style="display: grid; grid-template-columns: 2fr 1fr; gap: var(--space-6); align-items: flex-start;">
+        <!-- Left: Weekly Day-by-Day Availability Cards -->
+        <div style="display: flex; flex-direction: column; gap: var(--space-4);">
+            <div class="card" style="padding: var(--space-4); background: var(--color-bg-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-3); border-bottom: 1px solid var(--color-border); padding-bottom: var(--space-2);">
+                    <h2 style="font-size: var(--font-size-base); font-weight: 700; color: var(--color-text-primary); margin: 0;">Weekly Schedule Windows</h2>
+                    <span style="font-size: var(--font-size-xs); color: var(--color-text-muted);">
+                        Default: {{ pref.day_start_time|time:"H:i" }}–{{ pref.day_end_time|time:"H:i" }}
+                    </span>
+                </div>
+
+                <div style="display: flex; flex-direction: column; gap: var(--space-3);">
+                    {% for day in day_cards %}
+                        <div style="background: var(--color-bg-main); border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: var(--space-3);">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: {% if day.has_custom %}var(--space-2){% else %}0{% endif %};">
+                                <span style="font-weight: 700; font-size: var(--font-size-sm); color: var(--color-text-primary);">
+                                    {{ day.name }}
+                                </span>
+                                {% if day.has_custom %}
+                                    <span class="badge badge-primary" style="font-size: 11px;">
+                                        {{ day.total_hours }}h total window
+                                    </span>
+                                {% else %}
+                                    <span style="font-size: var(--font-size-xs); color: var(--color-text-muted);">
+                                        Default window ({{ pref.day_start_time|time:"H:i" }}–{{ pref.day_end_time|time:"H:i" }})
+                                    </span>
+                                {% endif %}
+                            </div>
+
+                            {% if day.has_custom %}
+                                <div style="display: flex; flex-direction: column; gap: 6px;">
+                                    {% for w in day.windows %}
+                                        <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.03); border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: 4px 10px;">
+                                            <div style="display: flex; align-items: center; gap: var(--space-2);">
+                                                <span style="font-family: monospace; font-size: 12px; font-weight: 600; color: var(--color-text-primary);">
+                                                    {{ w.start_time|time:"H:i" }} – {{ w.end_time|time:"H:i" }}
+                                                </span>
+                                                <span style="font-size: 11px; color: var(--color-text-muted);">
+                                                    ({{ w.duration_minutes }} mins)
+                                                </span>
+                                            </div>
+                                            <form method="post" action="{% url 'productivity:availability_delete' w.pk %}" style="display: inline;">
+                                                {% csrf_token %}
+                                                <button type="submit" class="btn btn-ghost btn-sm" style="color: #ef4444; font-size: 11px; padding: 2px 6px;" title="Remove Window">
+                                                    ✕
+                                                </button>
+                                            </form>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Right: Add Availability Window Form -->
+        <div class="card" style="padding: var(--space-5); background: var(--color-bg-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); position: sticky; top: 80px;">
+            <h3 style="font-size: var(--font-size-base); font-weight: 700; color: var(--color-text-primary); margin-bottom: var(--space-1);">
+                Add Time Window
+            </h3>
+            <p style="font-size: var(--font-size-xs); color: var(--color-text-muted); margin-bottom: var(--space-4);">
+                Define a custom available working slot for a specific weekday.
+            </p>
+
+            <form method="post" action="{% url 'productivity:availability_create' %}" novalidate>
+                {% csrf_token %}
+
+                <div class="form-group" style="margin-bottom: var(--space-3);">
+                    <label class="form-label" style="display: block; margin-bottom: var(--space-1); font-weight: 500; font-size: var(--font-size-xs); color: var(--color-text-secondary);">
+                        Day of the Week
+                    </label>
+                    {{ form.day_of_week }}
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); margin-bottom: var(--space-3);">
+                    <div class="form-group">
+                        <label class="form-label" style="display: block; margin-bottom: var(--space-1); font-weight: 500; font-size: var(--font-size-xs); color: var(--color-text-secondary);">
+                            Start Time
+                        </label>
+                        {{ form.start_time }}
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" style="display: block; margin-bottom: var(--space-1); font-weight: 500; font-size: var(--font-size-xs); color: var(--color-text-secondary);">
+                            End Time
+                        </label>
+                        {{ form.end_time }}
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-bottom: var(--space-4);">
+                    <label style="display: flex; align-items: center; gap: var(--space-2); cursor: pointer;">
+                        {{ form.is_active }}
+                        <span style="font-size: var(--font-size-xs); color: var(--color-text-primary);">Active Window</span>
+                    </label>
+                </div>
+
+                <button type="submit" class="btn btn-primary" style="width: 100%; font-size: var(--font-size-sm);">
+                    + Add Availability Window
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

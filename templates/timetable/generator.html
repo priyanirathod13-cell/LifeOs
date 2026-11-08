@@ -1,0 +1,237 @@
+{% extends 'layouts/app_layout.html' %}
+
+{% block title %}Smart Timetable Generator — LifeOS{% endblock %}
+{% block header_breadcrumb %}My Day / Timetable / Generator{% endblock %}
+
+{% block content %}
+<div class="content-container animate-fade-in">
+    <!-- Header -->
+    <div class="page-header" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: var(--space-4); flex-wrap: wrap; gap: var(--space-4);">
+        <div class="header-left">
+            <h1 class="page-title" style="font-size: var(--font-size-2xl); font-weight: 700; color: var(--color-text-primary); margin-bottom: var(--space-1);">Smart Timetable Generator</h1>
+            <p class="text-secondary" style="font-size: var(--font-size-sm); color: var(--color-text-muted);">
+                Deterministic algorithm allocating pending tasks and study plans into free time windows around fixed commitments.
+            </p>
+        </div>
+        <div class="header-actions">
+            <a href="{% url 'productivity:scheduling_preferences' %}" class="btn btn-secondary btn-sm" style="display: inline-flex; align-items: center; gap: 6px;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="3"></circle>
+                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                </svg>
+                Configure Settings
+            </a>
+        </div>
+    </div>
+
+    <!-- Navigation Pills -->
+    {% include 'timetable/timetable_nav.html' %}
+
+    <!-- Date Selection & Configuration Bar -->
+    <div class="card" style="padding: var(--space-4); background: var(--color-bg-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); margin-bottom: var(--space-6);">
+        <form method="get" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: var(--space-4);">
+            <div style="display: flex; align-items: center; gap: var(--space-3); flex-wrap: wrap;">
+                <label style="font-size: var(--font-size-sm); font-weight: 600; color: var(--color-text-primary);">Generate Timetable For:</label>
+                <input type="date" name="date" value="{{ target_date|date:'Y-m-d' }}" class="form-control" style="width: 160px; font-size: var(--font-size-sm);" onchange="this.form.submit()">
+                <button type="submit" class="btn btn-secondary btn-sm">Refresh Preview</button>
+            </div>
+
+            <!-- Preference Summary Tags -->
+            <div style="display: flex; gap: var(--space-2); align-items: center; font-size: var(--font-size-xs); color: var(--color-text-muted); flex-wrap: wrap;">
+                <span>Max continuous: <strong style="color: var(--color-text-primary);">{{ pref.max_continuous_work_minutes }}m</strong></span>
+                &bull;
+                <span>Break: <strong style="color: var(--color-text-primary);">{{ pref.default_break_minutes }}m</strong></span>
+                &bull;
+                <span>Daily cap: <strong style="color: var(--color-text-primary);">{{ pref.max_daily_work_minutes }}m</strong></span>
+            </div>
+        </form>
+    </div>
+
+    <!-- 4 KPI Preview Metrics -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: var(--space-4); margin-bottom: var(--space-6);">
+        <div class="card" style="padding: var(--space-4); background: var(--color-bg-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg);">
+            <div style="font-size: var(--font-size-xs); color: var(--color-text-muted); text-transform: uppercase; margin-bottom: 4px;">Scheduled Work</div>
+            <div style="font-size: var(--font-size-2xl); font-weight: 700; color: #10b981;">
+                {{ preview.statistics.total_work_minutes }} mins
+            </div>
+            <div style="font-size: var(--font-size-xs); color: var(--color-text-muted); margin-top: 2px;">
+                {{ preview.statistics.tasks_scheduled }} tasks &bull; {{ preview.statistics.study_scheduled }} study blocks
+            </div>
+        </div>
+
+        <div class="card" style="padding: var(--space-4); background: var(--color-bg-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg);">
+            <div style="font-size: var(--font-size-xs); color: var(--color-text-muted); text-transform: uppercase; margin-bottom: 4px;">Fixed Commitments</div>
+            <div style="font-size: var(--font-size-2xl); font-weight: 700; color: #6366f1;">
+                {{ preview.statistics.routines_scheduled }}
+            </div>
+            <div style="font-size: var(--font-size-xs); color: var(--color-text-muted); margin-top: 2px;">
+                Routines &amp; fixed calendar blocks
+            </div>
+        </div>
+
+        <div class="card" style="padding: var(--space-4); background: var(--color-bg-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg);">
+            <div style="font-size: var(--font-size-xs); color: var(--color-text-muted); text-transform: uppercase; margin-bottom: 4px;">Rest &amp; Recharge</div>
+            <div style="font-size: var(--font-size-2xl); font-weight: 700; color: #f59e0b;">
+                {{ preview.statistics.total_break_minutes }} mins
+            </div>
+            <div style="font-size: var(--font-size-xs); color: var(--color-text-muted); margin-top: 2px;">
+                {{ preview.statistics.breaks_scheduled }} scheduled recharge breaks
+            </div>
+        </div>
+
+        <div class="card" style="padding: var(--space-4); background: var(--color-bg-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg);">
+            <div style="font-size: var(--font-size-xs); color: var(--color-text-muted); text-transform: uppercase; margin-bottom: 4px;">Remaining Buffer</div>
+            <div style="font-size: var(--font-size-2xl); font-weight: 700; color: var(--color-text-primary);">
+                {{ preview.statistics.total_free_minutes }} mins
+            </div>
+            <div style="font-size: var(--font-size-xs); color: var(--color-text-muted); margin-top: 2px;">
+                Free unallocated working time
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Schedule Preview Section -->
+    <div class="card" style="padding: var(--space-5); background: var(--color-bg-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); margin-bottom: var(--space-6);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-4); border-bottom: 1px solid var(--color-border); padding-bottom: var(--space-3);">
+            <div>
+                <h2 style="font-size: var(--font-size-base); font-weight: 700; color: var(--color-text-primary); margin: 0 0 2px 0;">
+                    Proposed Chronological Schedule
+                </h2>
+                <p style="font-size: var(--font-size-xs); color: var(--color-text-muted); margin: 0;">
+                    Preview of all fixed commitments, tasks, study blocks, and breaks.
+                </p>
+            </div>
+            <span class="badge badge-neutral" style="font-size: 11px;">
+                {{ preview.statistics.total_scheduled_blocks }} total items
+            </span>
+        </div>
+
+        {% if preview.fixed_blocks or preview.scheduled_blocks %}
+            <div style="display: flex; flex-direction: column; gap: var(--space-3);">
+                <!-- Fixed Commitments -->
+                {% for fb in preview.fixed_blocks %}
+                    <div style="background: rgba(99, 102, 241, 0.05); border: 1px solid rgba(99, 102, 241, 0.25); border-left: 4px solid #6366f1; border-radius: var(--radius-md); padding: var(--space-3); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: var(--space-2);">
+                        <div style="display: flex; align-items: center; gap: var(--space-3);">
+                            <span style="font-family: monospace; font-size: 12px; font-weight: 700; color: #818cf8;">
+                                {{ fb.start_time|time:"H:i" }} – {{ fb.end_time|time:"H:i" }}
+                            </span>
+                            <div>
+                                <div style="font-size: var(--font-size-sm); font-weight: 600; color: var(--color-text-primary);">
+                                    {{ fb.title }}
+                                </div>
+                                <div style="font-size: 11px; color: var(--color-text-muted);">
+                                    Fixed Routine &bull; {{ fb.duration_minutes }}m
+                                </div>
+                            </div>
+                        </div>
+                        <span class="badge" style="background: rgba(99,102,241,0.15); color: #818cf8; font-size: 10px;">
+                            Non-Movable
+                        </span>
+                    </div>
+                {% endfor %}
+
+                <!-- Flexible Allocated Blocks -->
+                {% for sb in preview.scheduled_blocks %}
+                    <div style="background: {% if sb.block_type == 'BREAK' %}rgba(245, 158, 11, 0.05){% else %}var(--color-bg-main){% endif %}; border: 1px solid {% if sb.block_type == 'BREAK' %}rgba(245, 158, 11, 0.25){% else %}var(--color-border){% endif %}; border-left: 4px solid {% if sb.block_type == 'BREAK' %}#f59e0b{% elif sb.block_type == 'STUDY' %}#818cf8{% else %}#a78bfa{% endif %}; border-radius: var(--radius-md); padding: var(--space-3); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: var(--space-2);">
+                        <div style="display: flex; align-items: center; gap: var(--space-3);">
+                            <span style="font-family: monospace; font-size: 12px; font-weight: 700; color: var(--color-text-primary);">
+                                {{ sb.start_time|time:"H:i" }} – {{ sb.end_time|time:"H:i" }}
+                            </span>
+                            <div>
+                                <div style="font-size: var(--font-size-sm); font-weight: 600; color: var(--color-text-primary);">
+                                    {{ sb.title }}
+                                </div>
+                                <div style="font-size: 11px; color: var(--color-text-muted);">
+                                    {{ sb.get_block_type_display|default:sb.block_type }} &bull; {{ sb.duration_minutes }}m
+                                </div>
+                            </div>
+                        </div>
+
+                        <span class="badge {% if sb.block_type == 'BREAK' %}badge-warning{% elif sb.block_type == 'STUDY' %}badge-secondary{% else %}badge-primary{% endif %}" style="font-size: 10px;">
+                            {{ sb.block_type }}
+                        </span>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div style="text-align: center; padding: var(--space-6); color: var(--color-text-muted); font-size: var(--font-size-sm);">
+                No activities could be scheduled. Ensure you have active routines, pending tasks, or planned study activities.
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Unscheduled Activities (if any) -->
+    {% if preview.unscheduled_items %}
+        <div class="card" style="padding: var(--space-5); background: var(--color-bg-surface); border: 1px solid rgba(239, 68, 68, 0.25); border-radius: var(--radius-lg); margin-bottom: var(--space-6);">
+            <div style="display: flex; align-items: center; gap: var(--space-2); margin-bottom: var(--space-3);">
+                <span style="color: #ef4444; font-size: 18px;">⚠️</span>
+                <h3 style="font-size: var(--font-size-base); font-weight: 700; color: var(--color-text-primary); margin: 0;">
+                    Unscheduled Items ({{ preview.unscheduled_items|length }})
+                </h3>
+            </div>
+            <p style="font-size: var(--font-size-xs); color: var(--color-text-muted); margin-bottom: var(--space-4);">
+                These pending items could not be fitted into the available time windows for this date based on your duration and daily work cap.
+            </p>
+
+            <div style="display: flex; flex-direction: column; gap: var(--space-2);">
+                {% for item in preview.unscheduled_items %}
+                    <div style="background: var(--color-bg-main); border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: var(--space-3); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: var(--space-2);">
+                        <div>
+                            <div style="font-size: var(--font-size-sm); font-weight: 600; color: var(--color-text-primary);">
+                                {{ item.title }}
+                            </div>
+                            <div style="font-size: 11px; color: var(--color-text-muted);">
+                                Needs ~{{ item.duration_minutes }}m &bull; Priority: {{ item.priority }}
+                            </div>
+                        </div>
+                        <span class="badge badge-danger" style="font-size: 10px;">
+                            {{ item.reason }}
+                        </span>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    {% endif %}
+
+    <!-- Save & Apply Form -->
+    <div class="card" style="padding: var(--space-6); background: var(--color-bg-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg);">
+        <h3 style="font-size: var(--font-size-base); font-weight: 700; color: var(--color-text-primary); margin-bottom: var(--space-2);">
+            Apply &amp; Confirm Timetable
+        </h3>
+
+        {% if existing_blocks_count > 0 %}
+            <div class="alert alert-warning" style="background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3); color: #f59e0b; padding: var(--space-3) var(--space-4); border-radius: var(--radius-md); margin-bottom: var(--space-4); font-size: var(--font-size-sm);">
+                <strong>Notice:</strong> There are already <strong>{{ existing_blocks_count }}</strong> scheduled block(s) on {{ target_date|date:"l, M d" }}. Applying this timetable will merge with or replace them.
+            </div>
+        {% endif %}
+
+        <form method="post" action="{% url 'productivity:generator_apply' %}">
+            {% csrf_token %}
+            <input type="hidden" name="target_date" value="{{ target_date|date:'Y-m-d' }}">
+
+            {% if existing_blocks_count > 0 %}
+                <div style="margin-bottom: var(--space-4);">
+                    <label style="display: flex; align-items: center; gap: var(--space-2); cursor: pointer;">
+                        <input type="checkbox" name="replace_existing" value="1" checked class="form-check-input">
+                        <span style="font-size: var(--font-size-sm); color: var(--color-text-primary);">
+                            Replace non-completed flexible blocks (completed blocks and manual fixed commitments will be preserved).
+                        </span>
+                    </label>
+                </div>
+            {% endif %}
+
+            <div style="display: flex; justify-content: flex-end; gap: var(--space-3);">
+                <a href="{% url 'productivity:timetable_daily' %}?date={{ target_date|date:'Y-m-d' }}" class="btn btn-secondary">
+                    Cancel
+                </a>
+                <button type="submit" class="btn btn-primary" style="display: inline-flex; align-items: center; gap: var(--space-2);">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                    Apply Timetable to Schedule
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

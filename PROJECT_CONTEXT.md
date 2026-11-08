@@ -151,3 +151,36 @@ Established in Step 07:
   8. Exams & Assessments (`/study/exams/`): Exam scheduling, deadline countdowns, score tracking (`score_achieved / max_score`).
   9. Study Analytics (`/study/analytics/`): 14-day daily rhythm bar chart, subject time share, syllabus velocity, and plan adherence.
 
+---
+
+## 9. Smart Routine & Timetable Generator Architecture (Step 08)
+
+Established in Step 08:
+- **Module Architecture (`apps.productivity` & `apps.study` Integration)**:
+  - `Routine`: Recurring fixed commitments (e.g. Morning Routine, College Lectures, Office Work, Meals, Sleep) with weekday recurring sets (`MON,TUE...`), time validation, and cross-weekday overlap prevention.
+  - `AvailabilityWindow`: User-configured productive time windows by weekday (e.g. Mon 09:00–12:00, Mon 14:00–18:00) with duplicate and overlap validation.
+  - `ScheduleBlock`: Chronological calendar timeblocks on a specific date, linking to `Task`, `Routine`, or `StudyPlan`, with `status` (`SCHEDULED`, `COMPLETED`, `SKIPPED`, `RESCHEDULED`), `priority`, and `is_fixed` flags.
+  - `SchedulingPreference`: Per-user configuration for day bounds (`day_start_time`, `day_end_time`), `default_break_minutes`, `max_continuous_work_minutes`, `buffer_minutes`, `auto_insert_breaks`, and daily fatigue limits (`max_daily_work_minutes`).
+  - `ScheduleGenerationHistory`: Audit trail of generator runs, capturing generation timestamp, counts of scheduled tasks/study/routines/breaks, total work minutes, and structured reasons for unscheduled items in JSON format.
+- **Rule-Based Scheduling Engine (`apps.productivity.services.generator.TimetableGenerator`)**:
+  - Pure Python deterministic heuristic algorithm (100% testable, zero black-box AI dependencies).
+  - Multi-tier candidate prioritization:
+    1. Study commitments (`StudyPlan` for target date, prioritized by high/urgent priority and subject status).
+    2. Pending tasks (`Task`), ordered by deadline proximity (`due_date <= target_date`), priority weight (URGENT > HIGH > MEDIUM > LOW), and estimated duration.
+  - Continuous free slot discovery: Subtracts fixed routines and existing protected blocks from user availability windows or day bounds.
+  - Fatigue and ergonomics: Automatically inserts rest breaks when continuous work exceeds `max_continuous_work_minutes`, applies spacing buffers between activities, and caps daily workload at `max_daily_work_minutes`.
+  - Detailed unscheduled diagnostic reporting: Tags any unscheduled tasks or study plans with actionable reasons (e.g. "No available time slot of required duration", "Daily work limit reached").
+- **7 Core Functional Sections**:
+  1. Daily Timetable (`/timetable/`): Chronological day timeline, date navigation, 4 KPI cards (scheduled, completed, free time, work minutes), status actions (`COMPLETED`, `SKIPPED`), block reschedule, delete, manual block modal.
+  2. Weekly Timetable (`/timetable/weekly/`): 7-day Monday–Sunday responsive calendar view, today highlight, fixed vs flexible visual distinction, pending backlog sidebar.
+  3. Routine Management (`/routines/`): Recurring commitments CRUD, weekday filter pills, active status toggle, overlap protection.
+  4. Availability Windows (`/availability/`): Weekly productivity availability configuration with daily breakdown cards and add/delete actions.
+  5. Smart Timetable Generator (`/timetable/generator/`): Date selection, rule chips, schedule simulation preview, 4 preview KPI cards, unscheduled items callout with explicit reasons, conflict alerts, and atomic apply engine.
+  6. Schedule History (`/timetable/history/`): Generation history audit log table, execution metrics, and expandable unscheduled diagnostics.
+  7. Scheduling Preferences (`/timetable/preferences/`): User-configurable day bounds, fatigue thresholds, break lengths, buffers, and daily workload caps.
+- **Data Isolation & IDOR Protection**:
+  - All 17 timetable and routine endpoints strictly isolate data to `request.user`.
+  - Service layer functions require `user` argument and query exclusively within `user` scope.
+  - Forms validate foreign keys and prevent cross-user item manipulation with HTTP 404 responses.
+
+

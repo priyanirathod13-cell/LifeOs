@@ -1,0 +1,104 @@
+{% extends 'layouts/app_layout.html' %}
+
+{% block title %}Schedule History — LifeOS{% endblock %}
+{% block header_breadcrumb %}My Day / Schedule History{% endblock %}
+
+{% block content %}
+<div class="content-container animate-fade-in">
+    <!-- Header -->
+    <div class="page-header" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: var(--space-4); flex-wrap: wrap; gap: var(--space-4);">
+        <div class="header-left">
+            <h1 class="page-title" style="font-size: var(--font-size-2xl); font-weight: 700; color: var(--color-text-primary); margin-bottom: var(--space-1);">Schedule Generation History</h1>
+            <p class="text-secondary" style="font-size: var(--font-size-sm); color: var(--color-text-muted);">
+                Audit log of automated schedule generation runs, planned tasks, and capacity records.
+            </p>
+        </div>
+        <div class="header-actions">
+            <a href="{% url 'productivity:generator' %}" class="btn btn-primary" style="display: inline-flex; align-items: center; gap: var(--space-2);">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                </svg>
+                Run Timetable Generator
+            </a>
+        </div>
+    </div>
+
+    <!-- Navigation Pills -->
+    {% include 'timetable/timetable_nav.html' %}
+
+    {% if histories %}
+        <div class="card" style="padding: var(--space-5); background: var(--color-bg-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg);">
+            <div class="table-container" style="overflow-x: auto;">
+                <table class="table" style="width: 100%; border-collapse: collapse; font-size: var(--font-size-sm);">
+                    <thead>
+                        <tr style="border-bottom: 1px solid var(--color-border); text-align: left;">
+                            <th style="padding: var(--space-3); color: var(--color-text-muted); font-weight: 600; font-size: var(--font-size-xs);">SCHEDULE FOR</th>
+                            <th style="padding: var(--space-3); color: var(--color-text-muted); font-weight: 600; font-size: var(--font-size-xs);">GENERATED AT</th>
+                            <th style="padding: var(--space-3); color: var(--color-text-muted); font-weight: 600; font-size: var(--font-size-xs);">WORK ALLOCATED</th>
+                            <th style="padding: var(--space-3); color: var(--color-text-muted); font-weight: 600; font-size: var(--font-size-xs);">TASKS / STUDY</th>
+                            <th style="padding: var(--space-3); color: var(--color-text-muted); font-weight: 600; font-size: var(--font-size-xs);">ROUTINES</th>
+                            <th style="padding: var(--space-3); color: var(--color-text-muted); font-weight: 600; font-size: var(--font-size-xs);">UNSCHEDULED</th>
+                            <th style="padding: var(--space-3); color: var(--color-text-muted); font-weight: 600; font-size: var(--font-size-xs); text-align: right;">ACTION</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for h in histories %}
+                            <tr style="border-bottom: 1px solid var(--color-border);">
+                                <td style="padding: var(--space-3); font-weight: 700; color: var(--color-text-primary);">
+                                    {{ h.generation_date|date:"l, M d, Y" }}
+                                </td>
+                                <td style="padding: var(--space-3); color: var(--color-text-muted); font-size: var(--font-size-xs);">
+                                    {{ h.generated_at|date:"M d, Y H:i" }}
+                                </td>
+                                <td style="padding: var(--space-3); font-weight: 600; color: #10b981;">
+                                    {{ h.total_work_minutes }} mins
+                                </td>
+                                <td style="padding: var(--space-3); color: var(--color-text-secondary);">
+                                    {{ h.total_tasks_scheduled }} tasks &bull; {{ h.total_study_scheduled }} study
+                                </td>
+                                <td style="padding: var(--space-3); color: var(--color-text-muted);">
+                                    {{ h.total_routines_scheduled }}
+                                </td>
+                                <td style="padding: var(--space-3);">
+                                    {% if h.unscheduled_items %}
+                                        <span class="badge badge-warning" style="font-size: 10px;">
+                                            {{ h.unscheduled_items|length }} unscheduled
+                                        </span>
+                                    {% else %}
+                                        <span class="badge badge-success" style="font-size: 10px;">
+                                            All Fitted
+                                        </span>
+                                    {% endif %}
+                                </td>
+                                <td style="padding: var(--space-3); text-align: right;">
+                                    <a href="{% url 'productivity:timetable_daily' %}?date={{ h.generation_date|date:'Y-m-d' }}" class="btn btn-secondary btn-sm" style="font-size: 11px;">
+                                        View Day
+                                    </a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    {% else %}
+        <div class="card" style="padding: var(--space-8); background: var(--color-bg-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); text-align: center;">
+            <div style="width: 52px; height: 52px; border-radius: 50%; background: rgba(99, 102, 241, 0.1); color: var(--color-primary); display: flex; align-items: center; justify-content: center; margin: 0 auto var(--space-4);">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 8v4l3 3"></path>
+                    <circle cx="12" cy="12" r="9"></circle>
+                </svg>
+            </div>
+            <h3 style="font-size: var(--font-size-base); font-weight: 700; color: var(--color-text-primary); margin-bottom: var(--space-1);">
+                No Schedule Generation History
+            </h3>
+            <p style="font-size: var(--font-size-xs); color: var(--color-text-muted); max-width: 440px; margin: 0 auto var(--space-4);">
+                When you generate and apply daily timetables using the Smart Generator, audit records will be logged here for behavioral analytics.
+            </p>
+            <a href="{% url 'productivity:generator' %}" class="btn btn-primary btn-sm">
+                Generate First Timetable
+            </a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

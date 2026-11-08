@@ -11,7 +11,7 @@
 | **05** | **Main Dashboard Implementation** | **Completed** | Dynamic authenticated dashboard at `/dashboard/`, live data aggregation across 6 domain apps, 4 summary metric cards, interactive task toggle, habit completion toggle, quick add task modal, quick biometric check-in modal, upcoming exams, schedule blocks, recent activity feed, 59 automated tests (100% passing). |
 | **06** | **Productivity Management** | **Completed** | Full Productivity Management system across 6 sub-modules: Tasks (CRUD, multi-filter, sort, search, pagination, duration tracking), Categories (color-coded, duplicate prevention, safe unlinking), Habits (CRUD, pause/active toggle, 30-day matrix, daily/weekly streak engine), Activities (manual logging, live start/stop timer, duration aggregation), Goals (CRUD, target countdowns, task linkage, progress calculation), Projects (CRUD, child tasks, completion progress), 79 automated tests (100% passing). |
 | **07** | **Study Management & Syllabi** | **Completed** | Full multi-user Study Management module across 9 functional domains: Subjects (CRUD, chapter grouping, cascade warnings), Topics (chapter units, priority, completion toggle), Syllabus Tracker (dynamic progress bars, behind-schedule alerts), Study Planner (commitments, temporal tabs, status transitions), Study Sessions (live stopwatch timer, auto-closing dangling sessions, manual logs), Revision Planner (spaced revision iterations, quick reschedule), Exams & Assessments (deadlines, countdowns, score tracking), Study Analytics (14-day rhythm chart, subject time share, syllabus velocity, plan adherence), 19 study tests, 94 total system tests (100% passing). |
-| **08** | **Timetable & Daily Scheduling** | Pending | Structured timeblocks, scheduling engine, and daily calendar allocation. |
+| **08** | **Timetable & Daily Scheduling** | **Completed** | Smart Routine & Timetable Generator across 7 core functional areas: Daily Timetable (chronological timeline, date navigation, status actions, reschedule, KPI cards), Weekly Timetable (7-day calendar overview, backlog sidebar), Routine Management (recurring commitments, weekday filtering, overlap prevention), Availability Management (productive windows per weekday), Smart Generator Engine (deterministic rule-based scheduling, study + task prioritization, break insertion, workload cap, unscheduled item diagnostics), Generation History (audit logs with metrics and unscheduled reasons), Scheduling Preferences (customizable work bounds, break lengths, buffers, fatigue limit), 31 productivity tests, 108 total system tests (100% passing). |
 
 ---
 
@@ -298,3 +298,72 @@
 - **94 Automated Tests** across the entire application:
   - 19 dedicated tests in `apps.study` verifying models, calculations, views, timer workflows, validation rules, and multi-user IDOR isolation.
   - 100% pass rate (`Ran 94 tests in 93.364s — OK`).
+
+---
+
+## Detailed Step 08 Deliverables
+
+### 1. Daily Timetable
+- **Routes**:
+  - `productivity:daily_timetable` (`GET /timetable/`): Chronological day schedule, date navigation (`?date=YYYY-MM-DD`), 4 KPI summary cards (Total Scheduled, Completed Tasks, Free Gaps, Work Volume), timeline visualizer with distinct styling for routines, tasks, study sessions, and breaks.
+  - `productivity:schedule_block_create` (`GET/POST /timetable/blocks/create/`): Manual creation of schedule blocks with user-scoped foreign keys.
+  - `productivity:schedule_block_update` (`GET/POST /timetable/blocks/<pk>/edit/`): Edit existing block details and time intervals.
+  - `productivity:schedule_block_delete` (`GET/POST /timetable/blocks/<pk>/delete/`): Safe block deletion with confirmation dialog.
+  - `productivity:schedule_block_status` (`POST /timetable/blocks/<pk>/status/`): Inline status transition (`SCHEDULED`, `COMPLETED`, `SKIPPED`).
+  - `productivity:schedule_block_reschedule` (`GET/POST /timetable/blocks/<pk>/reschedule/`): Move block to a new date with optional auto-fit slot calculation.
+
+### 2. Weekly Timetable
+- **Route**: `productivity:weekly_timetable` (`GET /timetable/weekly/`)
+- **Features**:
+  - 7-day Monday through Sunday responsive visual schedule grid.
+  - Date navigation (`?week_start=YYYY-MM-DD`), Jump to Today action.
+  - Current day visual highlight and start/end time markers.
+  - Clear visual distinction between fixed routines/commitments and flexible work blocks.
+  - Pending backlog sidebar displaying unscheduled high-priority tasks with quick links.
+
+### 3. Daily Routine Management
+- **Routes**:
+  - `productivity:routines` (`GET /routines/`): Regular commitments management (e.g. Morning Routine, College Lectures, Office Work, Meals, Sleep) with weekday filter pills (`ALL`, `MON`, `TUE`, `WED`, `THU`, `FRI`, `SAT`, `SUN`).
+  - `productivity:routine_create` (`GET/POST /routines/create/`): Create recurring routine with multi-weekday selection pills, routine type, and time bounds.
+  - `productivity:routine_update` (`GET/POST /routines/<pk>/edit/`): Update routine properties, schedule, and weekday assignments.
+  - `productivity:routine_delete` (`GET/POST /routines/<pk>/delete/`): Delete routine with cascade safety.
+  - `productivity:routine_toggle_active` (`POST /routines/<pk>/toggle-active/`): One-click enable/disable toggle.
+- **Validation**:
+  - Start time must precede end time for single-day commitments.
+  - Overlapping routine prevention across shared weekdays (`clean()`).
+  - Optional date boundary enforcement (`start_date <= end_date`).
+
+### 4. Availability Management
+- **Routes**:
+  - `productivity:availability` (`GET /availability/`): Weekly productivity availability configuration with daily breakdown cards (Mon–Sun), window counts, and total available work hours.
+  - `productivity:availability_create` (`POST /availability/create/`): Add new availability window for a specified weekday.
+  - `productivity:availability_delete` (`POST /availability/<pk>/delete/`): Delete availability window.
+- **Validation**:
+  - Non-overlapping time window validation on same weekday.
+  - Single-day start/end time consistency.
+
+### 5. Smart Timetable Generator
+- **Routes**:
+  - `productivity:schedule_generator` (`GET /timetable/generator/`): Date selection, rule explanation chips, preview generation simulation, 4 preview KPI cards (Work Time, Tasks Scheduled, Study Plans, Free Buffer), detailed proposed schedule timeline, unscheduled items banner with structured reasons, and conflict warnings.
+  - `productivity:schedule_generator_apply` (`POST /timetable/generator/apply/`): Atomic persistence of generated blocks into `ScheduleBlock`, with option to replace existing flexible blocks while strictly preserving completed blocks and fixed commitments. Records audit log in `ScheduleGenerationHistory`.
+- **Engine Rules (`apps.productivity.services.generator.TimetableGenerator`)**:
+  - Multi-tier candidate priority: Study commitments (`StudyPlan`) prioritized by high/urgent priority, followed by pending tasks (`Task`) sorted by deadline urgency, priority score, and duration.
+  - Free slot discovery: Available windows minus fixed routines and existing non-replaceable blocks.
+  - Automatic rest break insertion after continuous work exceeding `max_continuous_work_minutes`.
+  - Spacing buffer insertion between adjacent work blocks.
+  - Daily workload ceiling enforcement (`max_daily_work_minutes`).
+  - Granular unscheduled diagnostics with explicit reasons (e.g., slot deficiency, daily cap).
+
+### 6. Schedule Generation History
+- **Route**: `productivity:schedule_history` (`GET /timetable/history/`)
+- **Features**: Audit log table of previous generation runs, execution metrics (generation date, timestamp, total work minutes, tasks scheduled, study blocks, routines), and expandable unscheduled diagnostics.
+
+### 7. Scheduling Preferences
+- **Route**: `productivity:scheduling_preferences` (`GET/POST /timetable/preferences/`)
+- **Features**: User-specific scheduling settings form: Day start time, Day end time, Default break minutes (5–60 min), Continuous work limit (30–240 min), Spacing buffer (0–30 min), Automatic break insertion toggle, Maximum daily work minutes (60–960 min).
+
+### Automated Test Suite
+- **108 Automated Tests** across the entire application:
+  - 31 dedicated tests in `apps.productivity` verifying models, validation rules, availability services, collision detection, timetable generator engine, rescheduling, views, and multi-user IDOR isolation.
+  - 100% pass rate (`Ran 108 tests in 106.975s — OK`).
+

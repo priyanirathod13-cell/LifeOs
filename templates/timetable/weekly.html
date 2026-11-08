@@ -1,0 +1,153 @@
+{% extends 'layouts/app_layout.html' %}
+
+{% block title %}Weekly Timetable — LifeOS{% endblock %}
+{% block header_breadcrumb %}My Day / Weekly Timetable{% endblock %}
+
+{% block content %}
+<div class="content-container animate-fade-in">
+    <!-- Header -->
+    <div class="page-header" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: var(--space-4); flex-wrap: wrap; gap: var(--space-4);">
+        <div class="header-left">
+            <h1 class="page-title" style="font-size: var(--font-size-2xl); font-weight: 700; color: var(--color-text-primary); margin-bottom: var(--space-1);">Weekly Timetable</h1>
+            <p class="text-secondary" style="font-size: var(--font-size-sm); color: var(--color-text-muted);">
+                High-level 7-day schedule view from Monday through Sunday with mobile responsive breakdown.
+            </p>
+        </div>
+        <div class="header-actions" style="display: flex; gap: var(--space-2); align-items: center; flex-wrap: wrap;">
+            <a href="{% url 'productivity:generator' %}" class="btn btn-primary" style="display: inline-flex; align-items: center; gap: var(--space-2);">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                </svg>
+                Smart Generator
+            </a>
+            <a href="{% url 'productivity:block_create' %}" class="btn btn-secondary">
+                Add Block
+            </a>
+        </div>
+    </div>
+
+    <!-- Navigation Pills -->
+    {% include 'timetable/timetable_nav.html' %}
+
+    <!-- Week Navigation Header -->
+    <div class="card" style="padding: var(--space-3) var(--space-4); background: var(--color-bg-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); margin-bottom: var(--space-5); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: var(--space-3);">
+        <div style="display: flex; align-items: center; gap: var(--space-2);">
+            <a href="?date={{ prev_week|date:'Y-m-d' }}" class="btn btn-ghost btn-sm" title="Previous Week">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="15 18 9 12 15 6"></polyline>
+                </svg>
+            </a>
+            <a href="?date={{ today|date:'Y-m-d' }}" class="btn btn-ghost btn-sm" style="font-weight: 600;">
+                Current Week
+            </a>
+            <a href="?date={{ next_week|date:'Y-m-d' }}" class="btn btn-ghost btn-sm" title="Next Week">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="9 18 15 12 9 6"></polyline>
+                </svg>
+            </a>
+            <span style="font-size: var(--font-size-base); font-weight: 700; color: var(--color-text-primary); margin-left: var(--space-2);">
+                Week of {{ week_start|date:"M d" }} – {{ week_end|date:"M d, Y" }}
+            </span>
+        </div>
+
+        <div style="font-size: var(--font-size-xs); color: var(--color-text-muted);">
+            Total Planned Work: <strong style="color: var(--color-primary); font-size: var(--font-size-sm);">{{ total_week_work_str }}</strong>
+        </div>
+    </div>
+
+    <!-- 7-Day Responsive Grid -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: var(--space-4); align-items: flex-start;">
+        {% for day in days_data %}
+            <div class="card" style="padding: var(--space-3); background: {% if day.is_today %}var(--color-bg-surface){% else %}var(--color-bg-surface){% endif %}; border: 1px solid {% if day.is_today %}var(--color-primary){% else %}var(--color-border){% endif %}; border-radius: var(--radius-lg); display: flex; flex-direction: column; min-height: 380px;">
+                
+                <!-- Day Header -->
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: var(--space-3); padding-bottom: var(--space-2); border-bottom: 1px solid var(--color-border);">
+                    <div>
+                        <div style="font-size: var(--font-size-sm); font-weight: 700; color: {% if day.is_today %}var(--color-primary){% else %}var(--color-text-primary){% endif %};">
+                            {{ day.day_short }} &bull; {{ day.date_str }}
+                        </div>
+                        <div style="font-size: 11px; color: var(--color-text-muted);">
+                            {{ day.work_hours }}h work &bull; {{ day.total_items }} items
+                        </div>
+                    </div>
+                    {% if day.is_today %}
+                        <span class="badge badge-primary" style="font-size: 10px; padding: 2px 6px;">Today</span>
+                    {% endif %}
+                </div>
+
+                <!-- Daily Time Blocks -->
+                <div style="display: flex; flex-direction: column; gap: var(--space-2); flex: 1;">
+                    {% if day.blocks %}
+                        {% for block in day.blocks %}
+                            <div style="background: var(--color-bg-main); border: 1px solid var(--color-border); border-left: 3px solid {% if block.status == 'COMPLETED' %}#10b981{% elif block.block_type == 'BREAK' %}#f59e0b{% elif block.block_type == 'STUDY' %}#818cf8{% elif block.is_fixed %}#6366f1{% else %}#a78bfa{% endif %}; border-radius: var(--radius-sm); padding: var(--space-2); font-size: var(--font-size-xs);">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px;">
+                                    <span style="font-family: monospace; font-size: 10px; font-weight: 600; color: var(--color-text-muted);">
+                                        {{ block.start_time|time:"H:i" }}–{{ block.end_time|time:"H:i" }}
+                                    </span>
+                                    {% if block.status == 'COMPLETED' %}
+                                        <span style="color: #10b981; font-size: 10px;">✓</span>
+                                    {% endif %}
+                                </div>
+                                <div style="font-weight: 600; color: var(--color-text-primary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; {% if block.status == 'COMPLETED' %}text-decoration: line-through; opacity: 0.8;{% endif %}">
+                                    {{ block.title }}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <div style="text-align: center; padding: var(--space-6) 0; color: var(--color-text-muted); font-size: var(--font-size-xs); flex: 1; display: flex; flex-direction: column; justify-content: center;">
+                            No blocks scheduled
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- Day Footer -->
+                <div style="margin-top: var(--space-3); padding-top: var(--space-2); border-top: 1px solid var(--color-border); display: flex; justify-content: space-between; align-items: center;">
+                    <a href="{% url 'productivity:timetable_daily' %}?date={{ day.date|date:'Y-m-d' }}" style="font-size: 11px; color: var(--color-primary); text-decoration: none; font-weight: 500;">
+                        Open Day →
+                    </a>
+                    <a href="{% url 'productivity:block_create' %}?date={{ day.date|date:'Y-m-d' }}" style="font-size: 11px; color: var(--color-text-muted); text-decoration: none;">
+                        + Add
+                    </a>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+
+    <!-- Bottom Pending Tasks Reference -->
+    {% if pending_tasks %}
+        <div class="card" style="padding: var(--space-5); background: var(--color-bg-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); margin-top: var(--space-6);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-3);">
+                <div>
+                    <h3 style="font-size: var(--font-size-base); font-weight: 700; color: var(--color-text-primary); margin: 0 0 2px 0;">
+                        Pending Backlog Items Ready for Scheduling
+                    </h3>
+                    <p style="font-size: var(--font-size-xs); color: var(--color-text-muted); margin: 0;">
+                        High-priority tasks with approaching deadlines that can be scheduled into upcoming days.
+                    </p>
+                </div>
+                <a href="{% url 'productivity:task_list' %}" class="btn btn-ghost btn-sm" style="font-size: var(--font-size-xs);">
+                    View All Tasks →
+                </a>
+            </div>
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: var(--space-3);">
+                {% for task in pending_tasks %}
+                    <div style="background: var(--color-bg-main); border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: var(--space-3); display: flex; justify-content: space-between; align-items: center; gap: var(--space-2);">
+                        <div style="min-width: 0;">
+                            <div style="font-size: var(--font-size-sm); font-weight: 600; color: var(--color-text-primary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                {{ task.title }}
+                            </div>
+                            <div style="font-size: var(--font-size-xs); color: var(--color-text-muted);">
+                                {% if task.due_date %}Due: {{ task.due_date|date:"M d" }}{% else %}No deadline{% endif %} &bull; ~{{ task.estimated_minutes|default:45 }}m
+                            </div>
+                        </div>
+                        <a href="{% url 'productivity:block_create' %}?related_task={{ task.pk }}" class="btn btn-secondary btn-sm" style="font-size: 11px; white-space: nowrap;">
+                            Schedule
+                        </a>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

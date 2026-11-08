@@ -1,11 +1,14 @@
 from django.contrib import admin
 from .models import (
     Activity,
+    AvailabilityWindow,
     Category,
     Habit,
     HabitLog,
     Routine,
     ScheduleBlock,
+    ScheduleGenerationHistory,
+    SchedulingPreference,
     Task,
 )
 
@@ -52,13 +55,33 @@ class ActivityAdmin(admin.ModelAdmin):
 
 @admin.register(Routine)
 class RoutineAdmin(admin.ModelAdmin):
-    list_display = ('title', 'user', 'start_time', 'end_time', 'days_of_week', 'is_active')
-    list_filter = ('is_active', 'user')
-    search_fields = ('title',)
+    list_display = ('title', 'user', 'routine_type', 'start_time', 'end_time', 'days_of_week', 'is_active')
+    list_filter = ('routine_type', 'is_active', 'user')
+    search_fields = ('title', 'description', 'user__username')
+
+
+@admin.register(AvailabilityWindow)
+class AvailabilityWindowAdmin(admin.ModelAdmin):
+    list_display = ('user', 'day_of_week', 'start_time', 'end_time', 'is_active')
+    list_filter = ('day_of_week', 'is_active', 'user')
+    search_fields = ('user__username',)
 
 
 @admin.register(ScheduleBlock)
 class ScheduleBlockAdmin(admin.ModelAdmin):
-    list_display = ('title', 'user', 'block_date', 'start_time', 'end_time', 'block_type', 'status')
-    list_filter = ('block_type', 'status', 'block_date', 'user')
-    search_fields = ('title', 'description')
+    list_display = ('title', 'user', 'block_date', 'start_time', 'end_time', 'block_type', 'status', 'is_fixed')
+    list_filter = ('block_type', 'status', 'is_fixed', 'block_date', 'user')
+    search_fields = ('title', 'description', 'user__username')
+
+
+@admin.register(SchedulingPreference)
+class SchedulingPreferenceAdmin(admin.ModelAdmin):
+    list_display = ('user', 'day_start_time', 'day_end_time', 'default_break_minutes', 'max_continuous_work_minutes', 'auto_insert_breaks')
+    search_fields = ('user__username',)
+
+
+@admin.register(ScheduleGenerationHistory)
+class ScheduleGenerationHistoryAdmin(admin.ModelAdmin):
+    list_display = ('user', 'generation_date', 'generated_at', 'total_tasks_scheduled', 'total_study_scheduled', 'total_work_minutes', 'status')
+    list_filter = ('generation_date', 'status', 'user')
+    search_fields = ('user__username',)

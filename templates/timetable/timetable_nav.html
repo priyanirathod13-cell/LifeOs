@@ -1,0 +1,55 @@
+<!-- Timetable & Routine Module Section Navigation -->
+<div class="card" style="padding: var(--space-2) var(--space-3); background: var(--color-bg-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); margin-bottom: var(--space-6); overflow-x: auto; white-space: nowrap;">
+    <div style="display: flex; gap: var(--space-2); align-items: center;">
+        <a href="{% url 'productivity:timetable_daily' %}" class="btn {% if subnav == 'daily' or not subnav %}btn-primary{% else %}btn-ghost{% endif %} btn-sm" style="font-size: var(--font-size-xs); font-weight: 500; display: inline-flex; align-items: center; gap: 6px;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <polyline points="12 6 12 12 16 14"></polyline>
+            </svg>
+            Daily Timetable
+        </a>
+        <a href="{% url 'productivity:timetable_weekly' %}" class="btn {% if subnav == 'weekly' %}btn-primary{% else %}btn-ghost{% endif %} btn-sm" style="font-size: var(--font-size-xs); font-weight: 500; display: inline-flex; align-items: center; gap: 6px;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                <line x1="16" y1="2" x2="16" y2="6"></line>
+                <line x1="8" y1="2" x2="8" y2="6"></line>
+                <line x1="3" y1="10" x2="21" y2="10"></line>
+            </svg>
+            Weekly Timetable
+        </a>
+        <a href="{% url 'productivity:routine_list' %}" class="btn {% if subnav == 'routines' %}btn-primary{% else %}btn-ghost{% endif %} btn-sm" style="font-size: var(--font-size-xs); font-weight: 500; display: inline-flex; align-items: center; gap: 6px;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path>
+            </svg>
+            Daily Routines
+        </a>
+        <a href="{% url 'productivity:availability_list' %}" class="btn {% if subnav == 'availability' %}btn-primary{% else %}btn-ghost{% endif %} btn-sm" style="font-size: var(--font-size-xs); font-weight: 500; display: inline-flex; align-items: center; gap: 6px;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                <line x1="8" y1="21" x2="16" y2="21"></line>
+                <line x1="12" y1="17" x2="12" y2="21"></line>
+            </svg>
+            Availability Windows
+        </a>
+        <a href="{% url 'productivity:generator' %}" class="btn {% if subnav == 'generator' %}btn-primary{% else %}btn-ghost{% endif %} btn-sm" style="font-size: var(--font-size-xs); font-weight: 500; display: inline-flex; align-items: center; gap: 6px;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+            </svg>
+            Smart Generator
+        </a>
+        <a href="{% url 'productivity:schedule_history' %}" class="btn {% if subnav == 'history' %}btn-primary{% else %}btn-ghost{% endif %} btn-sm" style="font-size: var(--font-size-xs); font-weight: 500; display: inline-flex; align-items: center; gap: 6px;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 8v4l3 3"></path>
+                <circle cx="12" cy="12" r="9"></circle>
+            </svg>
+            Schedule History
+        </a>
+        <a href="{% url 'productivity:scheduling_preferences' %}" class="btn {% if subnav == 'preferences' %}btn-primary{% else %}btn-ghost{% endif %} btn-sm" style="font-size: var(--font-size-xs); font-weight: 500; display: inline-flex; align-items: center; gap: 6px;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="3"></circle>
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+            </svg>
+            Preferences
+        </a>
+    </div>
+</div>

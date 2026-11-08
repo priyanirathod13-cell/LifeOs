@@ -3,7 +3,9 @@ from apps.planning.views import goal_list_view, project_list_view
 from apps.productivity.views import (
     activity_list_view,
     category_list_view,
+    daily_timetable_view,
     habit_list_view,
+    routine_list_view,
     task_list_view,
 )
 from apps.study.views import study_analytics_view, study_dashboard_view
@@ -49,8 +51,8 @@ urlpatterns = [
     path('ui-system/', ui_system, name='ui_system'),
 
     # MY DAY (Protected)
-    path('timetable/', timetable_view, name='timetable'),
-    path('routines/', routines_view, name='routines'),
+    path('timetable/', daily_timetable_view, name='timetable'),
+    path('routines/', routine_list_view, name='routines'),
     path('tasks/', task_list_view, name='tasks'),
     path('categories/', category_list_view, name='categories'),
     path('habits/', habit_list_view, name='habits'),

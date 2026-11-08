@@ -1,4 +1,4 @@
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, time, timedelta
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
@@ -9,18 +9,48 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 
-from .forms import ActivityForm, CategoryForm, HabitForm, HabitLogForm, TaskForm
+from .forms import (
+    ActivityForm,
+    AvailabilityWindowForm,
+    CategoryForm,
+    HabitForm,
+    HabitLogForm,
+    RescheduleBlockForm,
+    RoutineForm,
+    ScheduleBlockForm,
+    SchedulingPreferenceForm,
+    TaskForm,
+)
 from .models import (
     Activity,
+    AvailabilityWindow,
+    BlockType,
     Category,
     CategoryType,
+    DayOfWeek,
     Habit,
     HabitFrequency,
     HabitLog,
     Priority,
+    Routine,
+    RoutineType,
+    ScheduleBlock,
+    ScheduleGenerationHistory,
+    ScheduleStatus,
+    SchedulingPreference,
     Task,
     TaskStatus,
 )
+from .services import (
+    TimetableGenerator,
+    compute_free_intervals,
+    detect_block_collision,
+    get_day_fixed_commitments,
+    get_user_availability_windows,
+    mark_block_skipped,
+    reschedule_schedule_block,
+)
+from apps.study.models import PlanStatus, StudyPlan
 
 
 def calculate_habit_streak(habit, user):
@@ -850,3 +880,672 @@ def activity_delete_view(request, pk):
         'activity': activity,
     }
     return render(request, 'productivity/activity_confirm_delete.html', context)
+
+
+# ==============================================================================
+# 5. DAILY TIMETABLE VIEWS
+# ==============================================================================
+
+@login_required
+def daily_timetable_view(request):
+    """
+    Chronological daily timetable displaying fixed routines, scheduled tasks,
+    study blocks, rest breaks, and available gaps for a specific calendar date.
+    """
+    user = request.user
+    date_str = request.GET.get('date', '').strip()
+    today = timezone.localtime(timezone.now()).date()
+
+    if date_str:
+        try:
+            target_date = datetime.strptime(date_str, '%Y-%m-%d').date()
+        except ValueError:
+            target_date = today
+    else:
+        target_date = today
+
+    prev_date = target_date - timedelta(days=1)
+    next_date = target_date + timedelta(days=1)
+    is_today = (target_date == today)
+
+    # Fetch scheduled blocks for this date
+    blocks = list(
+        ScheduleBlock.objects.filter(
+            user=user,
+            block_date=target_date
+        ).select_related('related_task', 'related_routine', 'related_study_plan')
+        .order_by('start_time')
+    )
+
+    # Active routines that apply on this date
+    routines = [
+        r for r in Routine.objects.filter(user=user, is_active=True).order_by('start_time')
+        if r.applies_on_date(target_date)
+    ]
+
+    # Metrics
+    total_work_minutes = sum(
+        b.duration_minutes for b in blocks
+        if b.block_type in [BlockType.FOCUS, BlockType.STUDY]
+    )
+    completed_count = sum(1 for b in blocks if b.status == ScheduleStatus.COMPLETED)
+    scheduled_count = sum(1 for b in blocks if b.status == ScheduleStatus.SCHEDULED)
+    skipped_count = sum(1 for b in blocks if b.status == ScheduleStatus.SKIPPED)
+
+    # Compute free gaps in working windows
+    available_windows = get_user_availability_windows(user, target_date)
+    fixed_commitments = get_day_fixed_commitments(user, target_date)
+    free_intervals = compute_free_intervals(available_windows, fixed_commitments, target_date)
+    total_free_minutes = sum(dur for _, _, dur in free_intervals)
+
+    context = {
+        'page_title': f"Daily Timetable — {target_date.strftime('%a, %b %d')}",
+        'active_nav': 'timetable',
+        'subnav': 'daily',
+        'target_date': target_date,
+        'prev_date': prev_date,
+        'next_date': next_date,
+        'is_today': is_today,
+        'blocks': blocks,
+        'routines': routines,
+        'total_blocks': len(blocks),
+        'completed_count': completed_count,
+        'scheduled_count': scheduled_count,
+        'skipped_count': skipped_count,
+        'total_work_minutes': total_work_minutes,
+        'total_work_str': f"{total_work_minutes // 60}h {total_work_minutes % 60}m",
+        'total_free_minutes': total_free_minutes,
+        'free_intervals': free_intervals,
+        'statuses': ScheduleStatus.choices,
+        'block_types': BlockType.choices,
+    }
+    return render(request, 'timetable/daily.html', context)
+
+
+@login_required
+def schedule_block_create_view(request):
+    """
+    Manually create a single schedule block on a date.
+    """
+    target_date_str = request.GET.get('date', '').strip()
+    initial = {}
+    if target_date_str:
+        try:
+            initial['block_date'] = datetime.strptime(target_date_str, '%Y-%m-%d').date()
+        except ValueError:
+            pass
+
+    if request.method == 'POST':
+        form = ScheduleBlockForm(request.POST, user=request.user)
+        if form.is_valid():
+            block = form.save()
+            messages.success(request, f"Scheduled block '{block.title}' for {block.start_time.strftime('%H:%M')}.")
+            return redirect(f"{redirect('productivity:timetable_daily').url}?date={block.block_date.strftime('%Y-%m-%d')}")
+    else:
+        form = ScheduleBlockForm(user=request.user, initial=initial)
+
+    context = {
+        'page_title': 'Add Schedule Block',
+        'active_nav': 'timetable',
+        'subnav': 'daily',
+        'form': form,
+    }
+    return render(request, 'timetable/block_form.html', context)
+
+
+@login_required
+def schedule_block_update_view(request, pk):
+    """
+    Edit attributes, timings, or status of a schedule block.
+    """
+    block = get_object_or_404(ScheduleBlock, pk=pk, user=request.user)
+
+    if request.method == 'POST':
+        form = ScheduleBlockForm(request.POST, instance=block, user=request.user)
+        if form.is_valid():
+            b = form.save()
+            messages.success(request, f"Schedule block '{b.title}' updated.")
+            return redirect(f"{redirect('productivity:timetable_daily').url}?date={b.block_date.strftime('%Y-%m-%d')}")
+    else:
+        form = ScheduleBlockForm(instance=block, user=request.user)
+
+    context = {
+        'page_title': f"Edit Block — {block.title}",
+        'active_nav': 'timetable',
+        'subnav': 'daily',
+        'form': form,
+        'block': block,
+    }
+    return render(request, 'timetable/block_form.html', context)
+
+
+@login_required
+def schedule_block_delete_view(request, pk):
+    """
+    Delete a schedule block with confirmation.
+    """
+    block = get_object_or_404(ScheduleBlock, pk=pk, user=request.user)
+    block_date = block.block_date
+
+    if request.method == 'POST':
+        title = block.title
+        block.delete()
+        messages.success(request, f"Block '{title}' removed from timetable.")
+        return redirect(f"{redirect('productivity:timetable_daily').url}?date={block_date.strftime('%Y-%m-%d')}")
+
+    context = {
+        'page_title': f"Delete Block — {block.title}",
+        'active_nav': 'timetable',
+        'subnav': 'daily',
+        'block': block,
+    }
+    return render(request, 'timetable/block_confirm_delete.html', context)
+
+
+@login_required
+@require_POST
+def schedule_block_status_view(request, pk):
+    """
+    Quick status action (COMPLETED, SKIPPED, SCHEDULED, IN_PROGRESS) for a block.
+    Synchronizes task or study plan completion when completed.
+    """
+    block = get_object_or_404(ScheduleBlock, pk=pk, user=request.user)
+    new_status = request.POST.get('status', '').strip()
+
+    if new_status in ScheduleStatus.values:
+        block.status = new_status
+        block.save()
+
+        # If completed, synchronize linked Task
+        if new_status == ScheduleStatus.COMPLETED:
+            if block.related_task and block.related_task.status != TaskStatus.COMPLETED:
+                t = block.related_task
+                t.status = TaskStatus.COMPLETED
+                t.completed_at = timezone.now()
+                if not t.actual_minutes:
+                    t.actual_minutes = block.duration_minutes
+                t.save()
+                messages.success(request, f"Marked '{block.title}' and linked task as Completed!")
+            elif block.related_study_plan and block.related_study_plan.status != PlanStatus.COMPLETED:
+                sp = block.related_study_plan
+                sp.status = PlanStatus.COMPLETED
+                sp.save()
+                messages.success(request, f"Marked '{block.title}' and study plan as Completed!")
+            else:
+                messages.success(request, f"Block '{block.title}' marked as Completed.")
+        elif new_status == ScheduleStatus.SKIPPED:
+            mark_block_skipped(request.user, block)
+            messages.info(request, f"Block '{block.title}' marked as Skipped.")
+        else:
+            messages.info(request, f"Block '{block.title}' set to {block.get_status_display()}.")
+    else:
+        messages.error(request, "Invalid status choice.")
+
+    return redirect(f"{redirect('productivity:timetable_daily').url}?date={block.block_date.strftime('%Y-%m-%d')}")
+
+
+@login_required
+def schedule_block_reschedule_view(request, pk):
+    """
+    Reschedule an incomplete or skipped block to a new date and time slot.
+    """
+    block = get_object_or_404(ScheduleBlock, pk=pk, user=request.user)
+
+    if request.method == 'POST':
+        form = RescheduleBlockForm(request.POST)
+        if form.is_valid():
+            new_date = form.cleaned_data['new_date']
+            new_start = form.cleaned_data.get('new_start_time')
+
+            success, msg, _ = reschedule_schedule_block(
+                user=request.user,
+                block=block,
+                new_date=new_date,
+                new_start_time=new_start
+            )
+            if success:
+                messages.success(request, msg)
+                return redirect(f"{redirect('productivity:timetable_daily').url}?date={new_date.strftime('%Y-%m-%d')}")
+            else:
+                messages.error(request, msg)
+    else:
+        form = RescheduleBlockForm(initial={
+            'new_date': block.block_date + timedelta(days=1),
+            'new_start_time': block.start_time,
+        })
+
+    context = {
+        'page_title': f"Reschedule Block — {block.title}",
+        'active_nav': 'timetable',
+        'subnav': 'daily',
+        'block': block,
+        'form': form,
+    }
+    return render(request, 'timetable/block_reschedule.html', context)
+
+
+# ==============================================================================
+# 6. WEEKLY TIMETABLE VIEW
+# ==============================================================================
+
+@login_required
+def weekly_timetable_view(request):
+    """
+    Weekly timetable displaying Monday through Sunday with navigation,
+    fixed routines, schedule blocks, and mobile-friendly responsive layout.
+    """
+    user = request.user
+    today = timezone.localtime(timezone.now()).date()
+    date_str = request.GET.get('date', '').strip()
+
+    if date_str:
+        try:
+            anchor_date = datetime.strptime(date_str, '%Y-%m-%d').date()
+        except ValueError:
+            anchor_date = today
+    else:
+        anchor_date = today
+
+    # Find Monday of anchor_date's week
+    week_start = anchor_date - timedelta(days=anchor_date.weekday())
+    week_end = week_start + timedelta(days=6)
+    prev_week = week_start - timedelta(days=7)
+    next_week = week_start + timedelta(days=7)
+
+    # Fetch all blocks for this entire week
+    week_blocks = list(
+        ScheduleBlock.objects.filter(
+            user=user,
+            block_date__gte=week_start,
+            block_date__lte=week_end
+        ).select_related('related_task', 'related_routine', 'related_study_plan')
+        .order_by('block_date', 'start_time')
+    )
+
+    # Active user routines
+    routines = list(Routine.objects.filter(user=user, is_active=True).order_by('start_time'))
+
+    # Build day-by-day structure
+    days_data = []
+    total_week_work_mins = 0
+
+    for i in range(7):
+        current_day = week_start + timedelta(days=i)
+        day_blocks = [b for b in week_blocks if b.block_date == current_day]
+        day_routines = [r for r in routines if r.applies_on_date(current_day)]
+        
+        work_mins = sum(
+            b.duration_minutes for b in day_blocks
+            if b.block_type in [BlockType.FOCUS, BlockType.STUDY]
+        )
+        total_week_work_mins += work_mins
+
+        days_data.append({
+            'date': current_day,
+            'day_name': current_day.strftime('%A'),
+            'day_short': current_day.strftime('%a'),
+            'date_str': current_day.strftime('%b %d'),
+            'is_today': (current_day == today),
+            'blocks': day_blocks,
+            'routines': day_routines,
+            'work_mins': work_mins,
+            'work_hours': round(work_mins / 60, 1),
+            'total_items': len(day_blocks) + len(day_routines),
+        })
+
+    # Pending unscheduled tasks summary for sidebar
+    pending_tasks = Task.objects.filter(
+        user=user,
+        status__in=[TaskStatus.PENDING, TaskStatus.IN_PROGRESS]
+    ).order_by('due_date', '-priority')[:8]
+
+    context = {
+        'page_title': f"Weekly Timetable — {week_start.strftime('%b %d')} to {week_end.strftime('%b %d, %Y')}",
+        'active_nav': 'timetable',
+        'subnav': 'weekly',
+        'week_start': week_start,
+        'week_end': week_end,
+        'prev_week': prev_week,
+        'next_week': next_week,
+        'today': today,
+        'days_data': days_data,
+        'total_week_work_str': f"{total_week_work_mins // 60}h {total_week_work_mins % 60}m",
+        'pending_tasks': pending_tasks,
+    }
+    return render(request, 'timetable/weekly.html', context)
+
+
+# ==============================================================================
+# 7. ROUTINE MANAGEMENT VIEWS
+# ==============================================================================
+
+@login_required
+def routine_list_view(request):
+    """
+    List of user's recurring daily routines with weekday filters and active switches.
+    """
+    user = request.user
+    qs = Routine.objects.filter(user=user)
+
+    day_filter = request.GET.get('day', '').strip().upper()
+    if day_filter and day_filter in DayOfWeek.values:
+        qs = qs.filter(days_of_week__icontains=day_filter)
+
+    type_filter = request.GET.get('type', '').strip()
+    if type_filter and type_filter in RoutineType.values:
+        qs = qs.filter(routine_type=type_filter)
+
+    status_filter = request.GET.get('status', '').strip()
+    if status_filter == 'active':
+        qs = qs.filter(is_active=True)
+    elif status_filter == 'inactive':
+        qs = qs.filter(is_active=False)
+
+    routines = qs.order_by('start_time')
+
+    context = {
+        'page_title': 'Daily Routines',
+        'active_nav': 'routines',
+        'subnav': 'routines',
+        'routines': routines,
+        'day_filter': day_filter,
+        'type_filter': type_filter,
+        'status_filter': status_filter,
+        'days': DayOfWeek.choices,
+        'routine_types': RoutineType.choices,
+    }
+    return render(request, 'timetable/routines.html', context)
+
+
+@login_required
+def routine_create_view(request):
+    """
+    Define a new recurring routine or fixed commitment.
+    """
+    if request.method == 'POST':
+        form = RoutineForm(request.POST, user=request.user)
+        if form.is_valid():
+            routine = form.save()
+            messages.success(request, f"Routine '{routine.title}' created.")
+            return redirect('productivity:routine_list')
+    else:
+        form = RoutineForm(user=request.user)
+
+    context = {
+        'page_title': 'Add Daily Routine',
+        'active_nav': 'routines',
+        'subnav': 'routines',
+        'form': form,
+    }
+    return render(request, 'timetable/routine_form.html', context)
+
+
+@login_required
+def routine_update_view(request, pk):
+    """
+    Edit routine attributes, recurrence days, or timings.
+    """
+    routine = get_object_or_404(Routine, pk=pk, user=request.user)
+
+    if request.method == 'POST':
+        form = RoutineForm(request.POST, instance=routine, user=request.user)
+        if form.is_valid():
+            r = form.save()
+            messages.success(request, f"Routine '{r.title}' updated.")
+            return redirect('productivity:routine_list')
+    else:
+        form = RoutineForm(instance=routine, user=request.user)
+
+    context = {
+        'page_title': f"Edit Routine — {routine.title}",
+        'active_nav': 'routines',
+        'subnav': 'routines',
+        'form': form,
+        'routine': routine,
+    }
+    return render(request, 'timetable/routine_form.html', context)
+
+
+@login_required
+def routine_delete_view(request, pk):
+    """
+    Delete routine with confirmation dialog.
+    """
+    routine = get_object_or_404(Routine, pk=pk, user=request.user)
+
+    if request.method == 'POST':
+        title = routine.title
+        routine.delete()
+        messages.success(request, f"Routine '{title}' deleted.")
+        return redirect('productivity:routine_list')
+
+    context = {
+        'page_title': f"Delete Routine — {routine.title}",
+        'active_nav': 'routines',
+        'subnav': 'routines',
+        'routine': routine,
+    }
+    return render(request, 'timetable/routine_confirm_delete.html', context)
+
+
+@login_required
+@require_POST
+def routine_toggle_active_view(request, pk):
+    """
+    Quick toggle to activate or deactivate a routine.
+    """
+    routine = get_object_or_404(Routine, pk=pk, user=request.user)
+    routine.is_active = not routine.is_active
+    routine.save()
+
+    status_str = "activated" if routine.is_active else "paused"
+    messages.success(request, f"Routine '{routine.title}' {status_str}.")
+    return redirect('productivity:routine_list')
+
+
+# ==============================================================================
+# 8. AVAILABILITY MANAGEMENT VIEWS
+# ==============================================================================
+
+@login_required
+def availability_view(request):
+    """
+    Weekly availability overview: displays permitted working hours grouped by day
+    and provides inline forms to add or remove windows.
+    """
+    user = request.user
+    windows = AvailabilityWindow.objects.filter(user=user).order_by('day_of_week', 'start_time')
+
+    # Group by weekday
+    windows_by_day = {code: [] for code, _ in DayOfWeek.choices}
+    for w in windows:
+        windows_by_day[w.day_of_week].append(w)
+
+    pref = SchedulingPreference.get_for_user(user)
+
+    day_cards = []
+    for code, name in DayOfWeek.choices:
+        day_windows = windows_by_day[code]
+        total_mins = sum(w.duration_minutes for w in day_windows)
+        day_cards.append({
+            'code': code,
+            'name': name,
+            'windows': day_windows,
+            'has_custom': len(day_windows) > 0,
+            'total_mins': total_mins,
+            'total_hours': round(total_mins / 60, 1),
+        })
+
+    form = AvailabilityWindowForm(user=user)
+
+    context = {
+        'page_title': 'Availability Management',
+        'active_nav': 'timetable',
+        'subnav': 'availability',
+        'day_cards': day_cards,
+        'pref': pref,
+        'form': form,
+    }
+    return render(request, 'timetable/availability.html', context)
+
+
+@login_required
+@require_POST
+def availability_create_view(request):
+    """
+    Add a new availability window for a day of week.
+    """
+    form = AvailabilityWindowForm(request.POST, user=request.user)
+    if form.is_valid():
+        w = form.save()
+        messages.success(request, f"Added availability window for {w.get_day_of_week_display()} ({w.start_time.strftime('%H:%M')}-{w.end_time.strftime('%H:%M')}).")
+    else:
+        error_msg = list(form.errors.values())[0][0] if form.errors else "Invalid availability entry."
+        messages.error(request, error_msg)
+
+    return redirect('productivity:availability_list')
+
+
+@login_required
+@require_POST
+def availability_delete_view(request, pk):
+    """
+    Delete an availability window.
+    """
+    window = get_object_or_404(AvailabilityWindow, pk=pk, user=request.user)
+    day_name = window.get_day_of_week_display()
+    window.delete()
+    messages.success(request, f"Availability window for {day_name} removed.")
+    return redirect('productivity:availability_list')
+
+
+# ==============================================================================
+# 9. SCHEDULE GENERATOR VIEWS
+# ==============================================================================
+
+@login_required
+def schedule_generator_view(request):
+    """
+    Interactive Timetable Generator interface:
+    - Select target date.
+    - Inspect fixed commitments, available hours, pending tasks, study plans.
+    - Run deterministic rule-based scheduling engine.
+    - Preview generated timetable, breaks, and unscheduled items before saving.
+    """
+    user = request.user
+    today = timezone.localtime(timezone.now()).date()
+    target_date_str = request.GET.get('date', '').strip()
+
+    if target_date_str:
+        try:
+            target_date = datetime.strptime(target_date_str, '%Y-%m-%d').date()
+        except ValueError:
+            target_date = today + timedelta(days=1)
+    else:
+        target_date = today + timedelta(days=1)
+
+    pref = SchedulingPreference.get_for_user(user)
+
+    # Check existing blocks on target date
+    existing_blocks_count = ScheduleBlock.objects.filter(
+        user=user,
+        block_date=target_date
+    ).count()
+
+    # Execute deterministic schedule generation preview
+    generator = TimetableGenerator(user, target_date, preferences=pref)
+    plan_preview = generator.generate()
+
+    context = {
+        'page_title': f"Smart Timetable Generator — {target_date.strftime('%a, %b %d')}",
+        'active_nav': 'timetable',
+        'subnav': 'generator',
+        'target_date': target_date,
+        'today': today,
+        'pref': pref,
+        'preview': plan_preview,
+        'existing_blocks_count': existing_blocks_count,
+    }
+    return render(request, 'timetable/generator.html', context)
+
+
+@login_required
+@require_POST
+def schedule_generator_apply_view(request):
+    """
+    Persist generated preview into active ScheduleBlock database records.
+    Optionally replaces non-completed flexible blocks while preserving fixed/completed.
+    """
+    user = request.user
+    target_date_str = request.POST.get('target_date', '').strip()
+    replace_existing = bool(request.POST.get('replace_existing') == '1')
+
+    try:
+        target_date = datetime.strptime(target_date_str, '%Y-%m-%d').date()
+    except ValueError:
+        messages.error(request, "Invalid date.")
+        return redirect('productivity:generator')
+
+    generator = TimetableGenerator(user, target_date)
+    plan_preview = generator.generate()
+
+    history = generator.apply(plan_preview, replace_existing=replace_existing)
+
+    total_added = plan_preview['statistics']['tasks_scheduled'] + plan_preview['statistics']['study_scheduled']
+    messages.success(
+        request,
+        f"Timetable for {target_date.strftime('%a, %b %d')} generated! "
+        f"{total_added} activities scheduled ({plan_preview['statistics']['total_work_minutes']} mins work)."
+    )
+    return redirect(f"{redirect('productivity:timetable_daily').url}?date={target_date.strftime('%Y-%m-%d')}")
+
+
+# ==============================================================================
+# 10. SCHEDULE HISTORY VIEW
+# ==============================================================================
+
+@login_required
+def schedule_history_view(request):
+    """
+    Audit log of previously generated schedules, planned work metrics, and unscheduled items.
+    """
+    user = request.user
+    histories = ScheduleGenerationHistory.objects.filter(user=user).order_by('-generated_at')
+
+    context = {
+        'page_title': 'Schedule Generation History',
+        'active_nav': 'timetable',
+        'subnav': 'history',
+        'histories': histories,
+    }
+    return render(request, 'timetable/history.html', context)
+
+
+# ==============================================================================
+# 11. SCHEDULING PREFERENCES VIEW
+# ==============================================================================
+
+@login_required
+def scheduling_preferences_view(request):
+    """
+    User settings governing timetable generation: work hours, breaks, buffers.
+    """
+    pref = SchedulingPreference.get_for_user(request.user)
+
+    if request.method == 'POST':
+        form = SchedulingPreferenceForm(request.POST, instance=pref)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Scheduling preferences updated.")
+            return redirect('productivity:scheduling_preferences')
+    else:
+        form = SchedulingPreferenceForm(instance=pref)
+
+    context = {
+        'page_title': 'Scheduling Preferences',
+        'active_nav': 'timetable',
+        'subnav': 'preferences',
+        'form': form,
+    }
+    return render(request, 'timetable/preferences.html', context)
+

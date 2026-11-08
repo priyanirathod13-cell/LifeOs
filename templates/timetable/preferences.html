@@ -1,0 +1,127 @@
+{% extends 'layouts/app_layout.html' %}
+
+{% block title %}Scheduling Preferences — LifeOS{% endblock %}
+{% block header_breadcrumb %}My Day / Preferences{% endblock %}
+
+{% block content %}
+<div class="content-container animate-fade-in" style="max-width: 680px; margin: 0 auto;">
+    <div class="page-header" style="margin-bottom: var(--space-6);">
+        <div class="header-left">
+            <h1 class="page-title" style="font-size: var(--font-size-2xl); font-weight: 700; color: var(--color-text-primary);">
+                Scheduling Preferences
+            </h1>
+            <p class="text-secondary" style="font-size: var(--font-size-sm); color: var(--color-text-muted);">
+                Tune the timetable generation engine rules to match your energy rhythm and work habits.
+            </p>
+        </div>
+    </div>
+
+    <!-- Navigation Pills -->
+    {% include 'timetable/timetable_nav.html' %}
+
+    <div class="card" style="padding: var(--space-6); background: var(--color-bg-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg);">
+        <form method="post" novalidate>
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
+                <div class="alert alert-error" style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.2); color: #ef4444; padding: var(--space-3) var(--space-4); border-radius: var(--radius-md); margin-bottom: var(--space-4); font-size: var(--font-size-sm);">
+                    {% for error in form.non_field_errors %}
+                        <div>{{ error }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            <!-- Working Hours Boundary -->
+            <div style="background: var(--color-bg-main); border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: var(--space-4); margin-bottom: var(--space-4);">
+                <h4 style="font-size: var(--font-size-sm); font-weight: 700; color: var(--color-text-primary); margin-bottom: var(--space-2);">
+                    Default Daily Permitted Working Window
+                </h4>
+                <p style="font-size: var(--font-size-xs); color: var(--color-text-muted); margin-bottom: var(--space-3);">
+                    Used whenever no custom Availability Window has been configured for a weekday.
+                </p>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4);">
+                    <div class="form-group">
+                        <label for="{{ form.day_start_time.id_for_label }}" class="form-label" style="display: block; margin-bottom: var(--space-1); font-weight: 500; font-size: var(--font-size-xs); color: var(--color-text-secondary);">
+                            Day Start Time
+                        </label>
+                        {{ form.day_start_time }}
+                    </div>
+                    <div class="form-group">
+                        <label for="{{ form.day_end_time.id_for_label }}" class="form-label" style="display: block; margin-bottom: var(--space-1); font-weight: 500; font-size: var(--font-size-xs); color: var(--color-text-secondary);">
+                            Day End Time
+                        </label>
+                        {{ form.day_end_time }}
+                        {% if form.day_end_time.errors %}
+                            <div class="form-text" style="color: #ef4444; font-size: var(--font-size-xs); margin-top: 4px;">{{ form.day_end_time.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Breaks & Fatigue Management -->
+            <div style="background: var(--color-bg-main); border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: var(--space-4); margin-bottom: var(--space-4);">
+                <h4 style="font-size: var(--font-size-sm); font-weight: 700; color: var(--color-text-primary); margin-bottom: var(--space-2);">
+                    Break Allocation &amp; Fatigue Thresholds
+                </h4>
+                <p style="font-size: var(--font-size-xs); color: var(--color-text-muted); margin-bottom: var(--space-3);">
+                    Automatically breaks up long blocks of continuous focus to sustain cognitive sharpness.
+                </p>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4); margin-bottom: var(--space-3);">
+                    <div class="form-group">
+                        <label for="{{ form.max_continuous_work_minutes.id_for_label }}" class="form-label" style="display: block; margin-bottom: var(--space-1); font-weight: 500; font-size: var(--font-size-xs); color: var(--color-text-secondary);">
+                            Max Continuous Work (Mins)
+                        </label>
+                        {{ form.max_continuous_work_minutes }}
+                    </div>
+                    <div class="form-group">
+                        <label for="{{ form.default_break_minutes.id_for_label }}" class="form-label" style="display: block; margin-bottom: var(--space-1); font-weight: 500; font-size: var(--font-size-xs); color: var(--color-text-secondary);">
+                            Default Break Duration (Mins)
+                        </label>
+                        {{ form.default_break_minutes }}
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label style="display: flex; align-items: center; gap: var(--space-2); cursor: pointer;">
+                        {{ form.auto_insert_breaks }}
+                        <span style="font-size: var(--font-size-sm); color: var(--color-text-primary);">
+                            Automatically insert breaks after continuous work thresholds
+                        </span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Workload Limits & Spacing -->
+            <div style="background: var(--color-bg-main); border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: var(--space-4); margin-bottom: var(--space-6);">
+                <h4 style="font-size: var(--font-size-sm); font-weight: 700; color: var(--color-text-primary); margin-bottom: var(--space-2);">
+                    Workload Capacity &amp; Transition Buffers
+                </h4>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4);">
+                    <div class="form-group">
+                        <label for="{{ form.buffer_minutes.id_for_label }}" class="form-label" style="display: block; margin-bottom: var(--space-1); font-weight: 500; font-size: var(--font-size-xs); color: var(--color-text-secondary);">
+                            Buffer Between Activities (Mins)
+                        </label>
+                        {{ form.buffer_minutes }}
+                    </div>
+                    <div class="form-group">
+                        <label for="{{ form.max_daily_work_minutes.id_for_label }}" class="form-label" style="display: block; margin-bottom: var(--space-1); font-weight: 500; font-size: var(--font-size-xs); color: var(--color-text-secondary);">
+                            Max Daily Work Cap (Mins)
+                        </label>
+                        {{ form.max_daily_work_minutes }}
+                    </div>
+                </div>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: var(--space-3); border-top: 1px solid var(--color-border); padding-top: var(--space-4);">
+                <a href="{% url 'productivity:timetable_daily' %}" class="btn btn-secondary">Back to Timetable</a>
+                <button type="submit" class="btn btn-primary">
+                    Save Preferences
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

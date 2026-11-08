@@ -49,6 +49,11 @@ THIRD_PARTY_APPS = []
 LOCAL_APPS = [
     'apps.core.apps.CoreConfig',
     'apps.accounts.apps.AccountsConfig',
+    'apps.productivity.apps.ProductivityConfig',
+    'apps.planning.apps.PlanningConfig',
+    'apps.personal.apps.PersonalConfig',
+    'apps.finance.apps.FinanceConfig',
+    'apps.study.apps.StudyConfig',
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS

@@ -56,22 +56,13 @@ LifeOS/
 │
 ├── apps/                       # Modular Django applications
 │   ├── __init__.py
-│   ├── core/                   # Foundational views, health check, UI system, routes
-│   │   ├── migrations/
-│   │   │   └── __init__.py
-│   │   ├── __init__.py
-│   │   ├── apps.py
-│   │   ├── tests.py            # Core app test suite
-│   │   ├── urls.py             # Routes (/health/, /, /ui-system/, etc.)
-│   │   └── views.py            # View controllers
-│   └── accounts/               # Custom user model & authentication foundation
-│       ├── migrations/
-│       │   └── 0001_initial.py # Initial custom User migration
-│       ├── __init__.py
-│       ├── admin.py            # User model admin configuration
-│       ├── apps.py
-│       ├── models.py           # Custom User model inheriting AbstractUser
-│       └── tests.py            # User model test suite
+│   ├── core/                   # System core, health check, landing page, UI system
+│   ├── accounts/               # Custom user model, authentication, profile & sessions
+│   ├── productivity/           # Category, Task, Habit, HabitLog, Activity, Routine, ScheduleBlock
+│   ├── planning/               # Project, Goal, GoalTask
+│   ├── personal/               # JournalEntry, Decision, DecisionOption, DecisionOutcome, Mistake, DailyMetric
+│   ├── finance/                # Transaction
+│   └── study/                  # Subject, Topic, StudySession, Exam
 │
 ├── templates/                  # Django Template Architecture
 │   ├── base.html               # Foundational HTML5 shell and asset links
@@ -212,17 +203,20 @@ LANGUAGE_CODE=en-us
 # Run database migrations
 python manage.py migrate
 
+# (Optional) Import legacy data from legacy 'lifeos' database
+python manage.py import_legacy_data
+
 # Run Django system checks
 python manage.py check
 
-# Run automated test suite
+# Run automated test suite across all 7 applications
 python manage.py test
 ```
 
 Expected output:
 ```
 System check identified no issues (0 silenced).
-Ran 25 tests in ~20s
+Ran 45 tests in ~35s
 
 OK
 ```

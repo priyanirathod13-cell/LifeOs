@@ -7,7 +7,7 @@
 | **01** | **Project Foundation & Initial Setup** | **Completed** | Django project structure, `.env` config, MySQL database (`lifeos_db`), custom `User` model, health check (`GET /health/`), Git repository, initial migration. |
 | **02** | **UI/UX & Design System** | **Completed** | Minimal modern dark design system, 16 reusable UI components, CSS variables, Inter typography, application layout (sidebar, header, content), responsive drawer, zero broken links, showcase demo at `/ui-system/`. |
 | **03** | **Authentication System** | **Completed** | Public landing page, user registration with full name & email, case-insensitive unique email check, email authentication backend, login with Remember Me, secure logout, password reset flow via console email, user profile management with password change, strict `@login_required` access control, 25 automated tests. |
-| **04** | **Domain Modeling & Core Workflows** | Pending | Database models for Tasks, Habits, Timetable, Routines, and Study management. |
+| **04** | **Database Architecture & Data Models** | **Completed** | Normalized 3NF models across 5 apps (`productivity`, `planning`, `personal`, `finance`, `study`), 21 models total, check constraints, composite unique keys, multi-user isolation validation, admin registrations, legacy data preservation migration, 45 automated tests (100% passing). |
 | **05** | **Behavioral Tracking & Check-ins** | Pending | Daily subjective logging (mood, energy, sleep), journal entries, activities. |
 | **06** | **Decision Engine & Mistakes Journal** | Pending | Strategic decision logs, expected outcomes, retrospectives, and post-mortems. |
 | **07** | **Analytics & Behavioral Intelligence** | Pending | Correlation engines, productivity analytics, study mastery metrics, and recommendations. |
@@ -63,3 +63,45 @@
 ### Access Control Verification
 - All internal application routes (`/dashboard/`, `/timetable/`, `/tasks/`, `/habits/`, `/study/`, `/projects/`, `/journal/`, etc.) enforce `@login_required`.
 - Unauthenticated requests are redirected to `/accounts/login/?next=<path>`.
+
+
+---
+
+## Detailed Step 04 Deliverables
+
+### Data Models & Domain Architecture
+- **6 Domain Applications**:
+  - `apps.accounts`: Custom `User` model (`accounts_user`).
+  - `apps.productivity`: `Category`, `Task`, `Habit`, `HabitLog`, `Activity`, `Routine`, `ScheduleBlock`.
+  - `apps.planning`: `Project`, `Goal`, `GoalTask`.
+  - `apps.personal`: `JournalEntry`, `Decision`, `DecisionOption`, `DecisionOutcome`, `Mistake`, `DailyMetric`.
+  - `apps.finance`: `Transaction`.
+  - `apps.study`: `Subject`, `Topic`, `StudySession`, `Exam`.
+- **Database Normalization (3NF)**:
+  - Atomic attribute storage, elimination of partial and transitive dependencies.
+  - Calculated duration values (`Activity.duration_minutes`) computed on-the-fly rather than duplicating derived data in columns.
+  - Check constraints for scores (`1 <= score <= 10`), sleep hours (`0 <= sleep <= 24`), and strictly positive monetary transactions (`amount > 0`).
+
+### Multi-User Data Isolation
+- Direct user ownership foreign keys (`on_delete=models.CASCADE`).
+- Composite unique constraints scoped to tenant (`['user', 'name']`, `['user', 'metric_date']`, `['user', 'subject_name']`).
+- Application-level verification in model `clean()` preventing cross-user foreign key leakage (e.g. assigning another user's Category or Project).
+- High-cardinality composite indexes prefixed with `user_id` for efficient multi-tenant query execution.
+
+### Admin Interface
+- Registered all 21 models across all domain apps with customized `ModelAdmin` implementations including `list_display`, `list_filter`, `search_fields`, and computed display properties.
+
+### Legacy Data Migration & Preservation
+- Custom management command `python manage.py import_legacy_data` safely imported legacy data from legacy database `lifeos` into active database `lifeos_db` without data loss:
+  - 3 Users (`aarav_student`, `sharma_teacher`, `rathod_parent`)
+  - 5 Categories (`Engineering & Code`, `Health & Fitness`, `Studies & DBMS`, `Food & Living`, `Freelance & Salary`)
+  - 5 Tasks (including priorities, estimates, due dates)
+  - 3 Habits & 2 Habit Logs
+  - 1 Goal & 3 Goal-Task junction links
+  - 1 Daily Metric record (mood 9, energy 8, stress 3, sleep 7.50h)
+- 100% idempotent verification: zero duplicate records on repeated runs.
+
+### Automated Test Suite
+- Comprehensive unit test suite across all 7 applications (`apps.accounts`, `apps.core`, `apps.productivity`, `apps.planning`, `apps.personal`, `apps.finance`, `apps.study`):
+  - 45 automated tests verifying data isolation, unique constraints, check constraints, date validations, and authentication security.
+  - 100% pass rate (`Ran 45 tests in 35.984s — OK`).

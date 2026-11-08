@@ -65,3 +65,23 @@ Established in Step 03:
 - **Session Management**: Session cookies configured with `HttpOnly`, CSRF protection, and duration toggled by "Remember Me" (14 days persistent vs. browser session).
 - **Access Control Rule**: All private application routes (`/dashboard/`, `/timetable/`, `/tasks/`, `/habits/`, `/study/`, `/profile/`, etc.) strictly enforce `@login_required` access control.
 - **Ownership Verification**: All future models must tie private records directly to `user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)`. Never trust user IDs provided in form payloads or URL parameters — always filter and assign through `request.user`.
+
+
+---
+
+## 5. Data Architecture & Domain Model Registry (Step 04)
+
+Established in Step 04:
+- **Application Structure**:
+  - `apps.accounts`: Custom `User` model.
+  - `apps.productivity`: `Category`, `Task`, `Habit`, `HabitLog`, `Activity`, `Routine`, `ScheduleBlock`.
+  - `apps.planning`: `Project`, `Goal`, `GoalTask`.
+  - `apps.personal`: `JournalEntry`, `Decision`, `DecisionOption`, `DecisionOutcome`, `Mistake`, `DailyMetric`.
+  - `apps.finance`: `Transaction`.
+  - `apps.study`: `Subject`, `Topic`, `StudySession`, `Exam`.
+- **Integrity & Constraints**:
+  - Check constraints for strictly positive amounts (`amount > 0`), valid score ranges (`1 <= score <= 10`), valid sleep hours (`0 <= sleep <= 24`), and target dates (`target_date >= start_date`).
+  - Strict multi-user data isolation: Cross-model foreign keys validate identical user ownership in `clean()`.
+  - Normalization to 3NF: Computed values (e.g. `Activity.duration_minutes`) are derived dynamically on-the-fly rather than storing redundant columns.
+- **Legacy Preservation**:
+  - Legacy records from `lifeos` database migrated into `lifeos_db` via `python manage.py import_legacy_data` with zero data loss.

@@ -12,6 +12,16 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 
+from apps.core.models import (
+    DismissedRecommendation,
+    Notification,
+    NotificationType,
+    UserPreference,
+)
+from apps.core.services.export_service import ExportService
+from apps.core.services.notification_service import NotificationService
+from apps.core.services.recommendation_service import RecommendationService
+from apps.core.services.search_service import GlobalSearchService
 from apps.personal.models import DailyMetric, JournalEntry
 from apps.planning.models import Goal, GoalStatus, GoalTask, Priority as GoalPriority, Project
 from apps.productivity.models import (
@@ -341,10 +351,22 @@ def toggle_task_view(request, task_id):
         task.status = TaskStatus.PENDING
         task.completed_at = None
         action_desc = "marked pending"
+        # Sync linked schedule blocks
+        ScheduleBlock.objects.filter(
+            user=request.user,
+            related_task=task,
+            status=ScheduleStatus.COMPLETED
+        ).update(status=ScheduleStatus.SCHEDULED)
     else:
         task.status = TaskStatus.COMPLETED
         task.completed_at = timezone.now()
         action_desc = "marked completed"
+        # Sync linked schedule blocks
+        ScheduleBlock.objects.filter(
+            user=request.user,
+            related_task=task,
+            status=ScheduleStatus.SCHEDULED
+        ).update(status=ScheduleStatus.COMPLETED)
 
     task.save()
 
@@ -660,17 +682,259 @@ def financial_analytics_view(request):
     )
 
 
+# ==============================================================================
+# NOTIFICATION VIEWS
+# ==============================================================================
+
+@login_required
+def notification_list_view(request):
+    """
+    User notification center with domain filtering, unread status toggles,
+    and bulk operations.
+    """
+    filter_type = request.GET.get('type', 'all').upper()
+    status_filter = request.GET.get('status', 'all').lower()
+
+    qs = Notification.objects.filter(user=request.user)
+
+    if status_filter == 'unread':
+        qs = qs.filter(is_read=False)
+    elif status_filter == 'read':
+        qs = qs.filter(is_read=True)
+
+    if filter_type != 'ALL' and filter_type in NotificationType.values:
+        qs = qs.filter(notification_type=filter_type)
+
+    total_notifications = Notification.objects.filter(user=request.user).count()
+    unread_count = Notification.objects.filter(user=request.user, is_read=False).count()
+
+    context = {
+        'page_title': 'Notifications',
+        'active_nav': 'notifications',
+        'notifications': qs,
+        'current_filter_type': filter_type,
+        'current_status_filter': status_filter,
+        'total_count': total_notifications,
+        'unread_count': unread_count,
+        'notification_types': NotificationType.choices,
+    }
+    return render(request, 'core/notifications.html', context)
+
+
+@login_required
+def mark_notification_read_view(request, notification_id):
+    """
+    Marks a specific notification as read.
+    """
+    notif = get_object_or_404(Notification, id=notification_id, user=request.user)
+    notif.is_read = True
+    notif.save(update_fields=['is_read'])
+
+    if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        return JsonResponse({'status': 'ok', 'is_read': True})
+
+    referer = request.META.get('HTTP_REFERER')
+    if referer:
+        return HttpResponseRedirect(referer)
+    return redirect('core:notifications')
+
+
+@login_required
+@require_POST
+def mark_all_notifications_read_view(request):
+    """
+    Marks all notifications for the current user as read.
+    """
+    updated = Notification.objects.filter(user=request.user, is_read=False).update(is_read=True)
+    messages.success(request, f"Marked {updated} notification{'s' if updated != 1 else ''} as read.")
+
+    referer = request.META.get('HTTP_REFERER')
+    if referer:
+        return HttpResponseRedirect(referer)
+    return redirect('core:notifications')
+
+
+@login_required
+def delete_notification_view(request, notification_id):
+    """
+    Deletes a single notification.
+    """
+    notif = get_object_or_404(Notification, id=notification_id, user=request.user)
+    notif.delete()
+    messages.success(request, "Notification deleted.")
+
+    referer = request.META.get('HTTP_REFERER')
+    if referer:
+        return HttpResponseRedirect(referer)
+    return redirect('core:notifications')
+
+
+# ==============================================================================
+# GLOBAL SEARCH VIEW
+# ==============================================================================
+
+@login_required
+def global_search_view(request):
+    """
+    Multi-entity global search across tasks, habits, goals, projects,
+    study subjects, topics, journal entries, decisions, mistakes, and activities.
+    """
+    query = request.GET.get('q', '').strip()
+    search_data = GlobalSearchService.search(request.user, query)
+
+    context = {
+        'page_title': f"Search: {query}" if query else "Global Search",
+        'active_nav': 'search',
+        'query': query,
+        'total_count': search_data['total_count'],
+        'results_by_type': search_data['results_by_type'],
+        'all_results': search_data['all_results'],
+    }
+    return render(request, 'core/search_results.html', context)
+
+
+# ==============================================================================
+# RECOMMENDATIONS VIEW
+# ==============================================================================
+
 @login_required
 def recommendations_view(request):
-    return generic_module_view(
-        request, 'pages/placeholder.html', 'AI Recommendations', 'recommendations',
-        'Personalized behavioral adjustments and schedule optimization recommendations.'
-    )
+    """
+    Deterministic rule-based recommendations across Productivity, Study,
+    Habits, Schedule, and Well-being.
+    """
+    category_filter = request.GET.get('category', 'all').strip()
+    recommendations = RecommendationService.get_recommendations(request.user, category_filter=category_filter)
 
+    categories = [
+        ('all', 'All Recommendations'),
+        ('productivity', 'Productivity'),
+        ('study', 'Study & Learning'),
+        ('habits', 'Habits'),
+        ('schedule', 'Schedule & Time'),
+        ('well-being', 'Well-being'),
+    ]
+
+    context = {
+        'page_title': 'Personalized Recommendations',
+        'active_nav': 'recommendations',
+        'recommendations': recommendations,
+        'current_category': category_filter.lower(),
+        'categories': categories,
+        'total_count': len(recommendations),
+    }
+    return render(request, 'core/recommendations.html', context)
+
+
+@login_required
+@require_POST
+def dismiss_recommendation_view(request, rec_key):
+    """
+    Dismisses a recommendation key so it does not clutter the user's dashboard.
+    """
+    RecommendationService.dismiss_recommendation(request.user, rec_key)
+    if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        return JsonResponse({'status': 'ok', 'dismissed_key': rec_key})
+
+    messages.info(request, "Recommendation dismissed.")
+    referer = request.META.get('HTTP_REFERER')
+    if referer:
+        return HttpResponseRedirect(referer)
+    return redirect('core:recommendations')
+
+
+@login_required
+@require_POST
+def reset_dismissed_recommendations_view(request):
+    """
+    Clears all dismissed recommendations for the user.
+    """
+    count = RecommendationService.reset_dismissed(request.user)
+    messages.success(request, f"Reset {count} previously dismissed recommendation{'s' if count != 1 else ''}.")
+    return redirect('core:recommendations')
+
+
+# ==============================================================================
+# DATA EXPORT VIEW
+# ==============================================================================
+
+@login_required
+def data_export_view(request):
+    """
+    Self-service export page allowing user to download their complete LifeOS history
+    in sanitized JSON or CSV format.
+    """
+    format_type = request.GET.get('format', '').lower()
+    module_choice = request.GET.get('module', 'all').lower()
+
+    if format_type == 'json':
+        selected_modules = None if module_choice == 'all' else [module_choice]
+        return ExportService.export_json_response(request.user, modules=selected_modules)
+    elif format_type == 'csv':
+        return ExportService.export_csv_response(request.user, module=module_choice)
+
+    context = {
+        'page_title': 'Export Personal Data',
+        'active_nav': 'settings',
+    }
+    return render(request, 'core/export.html', context)
+
+
+# ==============================================================================
+# SETTINGS & USER PREFERENCES VIEW
+# ==============================================================================
 
 @login_required
 def settings_view(request):
-    return generic_module_view(
-        request, 'pages/settings.html', 'Settings', 'settings',
-        'User profile, system preferences, notification cadences, and security parameters.'
-    )
+    """
+    System & User settings page managing display preferences, notification toggles,
+    daily work targets, and privacy/data management.
+    """
+    prefs = UserPreference.get_for_user(request.user)
+
+    if request.method == 'POST':
+        action = request.POST.get('action', 'save_preferences')
+
+        if action == 'save_preferences':
+            # Display Preferences
+            date_fmt = request.POST.get('date_format', 'YYYY-MM-DD')
+            time_fmt = request.POST.get('time_format', '24h')
+            week_start = request.POST.get('week_start_day', 'monday')
+            work_goal = request.POST.get('daily_work_goal_hours', '8.0')
+
+            # Notification Toggles
+            notify_tasks = 'notify_tasks' in request.POST
+            notify_study = 'notify_study' in request.POST
+            notify_routines = 'notify_routines' in request.POST
+            notify_goals = 'notify_goals' in request.POST
+
+            # Timezone
+            tz_pref = request.POST.get('timezone_pref', request.user.timezone_pref).strip()
+            if tz_pref:
+                request.user.timezone_pref = tz_pref
+                request.user.save(update_fields=['timezone_pref'])
+
+            try:
+                prefs.daily_work_goal_hours = Decimal(work_goal)
+            except Exception:
+                pass
+
+            prefs.date_format = date_fmt
+            prefs.time_format = time_fmt
+            prefs.week_start_day = week_start
+            prefs.notify_tasks = notify_tasks
+            prefs.notify_study = notify_study
+            prefs.notify_routines = notify_routines
+            prefs.notify_goals = notify_goals
+            prefs.save()
+
+            messages.success(request, "Settings and preferences saved successfully.")
+            return redirect('core:settings')
+
+    context = {
+        'page_title': 'Settings & Preferences',
+        'active_nav': 'settings',
+        'preferences': prefs,
+        'user_tz': getattr(request.user, 'timezone_pref', 'Asia/Kolkata'),
+    }
+    return render(request, 'pages/settings.html', context)

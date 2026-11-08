@@ -885,6 +885,22 @@ def study_session_stop_view(request, pk):
             session.notes = notes
 
         session.save()
+
+        # Cross-module synchronization: update matching StudyPlan
+        if session.subject:
+            plan_qs = StudyPlan.objects.filter(
+                user=request.user,
+                subject=session.subject,
+                planned_date=session.session_date,
+                status=PlanStatus.PLANNED
+            )
+            if session.topic:
+                plan_qs = plan_qs.filter(Q(topic=session.topic) | Q(topic__isnull=True))
+            first_plan = plan_qs.first()
+            if first_plan:
+                first_plan.status = PlanStatus.COMPLETED
+                first_plan.save()
+
         messages.success(request, f"Session completed! Logged {format_duration(session.duration_minutes)} of study.")
 
     return redirect('study:sessions')
@@ -901,6 +917,22 @@ def study_session_create_view(request):
             session = form.save(commit=False)
             session.user = request.user
             session.save()
+
+            # Cross-module synchronization: update matching StudyPlan
+            if session.subject:
+                plan_qs = StudyPlan.objects.filter(
+                    user=request.user,
+                    subject=session.subject,
+                    planned_date=session.session_date,
+                    status=PlanStatus.PLANNED
+                )
+                if session.topic:
+                    plan_qs = plan_qs.filter(Q(topic=session.topic) | Q(topic__isnull=True))
+                first_plan = plan_qs.first()
+                if first_plan:
+                    first_plan.status = PlanStatus.COMPLETED
+                    first_plan.save()
+
             messages.success(request, f"Study session for '{session.subject.name}' recorded.")
             return redirect('study:sessions')
     else:

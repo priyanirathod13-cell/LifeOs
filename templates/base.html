@@ -23,6 +23,7 @@
     <link rel="stylesheet" href="{% static 'css/responsive.css' %}">
 
     <link rel="icon" type="image/svg+xml" href="{% static 'images/logo.svg' %}">
+    <link rel="manifest" href="{% static 'manifest.json' %}">
 
     {% block extra_head %}{% endblock %}
 </head>
@@ -32,6 +33,21 @@
     <!-- Core Interactions & Navigation Scripts -->
     <script src="{% static 'js/navigation.js' %}"></script>
     <script src="{% static 'js/main.js' %}"></script>
+
+    <!-- Progressive Web App Service Worker Registration -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                navigator.serviceWorker.register('{% static "js/service-worker.js" %}')
+                    .then(function(reg) {
+                        // Service worker registered successfully
+                    })
+                    .catch(function(err) {
+                        // Registration failed gracefully
+                    });
+            });
+        }
+    </script>
 
     {% block extra_js %}{% endblock %}
 </body>

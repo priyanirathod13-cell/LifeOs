@@ -367,10 +367,22 @@ def task_toggle_complete_view(request, pk):
         task.status = TaskStatus.PENDING
         task.completed_at = None
         action = "reopened"
+        # Sync linked schedule blocks
+        ScheduleBlock.objects.filter(
+            user=request.user,
+            related_task=task,
+            status=ScheduleStatus.COMPLETED
+        ).update(status=ScheduleStatus.SCHEDULED)
     else:
         task.status = TaskStatus.COMPLETED
         task.completed_at = timezone.now()
         action = "completed"
+        # Sync linked schedule blocks
+        ScheduleBlock.objects.filter(
+            user=request.user,
+            related_task=task,
+            status=ScheduleStatus.SCHEDULED
+        ).update(status=ScheduleStatus.COMPLETED)
     task.save()
 
     if request.headers.get('x-requested-with') == 'XMLHttpRequest':

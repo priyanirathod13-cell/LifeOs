@@ -1,0 +1,125 @@
+{% extends 'layouts/app_layout.html' %}
+{% load static %}
+
+{% block title %}Export Personal Data — LifeOS{% endblock %}
+{% block header_breadcrumb %}Settings / Data Export{% endblock %}
+
+{% block content %}
+<div class="content-container animate-fade-in" style="max-width: 850px; margin: 0 auto;">
+    <!-- Page Header -->
+    <div class="page-header" style="margin-bottom: var(--space-4);">
+        <h1 class="page-title" style="font-size: var(--font-size-2xl); font-weight: 700; color: var(--color-text-primary); margin-bottom: var(--space-1);">
+            Data Portability & Export
+        </h1>
+        <p class="text-secondary" style="font-size: var(--font-size-sm); color: var(--color-text-muted);">
+            Download a full, unredacted copy of your personal LifeOS records. You own 100% of your data.
+        </p>
+    </div>
+
+    <!-- Security & Privacy Guarantee Callout -->
+    <div class="card" style="padding: var(--space-4); margin-bottom: var(--space-4); background: rgba(16, 185, 129, 0.05); border: 1px solid rgba(16, 185, 129, 0.2); border-radius: var(--radius-md); display: flex; gap: var(--space-3); align-items: flex-start;">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--color-success, #10B981); flex-shrink: 0; margin-top: 2px;">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+        </svg>
+        <div>
+            <h4 style="font-size: var(--font-size-sm); font-weight: 600; color: var(--color-success, #10B981); margin: 0 0 2px 0;">
+                Zero-Leakage Privacy Guarantee
+            </h4>
+            <p style="font-size: var(--font-size-xs); color: var(--color-text-secondary); margin: 0; line-height: 1.4;">
+                All exports are scoped exclusively to your authenticated user account (<strong>{{ request.user.username }}</strong>). Password hashes, session tokens, and security salts are strictly omitted from export payloads.
+            </p>
+        </div>
+    </div>
+
+    <!-- Export Options Card -->
+    <div class="card" style="padding: var(--space-5); background: var(--color-bg-surface); border: 1px solid var(--color-border-subtle); border-radius: var(--radius-md); margin-bottom: var(--space-4);">
+        <h3 style="font-size: var(--font-size-base); font-weight: 600; color: var(--color-text-primary); margin: 0 0 var(--space-3) 0;">
+            Complete Data Archive
+        </h3>
+        <p style="font-size: var(--font-size-sm); color: var(--color-text-muted); margin-bottom: var(--space-4); line-height: 1.5;">
+            Export all modules at once, including your tasks, habits, timetable logs, study progress, journal entries, decisions, and financial transactions.
+        </p>
+
+        <div style="display: flex; gap: var(--space-3); flex-wrap: wrap;">
+            <a href="{% url 'core:data_export' %}?format=json&module=all" class="btn btn-primary" style="display: inline-flex; align-items: center; gap: var(--space-2);">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="7 10 12 15 17 10"></polyline>
+                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                </svg>
+                Download Complete Backup (JSON)
+            </a>
+            <a href="{% url 'core:data_export' %}?format=csv&module=all" class="btn btn-secondary" style="display: inline-flex; align-items: center; gap: var(--space-2);">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                    <polyline points="14 2 14 8 20 8"></polyline>
+                    <line x1="16" y1="13" x2="8" y2="13"></line>
+                    <line x1="16" y1="17" x2="8" y2="17"></line>
+                    <polyline points="10 9 9 9 8 9"></polyline>
+                </svg>
+                Download All Tables (CSV Archive .ZIP)
+            </a>
+        </div>
+    </div>
+
+    <!-- Granular Table Exports Card -->
+    <div class="card" style="padding: var(--space-5); background: var(--color-bg-surface); border: 1px solid var(--color-border-subtle); border-radius: var(--radius-md);">
+        <h3 style="font-size: var(--font-size-base); font-weight: 600; color: var(--color-text-primary); margin: 0 0 var(--space-3) 0;">
+            Export Individual Datasets (CSV)
+        </h3>
+        <p style="font-size: var(--font-size-sm); color: var(--color-text-muted); margin-bottom: var(--space-4);">
+            Download standalone spreadsheet CSV files for specific life domains:
+        </p>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: var(--space-3);">
+            <div style="padding: var(--space-3); border: 1px solid var(--color-border-subtle); border-radius: var(--radius-sm); display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <div style="font-weight: 600; font-size: var(--font-size-sm); color: var(--color-text-primary);">Tasks & Backlog</div>
+                    <div style="font-size: var(--font-size-xs); color: var(--color-text-muted);">Status, dates, estimates</div>
+                </div>
+                <a href="{% url 'core:data_export' %}?format=csv&module=tasks" class="btn btn-xs btn-outline">CSV</a>
+            </div>
+
+            <div style="padding: var(--space-3); border: 1px solid var(--color-border-subtle); border-radius: var(--radius-sm); display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <div style="font-weight: 600; font-size: var(--font-size-sm); color: var(--color-text-primary);">Habits & Routines</div>
+                    <div style="font-size: var(--font-size-xs); color: var(--color-text-muted);">Definitions & streaks</div>
+                </div>
+                <a href="{% url 'core:data_export' %}?format=csv&module=habits" class="btn btn-xs btn-outline">CSV</a>
+            </div>
+
+            <div style="padding: var(--space-3); border: 1px solid var(--color-border-subtle); border-radius: var(--radius-sm); display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <div style="font-weight: 600; font-size: var(--font-size-sm); color: var(--color-text-primary);">Time & Activities</div>
+                    <div style="font-size: var(--font-size-xs); color: var(--color-text-muted);">Time tracking sessions</div>
+                </div>
+                <a href="{% url 'core:data_export' %}?format=csv&module=activities" class="btn btn-xs btn-outline">CSV</a>
+            </div>
+
+            <div style="padding: var(--space-3); border: 1px solid var(--color-border-subtle); border-radius: var(--radius-sm); display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <div style="font-weight: 600; font-size: var(--font-size-sm); color: var(--color-text-primary);">Study Sessions</div>
+                    <div style="font-size: var(--font-size-xs); color: var(--color-text-muted);">Courses, topics, hours</div>
+                </div>
+                <a href="{% url 'core:data_export' %}?format=csv&module=study" class="btn btn-xs btn-outline">CSV</a>
+            </div>
+
+            <div style="padding: var(--space-3); border: 1px solid var(--color-border-subtle); border-radius: var(--radius-sm); display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <div style="font-weight: 600; font-size: var(--font-size-sm); color: var(--color-text-primary);">Personal Reflections</div>
+                    <div style="font-size: var(--font-size-xs); color: var(--color-text-muted);">Metrics, mood, decisions</div>
+                </div>
+                <a href="{% url 'core:data_export' %}?format=csv&module=personal" class="btn btn-xs btn-outline">CSV</a>
+            </div>
+
+            <div style="padding: var(--space-3); border: 1px solid var(--color-border-subtle); border-radius: var(--radius-sm); display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <div style="font-weight: 600; font-size: var(--font-size-sm); color: var(--color-text-primary);">Finance Ledger</div>
+                    <div style="font-size: var(--font-size-xs); color: var(--color-text-muted);">Transactions & income</div>
+                </div>
+                <a href="{% url 'core:data_export' %}?format=csv&module=finance" class="btn btn-xs btn-outline">CSV</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

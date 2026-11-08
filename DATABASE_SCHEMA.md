@@ -470,3 +470,67 @@ A dedicated management command `python manage.py import_legacy_data` was created
 | *Empty tables* | 0 records | `Activity`, `Project`, `Transaction`, `JournalEntry`, `Decision`, `Mistake` | Verified clean schema ready for entry |
 
 **Total Records Preserved**: 20 legacy records migrated, 100% verified idempotent.
+
+---
+
+## 8. Step 11 Schema Enhancements: Core Notification, Preferences & Dismissals
+
+Step 11 added three relational models to `apps/core` to support in-app notifications, user preferences, and recommendation state persistence.
+
+### 8.1 `core_notification`
+Stores user-scoped proactive alerts and notifications.
+
+```sql
+CREATE TABLE `core_notification` (
+    `id` bigint NOT NULL AUTO_INCREMENT,
+    `user_id` bigint NOT NULL,
+    `notification_type` varchar(20) NOT NULL DEFAULT 'SYSTEM',
+    `title` varchar(200) NOT NULL,
+    `message` longtext NOT NULL,
+    `target_url` varchar(255) NOT NULL DEFAULT '',
+    `is_read` tinyint(1) NOT NULL DEFAULT 0,
+    `created_at` datetime(6) NOT NULL,
+    PRIMARY KEY (`id`),
+    KEY `core_notifi_user_id_44f3b4_idx` (`user_id`, `is_read`, `created_at` DESC),
+    KEY `core_notifi_user_id_6207da_idx` (`user_id`, `notification_type`),
+    CONSTRAINT `core_notification_user_id_fk` FOREIGN KEY (`user_id`) REFERENCES `accounts_user` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+```
+
+### 8.2 `core_userpreference`
+Stores localization formats, daily work benchmarks, and notification toggles.
+
+```sql
+CREATE TABLE `core_userpreference` (
+    `id` bigint NOT NULL AUTO_INCREMENT,
+    `user_id` bigint NOT NULL UNIQUE,
+    `date_format` varchar(20) NOT NULL DEFAULT 'YYYY-MM-DD',
+    `time_format` varchar(10) NOT NULL DEFAULT '24h',
+    `week_start_day` varchar(10) NOT NULL DEFAULT 'monday',
+    `daily_work_goal_hours` decimal(4, 1) NOT NULL DEFAULT 8.0,
+    `notify_tasks` tinyint(1) NOT NULL DEFAULT 1,
+    `notify_study` tinyint(1) NOT NULL DEFAULT 1,
+    `notify_routines` tinyint(1) NOT NULL DEFAULT 1,
+    `notify_goals` tinyint(1) NOT NULL DEFAULT 1,
+    `created_at` datetime(6) NOT NULL,
+    `updated_at` datetime(6) NOT NULL,
+    PRIMARY KEY (`id`),
+    CONSTRAINT `core_userpreference_user_id_fk` FOREIGN KEY (`user_id`) REFERENCES `accounts_user` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+```
+
+### 8.3 `core_dismissedrecommendation`
+Persists dismissed heuristic recommendation keys per user.
+
+```sql
+CREATE TABLE `core_dismissedrecommendation` (
+    `id` bigint NOT NULL AUTO_INCREMENT,
+    `user_id` bigint NOT NULL,
+    `recommendation_key` varchar(100) NOT NULL,
+    `dismissed_at` datetime(6) NOT NULL,
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `unique_user_recommendation` (`user_id`, `recommendation_key`),
+    CONSTRAINT `core_dismissedrec_user_id_fk` FOREIGN KEY (`user_id`) REFERENCES `accounts_user` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+```
+

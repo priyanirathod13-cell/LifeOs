@@ -212,34 +212,39 @@ Established in Step 09:
 
 ---
 
-## 11. Analytics & Behavioral Intelligence Architecture (Step 10)
+---
 
-Established in Step 10:
-- **Module Structure (`apps.analytics`)**:
-  - `DismissedInsight`: Lightweight persistence model storing user-dismissed behavioral observations by deterministic key (`insight_key`), timestamp, and user foreign key, avoiding redundant database tables for statistics that can be derived on-the-fly from existing telemetry.
-  - `services/date_utils.py`: Timezone-aware date parsing across standard ranges (`7d`, `30d`, `90d`, `this_week`, `this_month`, `custom`) and prior comparison window calculations.
-  - `services/productivity_service.py`: Task velocity, completion rates, overdue counting, and duration estimation error analysis ($E = \text{Actual} - \text{Estimated}$), excluding unrecorded durations and categorizing tasks into underestimated vs. overestimated cohorts.
-  - `services/study_service.py`: Study hours aggregation, subject-wise duration breakdown, overall and per-subject syllabus topic mastery rates, planned vs. actual study variances, and Monday–Sunday weekly study rhythms.
-  - `services/habit_service.py`: Frequency-aware habit completion rates respecting `DAILY` vs. `WEEKLY` (e.g. 3x/week evaluated on 3x target rather than artificial 7-day expectation), streak reporting, and friction identification.
-  - `services/time_service.py`: Cross-domain time distribution (Study, Tasks, Routines, Activities) with double-counting prevention, schedule block adherence rates, and unscheduled task backlog tracking.
-  - `services/wellbeing_service.py`: Averages for mood, energy, stress, and sleep duration, multi-signal trends, and Pearson correlation coefficients ($r$) between sleep, energy, mood, study, and productivity. Requires a strict minimum of $N \ge 14$ paired observations before displaying exploratory correlation values.
-  - `services/finance_service.py`: Period income, expenses, net savings, savings rate %, category breakdown, and top expense driver identification.
-  - `services/comparison_service.py`: Multi-period comparative delta scorecards (current vs. previous period), reporting absolute deltas and percentage changes with zero-denominator safety handling (`N/A (baseline was 0)`).
-  - `services/insights_engine.py`: Deterministic, rule-based Behavioral Insights Engine with confidence ratings, supporting metrics, time periods, category badges, and user dismissal/restoration support.
-  - `services/charts.py`: Responsive Plotly interactive charts adhering to the LifeOS Minimal Modern Dark design system (#0F1117, #1B1F2A, #818CF8, #34D399, etc.) rendered offline via bundled `static/js/plotly.min.js`.
-- **8 Core Functional Sections**:
-  1. Main Executive Analytics Dashboard (`/analytics/`): Central multi-domain overview uniting productivity, study, habits, time allocation, well-being, and finances with active behavioral insight highlights.
-  2. Productivity Analytics (`/analytics/productivity/`): Task velocity, completion rate, daily productivity trend chart, and duration estimation error tables.
-  3. Study Analytics (`/analytics/study/`): Daily study hours chart, subject comparison horizontal bar chart, syllabus progress by subject, and plan adherence metrics.
-  4. Habit Analytics (`/analytics/habits/`): Frequency-aware habit performance, completion progress chart, and active habit ledger.
-  5. Time Management Analytics (`/analytics/time/`): Time allocation donut chart, category shares, and timetable schedule block execution adherence.
-  6. Well-being & Correlations (`/analytics/wellbeing/`): Multi-signal line charts, exploratory correlation matrix ($N \ge 14$ threshold), scatter plots, and mandatory medical/non-diagnostic disclaimer.
-  7. Behavioral Insights Engine (`/analytics/insights/`): Rule-based observation cards with category filters, confidence indicators, supporting metrics, and dismiss/restore actions.
-  8. Period Comparison System (`/analytics/compare/`): Multi-domain delta scorecard comparing current vs. previous period values.
+## 12. Advanced Features & System Integration Architecture (Step 11)
+
+Established in Step 11:
+- **Module Structure (`apps.core`)**:
+  - `Notification`: High-priority in-app alerts and notifications with polymorphic categories (`TASK_OVERDUE`, `TASK_DEADLINE`, `EXAM_APPROACHING`, `SPACED_REVISION`, `DAILY_CHECKIN`, `GOAL_TARGET`, `SYSTEM`), title, human-readable message, relative `target_url`, and read/unread status.
+  - `UserPreference`: User-level localization and application preferences (time format `12H` or `24H`, date format `YYYY-MM-DD` / `DD-MM-YYYY` / `MM/DD/YYYY`, week start day `MONDAY` or `SUNDAY`, daily work goal hours, and granular notification toggles `notify_tasks`, `notify_study`, `notify_routines`, `notify_goals`).
+  - `DismissedRecommendation`: Persistence model storing dismissed heuristic suggestions by deterministic recommendation key (`recommendation_key`), user foreign key, and dismissal timestamp.
+  - `services/notification_service.py`: Automated, non-duplicative proactive notification scanner detecting overdue tasks, same-day deadlines, exams within 7 days, pending spaced revisions, evening reflection triggers (after 20:00 without daily check-in), and approaching goal target dates. Implements a 12-to-24-hour deduplication window.
+  - `services/search_service.py`: High-performance multi-entity search engine spanning 10 distinct LifeOS models (`Task`, `Habit`, `Goal`, `Project`, `Subject`, `Topic`, `JournalEntry`, `Decision`, `Mistake`, `Activity`). Enforces strict tenant isolation (`user=request.user`), matches queries across titles, names, notes, and descriptions, and generates sanitized text snippet highlights with target URLs.
+  - `services/recommendation_service.py`: Deterministic, heuristic recommendation engine evaluating user behavior across 5 cognitive domains (Productivity, Study, Habits, Schedule, Well-being) with 9 specialized rules, actionable links, rationales, diagnostic metrics, and user dismissal/restoration mechanics.
+  - `services/export_service.py`: Comprehensive data sovereignty and export engine providing single-file complete JSON backup and individual or multi-table ZIP CSV archives across all 18 primary models, strictly excluding passwords, tokens, and sensitive internal security keys.
+  - `context_processors.py`: `lifeos_core_context` automatically delivers `unread_notifications_count`, `recent_notifications` (5 latest items), and `user_preferences` across all templates globally.
+- **Cross-Module Reactive Integration**:
+  1. *Tasks ↔ Timetable Synchronization*: When a task status changes to `COMPLETED` (via either productivity or timetable endpoints), any linked `ScheduleBlock` referencing that task is automatically updated to `COMPLETED`. Reopening a task reverts the schedule block to `SCHEDULED`.
+  2. *Study Sessions ↔ Study Plans Synchronization*: When a study session is logged or stopped, any matching `StudyPlan` for that subject on the same date is marked `COMPLETED`, keeping the study planner and daily schedule synchronized.
+  3. *Dashboard Real-Time Biometric & Task Sync*: The executive dashboard dynamically reflects the day's sleep hours, mood/energy check-ins, active study timer state, scheduled blocks, and open task count.
+- **User Interface & Interaction**:
+  - Global Header Search Bar: Instant query submission to `/search/?q=...` with auto-focus.
+  - Header Notification Bell: Live unread badge count with an interactive dropdown preview and single-click access to the full notification center.
+  - Dedicated Notifications Center (`/notifications/`): Tabbed status filtering (All, Unread), category filtering, single-click "Mark All as Read", individual read toggles, and deletion.
+  - Recommendation Hub (`/recommendations/`): Prioritized cards with impact levels, diagnostic observations, explanatory rationale, action links, and persistent dismissals.
+  - Data Sovereignty Portal (`/settings/export/`): One-click full JSON backup download, zipped multi-table CSV archive, and standalone table CSV exports.
+  - Preferences & Settings Center (`/settings/`): Unified interface for localization (dates, times, week start), daily work goals, notification category toggles, and data export access.
+- **Progressive Web App (PWA) Readiness**:
+  - `static/manifest.json`: Web App Manifest defining standalone display, theme color (`#0F1117`), background color (`#0F1117`), and SVG application icons.
+  - `static/js/service-worker.js`: Static-asset caching service worker strictly isolated to CSS, JS, fonts, and images, deliberately bypassing dynamic HTML and JSON endpoints to eliminate risk of multi-user stale data caching.
 - **Security & Data Isolation**:
-  - All analytical queries strictly filter records by `request.user`.
-  - Insights dismissal is isolated per user.
-  - All endpoints enforce `@login_required` with zero cross-user data leakage.
+  - All Step 11 views enforce `@login_required` and query exclusively within `request.user`.
+  - Global search queries strictly filter by tenant (`user=request.user`), with zero cross-tenant visibility.
+  - Data exports stream user-isolated records with password hashes, reset tokens, and session secrets completely stripped.
+
 
 
 

@@ -230,9 +230,27 @@
             </a>
         </div>
 
-        <!-- SETTINGS & SHOWCASE -->
+        <!-- SETTINGS & SYSTEM -->
         <div class="nav-group">
             <div class="nav-group-title">Settings & System</div>
+            <a href="{% url 'core:notifications' %}" class="nav-item {% if active_nav == 'notifications' %}active{% endif %}">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                    <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                </svg>
+                <span class="nav-label">Notifications</span>
+                {% if unread_notifications_count > 0 %}
+                <span class="badge badge-primary" style="font-size: 0.65rem; padding: 2px 6px;">{{ unread_notifications_count }}</span>
+                {% endif %}
+            </a>
+            <a href="{% url 'core:data_export' %}" class="nav-item {% if active_nav == 'data_export' %}active{% endif %}">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="7 10 12 15 17 10"></polyline>
+                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                </svg>
+                <span class="nav-label">Export Data</span>
+            </a>
             <a href="{% url 'core:settings' %}" class="nav-item {% if active_nav == 'settings' %}active{% endif %}">
                 <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                     <circle cx="12" cy="12" r="3"></circle>

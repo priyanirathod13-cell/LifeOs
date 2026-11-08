@@ -14,6 +14,7 @@
 | **08** | **Timetable & Daily Scheduling** | **Completed** | Smart Routine & Timetable Generator across 7 core functional areas: Daily Timetable (chronological timeline, date navigation, status actions, reschedule, KPI cards), Weekly Timetable (7-day calendar overview, backlog sidebar), Routine Management (recurring commitments, weekday filtering, overlap prevention), Availability Management (productive windows per weekday), Smart Generator Engine (deterministic rule-based scheduling, study + task prioritization, break insertion, workload cap, unscheduled item diagnostics), Generation History (audit logs with metrics and unscheduled reasons), Scheduling Preferences (customizable work bounds, break lengths, buffers, fatigue limit), 31 productivity tests, 108 total system tests (100% passing). |
 | **09** | **Personal Management Module** | **Completed** | Full Personal Management module across 8 functional areas: Personal Dashboard (8 summary KPI cards, recent journal/decisions/mistakes streams, 14-day mood trend, spending share), Journal (CRUD, date filters, search, newest/oldest sorting), Daily Check-in (standardized 1-5 scales, duplicate date prevention, 14-day history strip), Mood & Energy Tracking (7d/14d/30d/90d ranges, mood bar chart, energy vs stress comparison), Sleep Tracking (bedtime and wake-up timestamps, overnight duration calculation, 7.0–8.5h benchmark band, DailyMetric sync), Decision Journal (DRAFT/EVALUATING/DECIDED/REVIEWED lifecycle, options analysis, post-mortem outcome scoring), Mistake Tracker (anti-pattern logs, root causes, severity impacts, corrective protocols), Finance Manager (positive decimal transactions in ₹ INR, lifetime & monthly net balance/savings, category breakdowns, ledger search/filters), 22 tests in personal & finance, 123 total system tests (100% passing). |
 | **10** | **Analytics & Behavioral Intelligence** | **Completed** | Full multi-dimensional analytics suite: Main Analytics Dashboard (`/analytics/`), Productivity Analytics (task completion rate, estimation errors, daily trends), Study Analytics (subject hours, syllabus progress %, planning accuracy), Habit Analytics (frequency-aware completion, streaks, friction tracking), Time Management (time distribution donut, schedule adherence), Personal Well-being (mood/energy/stress/sleep trends, Pearson correlations with N>=14 threshold), Behavioral Insights Engine (deterministic rule-based heuristics with dismiss/restore), Period Comparison System (multi-domain delta scorecard with 0-denominator safety), 12 new analytics tests, 135 total system tests (100% passing). |
+| **11** | **Advanced Features & Integration** | **Completed** | Cross-module reactive sync (Task ↔ ScheduleBlock, StudySession ↔ StudyPlan/Topic), In-App Proactive Notifications with deduplication and unread counter badge, Global Multi-Entity Search across 10 models with tenant isolation, Rule-based Heuristic Recommendation Engine (`/recommendations/`) with dismissal persistence, Self-service Data Export Engine (sanitized JSON + modular CSV/ZIP), System Settings & Preferences (`/settings/`), PWA readiness (`manifest.json` + static-only `service-worker.js`), 16 new Step 11 tests, 151 total system tests (100% passing). |
 
 ---
 
@@ -545,6 +546,85 @@
 - **135 Automated Tests** across all 8 applications (100% passing):
   - 12 new dedicated tests in `apps.analytics` verifying date parsing, productivity estimation errors, study durations, frequency-aware habits, Pearson correlations, minimum data thresholds, financial metrics, delta calculations, insight generation/dismissal, and multi-user data isolation.
   - Full system test pass: `Ran 135 tests in 145.554s — OK`.
+
+---
+
+## Detailed Step 11 Deliverables: Advanced Features & Cross-Module Integration
+
+### 1. Cross-Module Reactive Synchronization
+- **Task ↔ Daily Timetable**: Marking a Task completed automatically syncs any linked `ScheduleBlock` (`related_task=task`, status `SCHEDULED`) to `COMPLETED`. Reopening a task reverts linked schedule blocks to `SCHEDULED`.
+- **Study Sessions ↔ Study Plans & Topics**: Logging or stopping a `StudySession` automatically marks any matching open `StudyPlan` for that subject, topic, and date as `COMPLETED`. `Topic.actual_minutes` dynamically sums active session minutes via ORM properties.
+- **Biometrics ↔ Executive Dashboard**: Instant updates to daily biometric summaries when logging evening check-ins.
+
+### 2. In-App Notification System
+- **Models**: `Notification(user, notification_type, title, message, target_url, is_read, created_at)` with types `TASK`, `STUDY`, `ROUTINE`, `GOAL`, `SYSTEM`.
+- **Proactive Notification Engine**: `NotificationService.generate_system_notifications` scans user data on authenticated page requests to detect overdue tasks, today's deadlines, exams approaching within 7 days, overdue spaced revisions, missing evening check-ins after 18:00, and approaching goal milestones (<3 days).
+- **Spam Prevention**: Intelligent deduplication window (12 to 24 hours) prevents redundant notifications.
+- **UI Integration**:
+  - Top header notification bell with live unread counter badge.
+  - Interactive notification dropdown displaying recent alerts with timestamps and deep-link destinations.
+  - Centralized notification center (`/notifications/`) with filtering by status (`all`, `unread`) and domain category (`TASK`, `STUDY`, `ROUTINE`, `GOAL`, `SYSTEM`).
+  - Single-click Mark as Read, Mark All as Read, and Delete actions.
+- **Global Context Processor**: `lifeos_core_context` provides unread counts, recent notifications, and user preferences to all templates.
+
+### 3. Global Multi-Entity Search
+- **Route**: `core:global_search` (`GET /search/?q=...`)
+- **Coverage**: Simultaneously searches across 10 distinct entities:
+  - Tasks (`title`, `description`)
+  - Habits (`name`, `description`)
+  - Goals (`title`, `description`)
+  - Projects (`title`, `description`)
+  - Subjects (`name`, `code`, `description`)
+  - Topics (`title`, `description`)
+  - Journal Entries (`title`, `content`)
+  - Decisions (`title`, `description`, `reason_for_choosing`)
+  - Mistakes (`title`, `description`, `lesson_learned`)
+  - Activities (`activity_name`, `description`)
+- **Strict Data Isolation**: Every entity query is filtered strictly with `user=request.user`.
+- **UX Features**: In-header search bar with focus animation, matched snippet previews with query highlights, entity type badges, metadata summaries, and direct deep-links.
+
+### 4. Deterministic Heuristic Recommendation Engine
+- **Route**: `core:recommendations` (`GET /recommendations/`)
+- **Engine**: `RecommendationService.get_recommendations` implements 9 heuristic diagnostics across Productivity, Study, Habits, Schedule, and Well-being:
+  1. Time estimation bias calibration (>50% underestimation with >=30m avg error)
+  2. Overdue task backlog triage (>=3 overdue tasks)
+  3. Urgent pending tasks missing timetable blocks
+  4. Approaching exam with low syllabus coverage (<60% with <=14 days remaining)
+  5. Overdue spaced repetition revisions (>=2 overdue reviews)
+  6. Daily habit consistency decay (<50% completions over past week)
+  7. Schedule overload risk (>10 hours scheduled in a day)
+  8. Sleep deficit pattern (average sleep <6.0 hours across recent logs)
+  9. Missing reflection cadence (<=3 daily check-ins logged in past 7 days)
+- **Features**: Priority badges (`HIGH`, `MEDIUM`, `LOW`), diagnostic data, "Why LifeOS Recommends This" rationales, actionable deep-link buttons, and persistent dismissal tracking via `DismissedRecommendation`.
+
+### 5. Personal Data Export & Sovereignty Engine
+- **Route**: `core:data_export` (`GET /settings/export/`)
+- **Formats**:
+  - Complete JSON backup with ISO timestamps, user profile metadata, and nested collections.
+  - Complete CSV Archive (`.zip` compressed archive of individual CSV tables).
+  - Granular single-table CSV downloads (Tasks, Habits, Activities, Study, Personal, Finance).
+- **Zero-Leakage Guarantee**: Passwords, hash tokens, sessions, and security salts are strictly omitted at serialization.
+
+### 6. System Settings & Preferences
+- **Route**: `core:settings` (`GET/POST /settings/`)
+- **Features**:
+  - Primary timezone preference (`Asia/Kolkata`, `UTC`, `America/New_York`, etc.).
+  - ISO date formatting (`YYYY-MM-DD`, `DD/MM/YYYY`, `MM/DD/YYYY`).
+  - Time format (`24h`, `12h`).
+  - First day of the week (`Monday`, `Sunday`).
+  - Target productive work hours per day (default `8.0`).
+  - Proactive notification channel toggles for Tasks, Study, Routines, and Goals.
+  - Data sovereignty panel with direct links to Profile, Export, and Recommendation reset.
+
+### 7. Progressive Web App (PWA)
+- **Web App Manifest**: `static/manifest.json` configured with dark theme `#0F1117`, standalone display mode, and maskable application icons.
+- **Privacy-Preserving Service Worker**: `static/js/service-worker.js` caches static CSS, JS, fonts, and brand assets for instant offline presentation while strictly bypassing all dynamic and authenticated endpoints to prevent sensitive personal data caching.
+
+### Automated Test Suite
+- **151 Total Automated Tests** across all 8 applications (100% passing):
+  - 16 new dedicated tests in `apps.core.tests_step11` covering Notifications CRUD/deduplication/filters/isolation, Global Search across 10 models, Recommendation Heuristics & Dismissal, Data Export JSON/CSV/ZIP, User Preferences & Context Processor, and Task/Study Cross-Module Synchronization.
+  - Full system test pass: `Ran 151 tests in 165.151s — OK`.
+
 
 
 

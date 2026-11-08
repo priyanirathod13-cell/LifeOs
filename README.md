@@ -11,12 +11,17 @@ LifeOS brings together multiple life dimensions into a cohesive, private, multi-
 - **Habits & Routines**: Streak tracking, consistency metrics, and behavioral feedback.
 - **Goals & Projects**: Structured milestones linking high-level objectives to daily tasks.
 - **Study Management**: Subject tracking, revision schedules, and academic workflows.
-- **Timetables & Schedules**: Dynamic daily and weekly routines.
+- **Timetables & Schedules**: Dynamic daily and weekly routines with auto-generation.
 - **Journal Entries & Reflections**: Qualitative daily logs for retrospectives.
 - **Mood, Sleep & Energy**: Biometric and subjective state logging to correlate with productivity.
-- **Financial Activities**: Personal expense and cash flow tracking.
+- **Financial Activities**: Personal expense and cash flow tracking in INR.
 - **Decisions & Mistakes**: Documenting decisions, expected outcomes, and lessons learned.
 - **Behavioral Analytics**: Insights into the relationships between planning, execution, and outcomes.
+- **In-App Notifications**: Proactive, deduplicated alerts for overdue tasks, exams, revisions, and habits.
+- **Global Search**: Instant cross-entity search spanning 10 core LifeOS data models.
+- **Personalized Recommendations**: Deterministic heuristic rules across productivity, study, and routines.
+- **Data Sovereignty & Export**: Full self-service JSON and multi-table CSV / ZIP downloads.
+- **PWA Readiness**: Offline static caching service worker and Web App Manifest.
 
 ---
 
@@ -56,13 +61,15 @@ LifeOS/
 │
 ├── apps/                       # Modular Django applications
 │   ├── __init__.py
-│   ├── core/                   # System core, health check, landing page, UI system
+│   ├── core/                   # System core, notifications, search, recommendations, export, preferences
+│   │   └── services/           # notification_service, search_service, recommendation_service, export_service
 │   ├── accounts/               # Custom user model, authentication, profile & sessions
 │   ├── productivity/           # Category, Task, Habit, HabitLog, Activity, Routine, ScheduleBlock
 │   ├── planning/               # Project, Goal, GoalTask
-│   ├── personal/               # JournalEntry, Decision, DecisionOption, DecisionOutcome, Mistake, DailyMetric
+│   ├── personal/               # JournalEntry, Decision, DecisionOption, DecisionOutcome, Mistake, DailyMetric, SleepRecord
 │   ├── finance/                # Transaction
-│   └── study/                  # Subject, Topic, StudySession, StudyPlan, Revision, Exam
+│   ├── study/                  # Subject, Topic, StudySession, StudyPlan, Revision, Exam
+│   └── analytics/              # Multi-domain analytics, correlation engine, charts & insights persistence
 │
 ├── templates/                  # Django Template Architecture
 │   ├── base.html               # Foundational HTML5 shell and asset links
@@ -218,12 +225,13 @@ python manage.py test apps.study
 python manage.py test apps.personal
 python manage.py test apps.finance
 python manage.py test apps.analytics
+python manage.py test apps.core.tests_step11
 ```
 
 Expected output:
 ```
 System check identified no issues (0 silenced).
-Ran 135 tests in ~145s
+Ran 151 tests in ~160s
 
 OK
 ```
@@ -284,5 +292,10 @@ python manage.py runserver
 - **Well-being & Biological Correlations**: [http://127.0.0.1:8000/analytics/wellbeing/](http://127.0.0.1:8000/analytics/wellbeing/) (Mood/energy/stress/sleep trend charts, Pearson correlations with N >= 14 data threshold, scatter plots, and medical disclaimer)
 - **Behavioral Insights Engine**: [http://127.0.0.1:8000/analytics/insights/](http://127.0.0.1:8000/analytics/insights/) (Deterministic rule-based heuristics across all life domains with confidence ratings, supporting metrics, and dismiss/restore persistence)
 - **Period Comparison System**: [http://127.0.0.1:8000/analytics/compare/](http://127.0.0.1:8000/analytics/compare/) (Multi-domain comparative delta scorecard comparing current vs. previous periods with zero-denominator safety)
+- **Notifications Center**: [http://127.0.0.1:8000/notifications/](http://127.0.0.1:8000/notifications/) (In-app proactive alerts, overdue tasks, exam alerts, revision triggers, mark all read, deletion)
+- **Global Search**: [http://127.0.0.1:8000/search/](http://127.0.0.1:8000/search/) (Cross-entity search spanning Tasks, Habits, Goals, Projects, Subjects, Topics, Journal, Decisions, Mistakes, Activities)
+- **Personalized Recommendations**: [http://127.0.0.1:8000/recommendations/](http://127.0.0.1:8000/recommendations/) (Heuristic rule-based recommendations with rationales, metrics, actions, and dismissals)
+- **Data Export & Privacy**: [http://127.0.0.1:8000/settings/export/](http://127.0.0.1:8000/settings/export/) (Self-service single JSON backup and multi-table CSV/ZIP archive download)
+- **System Settings & Preferences**: [http://127.0.0.1:8000/settings/](http://127.0.0.1:8000/settings/) (User localization, 12h/24h time, week start day, daily work goals, notification toggles)
 - **UI Design System Showcase**: [http://127.0.0.1:8000/ui-system/](http://127.0.0.1:8000/ui-system/) (Interactive 16-component catalog)
 - **Health-Check API Endpoint**: [http://127.0.0.1:8000/health/](http://127.0.0.1:8000/health/) (Preserved from Step 01)

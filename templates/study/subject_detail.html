@@ -1,0 +1,237 @@
+{% extends 'layouts/app_layout.html' %}
+
+{% block title %}{{ subject.name }} — LifeOS{% endblock %}
+{% block header_breadcrumb %}Study / Subjects / {{ subject.name }}{% endblock %}
+
+{% block content %}
+<div class="content-container animate-fade-in" style="max-width: 960px; margin: 0 auto;">
+    <!-- Navigation Bar -->
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-4); flex-wrap: wrap; gap: var(--space-3);">
+        <a href="{% url 'study:subject_list' %}" class="btn btn-ghost btn-sm" style="display: inline-flex; align-items: center; gap: var(--space-1); color: var(--color-text-muted);">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="19" y1="12" x2="5" y2="12"></line>
+                <polyline points="12 19 5 12 12 5"></polyline>
+            </svg>
+            All Subjects
+        </a>
+        <div style="display: flex; gap: var(--space-2);">
+            <a href="{% url 'study:subject_update' subject.pk %}" class="btn btn-secondary btn-sm" style="display: inline-flex; align-items: center; gap: var(--space-1);">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 20h9"></path>
+                    <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+                </svg>
+                Edit Subject
+            </a>
+            <a href="{% url 'study:subject_delete' subject.pk %}" class="btn btn-ghost btn-sm" style="color: #ef4444; display: inline-flex; align-items: center; gap: var(--space-1);">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="3 6 5 6 21 6"></polyline>
+                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                </svg>
+                Delete
+            </a>
+        </div>
+    </div>
+
+    <!-- Subject Header Card -->
+    <div class="card" style="padding: var(--space-6); background: var(--color-bg-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); margin-bottom: var(--space-6); border-top: 4px solid {{ subject.color|default:'#818cf8' }};">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: var(--space-3); flex-wrap: wrap; gap: var(--space-2);">
+            <div style="display: flex; gap: var(--space-2); align-items: center;">
+                <span class="badge" style="background: rgba(99, 102, 241, 0.1); color: var(--color-accent-primary, #6366f1); border: 1px solid rgba(99, 102, 241, 0.2); font-size: 11px;">
+                    {{ subject.get_subject_type_display }}
+                </span>
+                <span class="badge {% if subject.status == 'ACTIVE' %}badge-success{% elif subject.status == 'COMPLETED' %}badge-primary{% else %}badge-neutral{% endif %}" style="font-size: 11px;">
+                    {{ subject.get_status_display }}
+                </span>
+            </div>
+            {% if subject.target_date %}
+                <div style="font-size: var(--font-size-xs); color: var(--color-text-muted);">
+                    Target Completion: <strong style="color: var(--color-text-primary);">{{ subject.target_date|date:"M d, Y" }}</strong>
+                </div>
+            {% endif %}
+        </div>
+
+        <h1 style="font-size: var(--font-size-2xl); font-weight: 700; color: var(--color-text-primary); margin-bottom: 2px;">
+            {{ subject.name }}
+        </h1>
+        {% if subject.code %}
+            <div style="font-size: var(--font-size-sm); color: var(--color-accent-primary, #6366f1); font-weight: 600; margin-bottom: var(--space-3);">
+                {{ subject.code }}
+            </div>
+        {% endif %}
+
+        {% if subject.description %}
+            <p style="font-size: var(--font-size-sm); color: var(--color-text-secondary); line-height: 1.6; margin-bottom: var(--space-4);">
+                {{ subject.description }}
+            </p>
+        {% endif %}
+
+        <!-- Quick Stats & Syllabus Progress -->
+        <div style="border-top: 1px solid var(--color-border); padding-top: var(--space-4); margin-top: var(--space-3);">
+            <div style="display: flex; justify-content: space-between; font-size: var(--font-size-xs); color: var(--color-text-muted); margin-bottom: 6px;">
+                <span>Syllabus Completion</span>
+                <span><strong>{{ completed_topics }}</strong> of <strong>{{ total_topics }}</strong> topics completed ({{ progress_pct }}%)</span>
+            </div>
+            <div style="height: 8px; width: 100%; background: var(--color-bg-main); border-radius: 999px; overflow: hidden; margin-bottom: var(--space-3);">
+                <div style="height: 100%; width: {{ progress_pct }}%; background: {{ subject.color|default:'#818cf8' }}; border-radius: 999px; transition: width 0.3s;"></div>
+            </div>
+            <div style="display: flex; gap: var(--space-6); font-size: var(--font-size-xs); color: var(--color-text-muted); flex-wrap: wrap;">
+                <div>Total Studied: <strong style="color: var(--color-text-primary);">{{ study_duration_str }}</strong></div>
+                <div>In-Progress Topics: <strong style="color: var(--color-text-primary);">{{ in_progress_topics }}</strong></div>
+                <div>Created: <strong style="color: var(--color-text-primary);">{{ subject.created_at|date:"M d, Y" }}</strong></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Topics & Chapters Section -->
+    <div class="card" style="padding: var(--space-6); background: var(--color-bg-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); margin-bottom: var(--space-6);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-4); flex-wrap: wrap; gap: var(--space-3);">
+            <div>
+                <h2 style="font-size: var(--font-size-lg); font-weight: 600; color: var(--color-text-primary);">Syllabus Topics &amp; Chapters</h2>
+                <p style="font-size: var(--font-size-xs); color: var(--color-text-muted);">Manage topics, track completion, and organize by chapters.</p>
+            </div>
+            <a href="{% url 'study:topic_create' %}?subject={{ subject.pk }}" class="btn btn-primary btn-sm" style="display: inline-flex; align-items: center; gap: var(--space-1);">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                </svg>
+                Add Topic
+            </a>
+        </div>
+
+        {% if chapters_dict %}
+            <div style="display: flex; flex-direction: column; gap: var(--space-5);">
+                {% for chapter_name, chapter_topics in chapters_dict.items %}
+                    <div style="border: 1px solid var(--color-border); border-radius: var(--radius-md); overflow: hidden;">
+                        <div style="background: var(--color-bg-main); padding: var(--space-3) var(--space-4); font-size: var(--font-size-sm); font-weight: 600; color: var(--color-text-primary); border-bottom: 1px solid var(--color-border); display: flex; justify-content: space-between; align-items: center;">
+                            <span>{{ chapter_name }}</span>
+                            <span style="font-size: var(--font-size-xs); color: var(--color-text-muted); font-weight: 400;">{{ chapter_topics|length }} topic(s)</span>
+                        </div>
+                        <div class="table-container" style="overflow-x: auto;">
+                            <table class="table" style="width: 100%; border-collapse: collapse; font-size: var(--font-size-sm);">
+                                <tbody>
+                                    {% for topic in chapter_topics %}
+                                        <tr style="border-bottom: 1px solid var(--color-border);">
+                                            <td style="padding: var(--space-3); width: 36px; vertical-align: middle;">
+                                                <form method="post" action="{% url 'study:topic_toggle' topic.pk %}" style="display: inline;">
+                                                    {% csrf_token %}
+                                                    <input type="hidden" name="next" value="{{ request.path }}">
+                                                    <button type="submit" style="background: none; border: none; cursor: pointer; padding: 0; color: {% if topic.is_completed %}#10b981{% else %}var(--color-border){% endif %};" title="Toggle completion">
+                                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                            {% if topic.is_completed %}
+                                                                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                                                                <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                                                            {% else %}
+                                                                <circle cx="12" cy="12" r="10"></circle>
+                                                            {% endif %}
+                                                        </svg>
+                                                    </button>
+                                                </form>
+                                            </td>
+                                            <td style="padding: var(--space-3);">
+                                                <div style="font-weight: 500; color: var(--color-text-primary); {% if topic.is_completed %}text-decoration: line-through; color: var(--color-text-muted);{% endif %}">
+                                                    {{ topic.title }}
+                                                </div>
+                                                {% if topic.description %}
+                                                    <div style="font-size: var(--font-size-xs); color: var(--color-text-muted); margin-top: 2px;">
+                                                        {{ topic.description }}
+                                                    </div>
+                                                {% endif %}
+                                            </td>
+                                            <td style="padding: var(--space-3); width: 100px;">
+                                                <span class="badge {% if topic.is_completed %}badge-success{% elif topic.status == 'IN_PROGRESS' %}badge-primary{% elif topic.status == 'NEEDS_REVISION' %}badge-warning{% else %}badge-neutral{% endif %}" style="font-size: 11px;">
+                                                    {{ topic.get_status_display }}
+                                                </span>
+                                            </td>
+                                            <td style="padding: var(--space-3); width: 90px;">
+                                                <span class="badge {% if topic.priority == 'urgent' %}badge-danger{% elif topic.priority == 'high' %}badge-warning{% elif topic.priority == 'medium' %}badge-info{% else %}badge-neutral{% endif %}" style="font-size: 11px;">
+                                                    {{ topic.get_priority_display }}
+                                                </span>
+                                            </td>
+                                            <td style="padding: var(--space-3); width: 110px; font-size: var(--font-size-xs); color: var(--color-text-muted);">
+                                                {% if topic.estimated_minutes %}{{ topic.estimated_minutes }}m est.{% else %}—{% endif %}
+                                            </td>
+                                            <td style="padding: var(--space-3); text-align: right; width: 120px; white-space: nowrap;">
+                                                <a href="{% url 'study:topic_update' topic.pk %}" class="btn btn-ghost btn-sm" style="padding: 2px 6px; font-size: 11px;">Edit</a>
+                                                <a href="{% url 'study:topic_delete' topic.pk %}" class="btn btn-ghost btn-sm" style="color: #ef4444; padding: 2px 6px; font-size: 11px;">Delete</a>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div style="text-align: center; padding: var(--space-8); color: var(--color-text-muted); font-size: var(--font-size-sm);">
+                No topics defined for this subject yet.
+                <div style="margin-top: 8px;">
+                    <a href="{% url 'study:topic_create' %}?subject={{ subject.pk }}" class="btn btn-primary btn-sm">+ Add First Topic</a>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Exams & Sessions Tabs / Grid -->
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-6); align-items: start;">
+        <!-- Exams -->
+        <div class="card" style="padding: var(--space-5); background: var(--color-bg-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-3);">
+                <h3 style="font-size: var(--font-size-base); font-weight: 600; color: var(--color-text-primary);">Subject Exams</h3>
+                <a href="{% url 'study:exam_create' %}?subject={{ subject.pk }}" class="btn btn-ghost btn-sm" style="color: var(--color-accent-primary, #6366f1); font-size: var(--font-size-xs);">+ Schedule Exam</a>
+            </div>
+            {% if exams %}
+                <div style="display: flex; flex-direction: column; gap: var(--space-2);">
+                    {% for exam in exams %}
+                        <div style="padding: var(--space-3); background: var(--color-bg-main); border: 1px solid var(--color-border); border-radius: var(--radius-md);">
+                            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                                <span style="font-weight: 600; font-size: var(--font-size-sm); color: var(--color-text-primary);">{{ exam.exam_name }}</span>
+                                <span class="badge badge-neutral" style="font-size: 10px;">{{ exam.exam_date|date:"M d, Y" }}</span>
+                            </div>
+                            <div style="font-size: var(--font-size-xs); color: var(--color-text-muted); margin-top: 2px;">
+                                {{ exam.get_exam_type_display }}
+                                {% if exam.score_achieved is not None %}
+                                    &bull; Score: <strong style="color: #10b981;">{{ exam.score_achieved }}/{{ exam.max_score }} ({{ exam.percentage_score }}%)</strong>
+                                {% endif %}
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div style="text-align: center; padding: var(--space-6); color: var(--color-text-muted); font-size: var(--font-size-xs);">
+                    No exams scheduled for this subject.
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Recent Sessions -->
+        <div class="card" style="padding: var(--space-5); background: var(--color-bg-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-3);">
+                <h3 style="font-size: var(--font-size-base); font-weight: 600; color: var(--color-text-primary);">Logged Sessions</h3>
+                <a href="{% url 'study:session_create' %}" class="btn btn-ghost btn-sm" style="color: var(--color-accent-primary, #6366f1); font-size: var(--font-size-xs);">+ Log Session</a>
+            </div>
+            {% if sessions %}
+                <div style="display: flex; flex-direction: column; gap: var(--space-2);">
+                    {% for session in sessions %}
+                        <div style="padding: var(--space-3); background: var(--color-bg-main); border: 1px solid var(--color-border); border-radius: var(--radius-md);">
+                            <div style="display: flex; justify-content: space-between;">
+                                <span style="font-weight: 500; font-size: var(--font-size-xs); color: var(--color-text-primary);">
+                                    {{ session.topic.title|default:"General Study" }}
+                                </span>
+                                <span style="color: #10b981; font-weight: 600; font-size: var(--font-size-xs);">{{ session.duration_minutes }}m</span>
+                            </div>
+                            <div style="font-size: var(--font-size-xs); color: var(--color-text-muted); margin-top: 2px;">
+                                {{ session.session_date|date:"M d, Y" }} &bull; {{ session.get_session_type_display }}
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div style="text-align: center; padding: var(--space-6); color: var(--color-text-muted); font-size: var(--font-size-xs);">
+                    No study sessions logged for this subject yet.
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

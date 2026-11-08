@@ -6,6 +6,7 @@ from apps.productivity.views import (
     habit_list_view,
     task_list_view,
 )
+from apps.study.views import study_analytics_view, study_dashboard_view
 from .views import (
     behavioral_insights_view,
     checkin_view,
@@ -22,8 +23,6 @@ from .views import (
     recommendations_view,
     routines_view,
     settings_view,
-    study_analytics_view,
-    study_view,
     timetable_view,
     toggle_habit_view,
     toggle_task_view,
@@ -59,7 +58,7 @@ urlpatterns = [
     path('checkin/', checkin_view, name='checkin'),
 
     # MY GROWTH (Protected)
-    path('study/', study_view, name='study'),
+    path('study/', study_dashboard_view, name='study'),
     path('goals/', goal_list_view, name='goals'),
     path('projects/', project_list_view, name='projects'),
     path('journal/', journal_view, name='journal'),

@@ -1,0 +1,136 @@
+{% extends 'layouts/app_layout.html' %}
+
+{% block title %}{% if exam %}Edit Exam: {{ exam.exam_name }}{% else %}Schedule Exam{% endif %} — LifeOS{% endblock %}
+{% block header_breadcrumb %}Study / {% if exam %}Edit Exam{% else %}New Exam{% endif %}{% endblock %}
+
+{% block content %}
+<div class="content-container animate-fade-in" style="max-width: 680px; margin: 0 auto;">
+    <div class="page-header" style="margin-bottom: var(--space-6);">
+        <div class="header-left">
+            <a href="{% url 'study:exams' %}" class="btn btn-ghost btn-sm" style="margin-bottom: var(--space-2); display: inline-flex; align-items: center; gap: var(--space-1); color: var(--color-text-muted);">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="19" y1="12" x2="5" y2="12"></line>
+                    <polyline points="12 19 5 12 12 5"></polyline>
+                </svg>
+                Back to Exams &amp; Assessments
+            </a>
+            <h1 class="page-title" style="font-size: var(--font-size-2xl); font-weight: 700; color: var(--color-text-primary);">
+                {% if exam %}Edit Exam: {{ exam.exam_name }}{% else %}Schedule Examination / Test{% endif %}
+            </h1>
+            <p class="text-secondary" style="font-size: var(--font-size-sm); color: var(--color-text-muted);">
+                Define exam schedule, assessment type, weightage, and record achieved scores.
+            </p>
+        </div>
+    </div>
+
+    <div class="card" style="padding: var(--space-6); background: var(--color-bg-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg);">
+        <form method="post" novalidate>
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
+                <div class="alert alert-error" style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.2); color: #ef4444; padding: var(--space-3) var(--space-4); border-radius: var(--radius-md); margin-bottom: var(--space-4); font-size: var(--font-size-sm);">
+                    {% for error in form.non_field_errors %}
+                        <div>{{ error }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            <div class="form-group" style="margin-bottom: var(--space-4);">
+                <label for="{{ form.exam_name.id_for_label }}" class="form-label" style="display: block; margin-bottom: var(--space-1); font-weight: 500; font-size: var(--font-size-sm); color: var(--color-text-secondary);">
+                    Exam Name / Title <span style="color: var(--color-danger, #ef4444);">*</span>
+                </label>
+                {{ form.exam_name }}
+                {% if form.exam_name.errors %}
+                    <div class="form-text" style="color: #ef4444; font-size: var(--font-size-xs); margin-top: 4px;">{{ form.exam_name.errors.0 }}</div>
+                {% endif %}
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4); margin-bottom: var(--space-4);">
+                <div class="form-group">
+                    <label for="{{ form.subject.id_for_label }}" class="form-label" style="display: block; margin-bottom: var(--space-1); font-weight: 500; font-size: var(--font-size-sm); color: var(--color-text-secondary);">
+                        Subject <span style="color: var(--color-danger, #ef4444);">*</span>
+                    </label>
+                    {{ form.subject }}
+                    {% if form.subject.errors %}
+                        <div class="form-text" style="color: #ef4444; font-size: var(--font-size-xs); margin-top: 4px;">{{ form.subject.errors.0 }}</div>
+                    {% endif %}
+                </div>
+                <div class="form-group">
+                    <label for="{{ form.exam_date.id_for_label }}" class="form-label" style="display: block; margin-bottom: var(--space-1); font-weight: 500; font-size: var(--font-size-sm); color: var(--color-text-secondary);">
+                        Exam Date <span style="color: var(--color-danger, #ef4444);">*</span>
+                    </label>
+                    {{ form.exam_date }}
+                    {% if form.exam_date.errors %}
+                        <div class="form-text" style="color: #ef4444; font-size: var(--font-size-xs); margin-top: 4px;">{{ form.exam_date.errors.0 }}</div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: var(--space-4); margin-bottom: var(--space-4);">
+                <div class="form-group">
+                    <label for="{{ form.exam_type.id_for_label }}" class="form-label" style="display: block; margin-bottom: var(--space-1); font-weight: 500; font-size: var(--font-size-sm); color: var(--color-text-secondary);">
+                        Exam Type
+                    </label>
+                    {{ form.exam_type }}
+                </div>
+                <div class="form-group">
+                    <label for="{{ form.status.id_for_label }}" class="form-label" style="display: block; margin-bottom: var(--space-1); font-weight: 500; font-size: var(--font-size-sm); color: var(--color-text-secondary);">
+                        Status
+                    </label>
+                    {{ form.status }}
+                </div>
+                <div class="form-group">
+                    <label for="{{ form.weight_percentage.id_for_label }}" class="form-label" style="display: block; margin-bottom: var(--space-1); font-weight: 500; font-size: var(--font-size-sm); color: var(--color-text-secondary);">
+                        Weight (% of Grade)
+                    </label>
+                    {{ form.weight_percentage }}
+                    {% if form.weight_percentage.errors %}
+                        <div class="form-text" style="color: #ef4444; font-size: var(--font-size-xs); margin-top: 4px;">{{ form.weight_percentage.errors.0 }}</div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Scoring Section -->
+            <div style="background: var(--color-bg-main); border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: var(--space-4); margin-bottom: var(--space-4);">
+                <h4 style="font-size: var(--font-size-sm); font-weight: 600; color: var(--color-text-primary); margin-bottom: var(--space-2);">
+                    Scoring &amp; Results (Optional / Post-Exam)
+                </h4>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4);">
+                    <div class="form-group">
+                        <label for="{{ form.score_achieved.id_for_label }}" class="form-label" style="display: block; margin-bottom: var(--space-1); font-weight: 500; font-size: var(--font-size-xs); color: var(--color-text-secondary);">
+                            Score Achieved
+                        </label>
+                        {{ form.score_achieved }}
+                        {% if form.score_achieved.errors %}
+                            <div class="form-text" style="color: #ef4444; font-size: var(--font-size-xs); margin-top: 4px;">{{ form.score_achieved.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="form-group">
+                        <label for="{{ form.max_score.id_for_label }}" class="form-label" style="display: block; margin-bottom: var(--space-1); font-weight: 500; font-size: var(--font-size-xs); color: var(--color-text-secondary);">
+                            Maximum Score
+                        </label>
+                        {{ form.max_score }}
+                        {% if form.max_score.errors %}
+                            <div class="form-text" style="color: #ef4444; font-size: var(--font-size-xs); margin-top: 4px;">{{ form.max_score.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group" style="margin-bottom: var(--space-6);">
+                <label for="{{ form.description.id_for_label }}" class="form-label" style="display: block; margin-bottom: var(--space-1); font-weight: 500; font-size: var(--font-size-sm); color: var(--color-text-secondary);">
+                    Description &amp; Syllabus Coverage
+                </label>
+                {{ form.description }}
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: var(--space-3); border-top: 1px solid var(--color-border); padding-top: var(--space-4);">
+                <a href="{% url 'study:exams' %}" class="btn btn-secondary">Cancel</a>
+                <button type="submit" class="btn btn-primary">
+                    {% if exam %}Save Changes{% else %}Schedule Exam{% endif %}
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

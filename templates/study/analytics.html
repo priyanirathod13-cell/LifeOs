@@ -1,0 +1,244 @@
+{% extends 'layouts/app_layout.html' %}
+
+{% block title %}Study Analytics &amp; Insights — LifeOS{% endblock %}
+{% block header_breadcrumb %}Study / Analytics{% endblock %}
+
+{% block content %}
+<div class="content-container animate-fade-in">
+    <!-- Header -->
+    <div class="page-header" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: var(--space-4); flex-wrap: wrap; gap: var(--space-4);">
+        <div class="header-left">
+            <h1 class="page-title" style="font-size: var(--font-size-2xl); font-weight: 700; color: var(--color-text-primary); margin-bottom: var(--space-1);">Study Analytics &amp; Behavioral Insights</h1>
+            <p class="text-secondary" style="font-size: var(--font-size-sm); color: var(--color-text-muted);">
+                Detailed breakdowns of study duration, subject distribution, syllabus velocity, and plan adherence.
+            </p>
+        </div>
+        <div class="header-actions">
+            <a href="{% url 'study:session_create' %}" class="btn btn-secondary" style="font-size: var(--font-size-sm);">
+                Log Study Session
+            </a>
+            <a href="{% url 'study:sessions' %}" class="btn btn-primary" style="font-size: var(--font-size-sm);">
+                Open Live Timer
+            </a>
+        </div>
+    </div>
+
+    <!-- Sub-navigation Bar -->
+    {% with study_subnav='analytics' %}
+        {% include 'study/study_nav.html' %}
+    {% endwith %}
+
+    <!-- Top Analytics KPI Grid -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: var(--space-4); margin-bottom: var(--space-6);">
+        <!-- 1. Total Study (14 Days) -->
+        <div class="card" style="padding: var(--space-4); background: var(--color-bg-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg);">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--space-2);">
+                <span style="font-size: var(--font-size-xs); font-weight: 600; color: var(--color-text-muted); text-transform: uppercase; letter-spacing: 0.05em;">14-Day Study Volume</span>
+                <span style="color: var(--color-primary); font-size: 14px;">⏱</span>
+            </div>
+            <div style="font-size: var(--font-size-2xl); font-weight: 700; color: var(--color-text-primary); line-height: 1.2;">
+                {{ total_14_str }}
+            </div>
+            <div style="font-size: var(--font-size-xs); color: var(--color-text-muted); margin-top: 4px;">
+                Total active learning logged
+            </div>
+        </div>
+
+        <!-- 2. Daily Average -->
+        <div class="card" style="padding: var(--space-4); background: var(--color-bg-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg);">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--space-2);">
+                <span style="font-size: var(--font-size-xs); font-weight: 600; color: var(--color-text-muted); text-transform: uppercase; letter-spacing: 0.05em;">Daily Average</span>
+                <span style="color: #10b981; font-size: 14px;">📈</span>
+            </div>
+            <div style="font-size: var(--font-size-2xl); font-weight: 700; color: var(--color-text-primary); line-height: 1.2;">
+                {{ avg_daily_str }}
+            </div>
+            <div style="font-size: var(--font-size-xs); color: var(--color-text-muted); margin-top: 4px;">
+                Across past 14 days
+            </div>
+        </div>
+
+        <!-- 3. Study Consistency -->
+        <div class="card" style="padding: var(--space-4); background: var(--color-bg-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg);">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--space-2);">
+                <span style="font-size: var(--font-size-xs); font-weight: 600; color: var(--color-text-muted); text-transform: uppercase; letter-spacing: 0.05em;">14-Day Consistency</span>
+                <span style="color: #6366f1; font-size: 14px;">🎯</span>
+            </div>
+            <div style="font-size: var(--font-size-2xl); font-weight: 700; color: var(--color-text-primary); line-height: 1.2;">
+                {{ consistency_pct }}%
+            </div>
+            <div style="font-size: var(--font-size-xs); color: var(--color-text-muted); margin-top: 4px;">
+                {{ days_with_study }} of 14 days studied
+            </div>
+        </div>
+
+        <!-- 4. Plan Adherence -->
+        <div class="card" style="padding: var(--space-4); background: var(--color-bg-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg);">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--space-2);">
+                <span style="font-size: var(--font-size-xs); font-weight: 600; color: var(--color-text-muted); text-transform: uppercase; letter-spacing: 0.05em;">Plan Adherence (30D)</span>
+                <span style="color: #f59e0b; font-size: 14px;">⚖️</span>
+            </div>
+            <div style="font-size: var(--font-size-2xl); font-weight: 700; color: var(--color-text-primary); line-height: 1.2;">
+                {{ plan_adherence_pct }}%
+            </div>
+            <div style="font-size: var(--font-size-xs); color: var(--color-text-muted); margin-top: 4px;">
+                {{ actual_duration_str }} actual / {{ planned_duration_str }} planned
+            </div>
+        </div>
+    </div>
+
+    <!-- 14-Day Study Rhythm Visualization -->
+    <div class="card" style="padding: var(--space-5); background: var(--color-bg-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); margin-bottom: var(--space-6);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-4); flex-wrap: wrap; gap: var(--space-2);">
+            <div>
+                <h2 style="font-size: var(--font-size-base); font-weight: 600; color: var(--color-text-primary); margin-bottom: 2px;">14-Day Study Rhythm</h2>
+                <p style="font-size: var(--font-size-xs); color: var(--color-text-muted);">Daily hours invested in coursework and revision.</p>
+            </div>
+            <span style="font-size: var(--font-size-xs); color: var(--color-text-muted);">
+                Past 14 days up to today
+            </span>
+        </div>
+
+        <!-- CSS Bar Chart Container -->
+        <div style="height: 180px; display: flex; align-items: flex-end; gap: 8px; padding-top: var(--space-4); padding-bottom: var(--space-2); border-bottom: 1px solid var(--color-border);">
+            {% for d in past_14_days %}
+                <div style="flex: 1; display: flex; flex-direction: column; align-items: center; height: 100%; justify-content: flex-end;" title="{{ d.day_name }}: {{ d.formatted }} ({{ d.hours }} hrs)">
+                    <!-- Value text on hover/bar top -->
+                    {% if d.minutes > 0 %}
+                        <span style="font-size: 10px; color: var(--color-text-muted); margin-bottom: 4px;">{{ d.hours }}h</span>
+                    {% endif %}
+                    <!-- Bar -->
+                    <div style="width: 100%; max-width: 32px; height: {{ d.height_pct }}%; min-height: {% if d.minutes > 0 %}6px{% else %}2px{% endif %}; background: {% if d.minutes > 0 %}linear-gradient(180deg, var(--color-primary), #6366f1){% else %}rgba(255,255,255,0.06){% endif %}; border-radius: 4px 4px 0 0; transition: height 0.3s ease;"></div>
+                </div>
+            {% endfor %}
+        </div>
+
+        <!-- Day Labels -->
+        <div style="display: flex; gap: 8px; margin-top: 8px;">
+            {% for d in past_14_days %}
+                <div style="flex: 1; text-align: center; font-size: 10px; color: var(--color-text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                    {{ d.day_name|slice:":6" }}
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Two-Column Layout: Subject Breakdown & Syllabus Progress -->
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-6); margin-bottom: var(--space-6);">
+        <!-- Column 1: Subject Time Distribution -->
+        <div class="card" style="padding: var(--space-5); background: var(--color-bg-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg);">
+            <div style="margin-bottom: var(--space-4);">
+                <h2 style="font-size: var(--font-size-base); font-weight: 600; color: var(--color-text-primary); margin-bottom: 2px;">Time Invested by Subject</h2>
+                <p style="font-size: var(--font-size-xs); color: var(--color-text-muted);">Proportional breakdown across all recorded study sessions.</p>
+            </div>
+
+            {% if subject_time_distribution %}
+                <!-- Stacked Progress Bar -->
+                <div style="height: 14px; display: flex; border-radius: 9999px; overflow: hidden; margin-bottom: var(--space-4); background: rgba(255,255,255,0.05);">
+                    {% for item in subject_time_distribution %}
+                        <div style="width: {{ item.percentage }}%; background: {{ item.color|default:'#818cf8' }};" title="{{ item.name }}: {{ item.percentage }}%"></div>
+                    {% endfor %}
+                </div>
+
+                <div style="display: flex; flex-direction: column; gap: var(--space-3);">
+                    {% for item in subject_time_distribution %}
+                        <div style="display: flex; justify-content: space-between; align-items: center; font-size: var(--font-size-sm); padding-bottom: var(--space-2); border-bottom: 1px solid var(--color-border);">
+                            <div style="display: flex; align-items: center; gap: var(--space-2);">
+                                <span style="width: 10px; height: 10px; border-radius: 50%; background: {{ item.color|default:'#818cf8' }}; display: inline-block;"></span>
+                                <span style="font-weight: 500; color: var(--color-text-primary);">{{ item.name }}</span>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: var(--space-3);">
+                                <span style="color: var(--color-text-muted); font-size: var(--font-size-xs);">{{ item.formatted }}</span>
+                                <span class="badge badge-neutral" style="font-size: 11px; min-width: 44px; text-align: center;">{{ item.percentage }}%</span>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div style="text-align: center; padding: var(--space-6); color: var(--color-text-muted); font-size: var(--font-size-sm);">
+                    No study session time logged yet.
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Column 2: Syllabus Completion Velocity -->
+        <div class="card" style="padding: var(--space-5); background: var(--color-bg-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg);">
+            <div style="margin-bottom: var(--space-4);">
+                <h2 style="font-size: var(--font-size-base); font-weight: 600; color: var(--color-text-primary); margin-bottom: 2px;">Syllabus Completion</h2>
+                <p style="font-size: var(--font-size-xs); color: var(--color-text-muted);">Curriculum mastery progress across enrolled subjects.</p>
+            </div>
+
+            {% if syllabus_comparison %}
+                <div style="display: flex; flex-direction: column; gap: var(--space-4);">
+                    {% for item in syllabus_comparison %}
+                        <div>
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; font-size: var(--font-size-sm);">
+                                <div style="display: flex; align-items: center; gap: var(--space-2);">
+                                    <span style="width: 10px; height: 10px; border-radius: 50%; background: {{ item.subject.color|default:'#818cf8' }}; display: inline-block;"></span>
+                                    <a href="{% url 'study:subject_detail' item.subject.pk %}" style="font-weight: 500; color: var(--color-text-primary); text-decoration: none;">
+                                        {{ item.subject.name }}
+                                    </a>
+                                </div>
+                                <span style="font-weight: 600; color: var(--color-text-primary); font-size: var(--font-size-xs);">
+                                    {{ item.pct }}%
+                                    <span style="color: var(--color-text-muted); font-weight: normal;">({{ item.completed_topics }}/{{ item.total_topics }})</span>
+                                </span>
+                            </div>
+                            <div class="progress-bar-bg" style="height: 6px; background: rgba(255,255,255,0.06); border-radius: 9999px; overflow: hidden;">
+                                <div style="height: 100%; width: {{ item.pct }}%; background: {{ item.subject.color|default:'#818cf8' }}; border-radius: 9999px; transition: width 0.4s ease;"></div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div style="text-align: center; padding: var(--space-6); color: var(--color-text-muted); font-size: var(--font-size-sm);">
+                    No subjects or syllabus topics defined yet.
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Plan vs Actual Adherence Card -->
+    <div class="card" style="padding: var(--space-5); background: var(--color-bg-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg);">
+        <div style="margin-bottom: var(--space-4);">
+            <h2 style="font-size: var(--font-size-base); font-weight: 600; color: var(--color-text-primary); margin-bottom: 2px;">Planned vs. Actual Study Adherence (30 Days)</h2>
+            <p style="font-size: var(--font-size-xs); color: var(--color-text-muted);">Compares scheduled study commitments in the Study Planner against executed study session durations.</p>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-6); align-items: center;">
+            <div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: var(--space-2); font-size: var(--font-size-sm);">
+                    <span style="color: var(--color-text-secondary);">Execution Rate</span>
+                    <span style="font-weight: 700; color: var(--color-text-primary);">{{ plan_adherence_pct }}%</span>
+                </div>
+                <div class="progress-bar-bg" style="height: 8px; background: rgba(255,255,255,0.08); border-radius: 9999px; overflow: hidden; margin-bottom: var(--space-3);">
+                    <div style="height: 100%; width: {% if plan_adherence_pct > 100 %}100{% else %}{{ plan_adherence_pct }}{% endif %}%; background: {% if plan_adherence_pct >= 80 %}#10b981{% elif plan_adherence_pct >= 50 %}#f59e0b{% else %}#ef4444{% endif %}; border-radius: 9999px;"></div>
+                </div>
+                <p style="font-size: var(--font-size-xs); color: var(--color-text-muted); line-height: 1.4;">
+                    {% if plan_adherence_pct >= 90 %}
+                        Outstanding discipline! You are executing at or above your planned study targets.
+                    {% elif plan_adherence_pct >= 60 %}
+                        Moderate adherence. Keep scheduling realistic slots and logging all your sessions.
+                    {% elif plan_adherence_pct > 0 %}
+                        Lower than planned execution. Consider reviewing target estimates or blocking distraction-free time.
+                    {% else %}
+                        No planned study targets recorded in the past 30 days. Add sessions in the Study Planner to benchmark adherence.
+                    {% endif %}
+                </p>
+            </div>
+
+            <div style="display: flex; gap: var(--space-4); justify-content: space-around; background: var(--color-bg-main); border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: var(--space-4);">
+                <div style="text-align: center;">
+                    <div style="font-size: var(--font-size-xs); color: var(--color-text-muted); margin-bottom: 2px;">Planned Target</div>
+                    <div style="font-size: var(--font-size-xl); font-weight: 700; color: var(--color-text-primary);">{{ planned_duration_str }}</div>
+                </div>
+                <div style="border-left: 1px solid var(--color-border);"></div>
+                <div style="text-align: center;">
+                    <div style="font-size: var(--font-size-xs); color: var(--color-text-muted); margin-bottom: 2px;">Actual Logged</div>
+                    <div style="font-size: var(--font-size-xl); font-weight: 700; color: #10b981;">{{ actual_duration_str }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

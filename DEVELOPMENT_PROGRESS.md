@@ -10,7 +10,8 @@
 | **04** | **Database Architecture & Data Models** | **Completed** | Normalized 3NF models across 5 apps (`productivity`, `planning`, `personal`, `finance`, `study`), 21 models total, check constraints, composite unique keys, multi-user isolation validation, admin registrations, legacy data preservation migration, 45 automated tests (100% passing). |
 | **05** | **Main Dashboard Implementation** | **Completed** | Dynamic authenticated dashboard at `/dashboard/`, live data aggregation across 6 domain apps, 4 summary metric cards, interactive task toggle, habit completion toggle, quick add task modal, quick biometric check-in modal, upcoming exams, schedule blocks, recent activity feed, 59 automated tests (100% passing). |
 | **06** | **Productivity Management** | **Completed** | Full Productivity Management system across 6 sub-modules: Tasks (CRUD, multi-filter, sort, search, pagination, duration tracking), Categories (color-coded, duplicate prevention, safe unlinking), Habits (CRUD, pause/active toggle, 30-day matrix, daily/weekly streak engine), Activities (manual logging, live start/stop timer, duration aggregation), Goals (CRUD, target countdowns, task linkage, progress calculation), Projects (CRUD, child tasks, completion progress), 79 automated tests (100% passing). |
-| **07** | **Study Management & Syllabi** | Pending | Course management, syllabus topic tracking, active recall sessions, and exam readiness. |
+| **07** | **Study Management & Syllabi** | **Completed** | Full multi-user Study Management module across 9 functional domains: Subjects (CRUD, chapter grouping, cascade warnings), Topics (chapter units, priority, completion toggle), Syllabus Tracker (dynamic progress bars, behind-schedule alerts), Study Planner (commitments, temporal tabs, status transitions), Study Sessions (live stopwatch timer, auto-closing dangling sessions, manual logs), Revision Planner (spaced revision iterations, quick reschedule), Exams & Assessments (deadlines, countdowns, score tracking), Study Analytics (14-day rhythm chart, subject time share, syllabus velocity, plan adherence), 19 study tests, 94 total system tests (100% passing). |
+| **08** | **Timetable & Daily Scheduling** | Pending | Structured timeblocks, scheduling engine, and daily calendar allocation. |
 
 ---
 
@@ -212,3 +213,88 @@
 - **79 Automated Tests** across the entire application:
   - 29 tests in `apps.productivity` and `apps.planning` covering CRUD, filtering, pagination, search, validation, timer mechanics, streak computation, and strict multi-user cross-boundary IDOR protection.
   - 100% pass rate (`Ran 79 tests in 53.175s — OK`).
+
+---
+
+## Detailed Step 07 Deliverables (Study Management Module)
+
+### 1. Study Dashboard (`apps/study/`)
+- **Routes**: `GET /study/`, `GET /study/dashboard/`, alias `GET /core/study/`
+- **Deliverables**:
+  - 7 summary KPI metric cards: Total Study Time, Today's Study Time, Active Subjects, Total Topics, Completed Topics, Overall Syllabus %, Upcoming Exams.
+  - Active Timer Banner: Displays live study timer countdown and quick stop/discard actions when a session is in progress.
+  - Quick-start study session launch form.
+  - Today's planned study tasks with instant status updates.
+  - Upcoming exams cards with deadline countdown badges.
+  - Incomplete syllabus subject progress bars.
+  - Recent study sessions log.
+  - 7-day study rhythm mini bar chart.
+
+### 2. Subjects & Courses Management
+- **Routes**:
+  - `study:subject_list` (`GET /study/subjects/`): Filterable by status (`ACTIVE`, `COMPLETED`, `ARCHIVED`), subject type, color coding, search, and sorting.
+  - `study:subject_create` (`GET/POST /study/subjects/create/`): Create new subjects with unique constraint enforcement per user.
+  - `study:subject_detail` (`GET /study/subjects/<pk>/`): Deep inspection view displaying chapter-grouped topics, scheduled exams, logged study sessions, and progress metrics.
+  - `study:subject_update` (`GET/POST /study/subjects/<pk>/edit/`): Update subject metadata and target dates.
+  - `study:subject_delete` (`GET/POST /study/subjects/<pk>/delete/`): Safe deletion dialog displaying cascade deletion warnings for child topics and study sessions.
+
+### 3. Topics & Chapters Management
+- **Routes**:
+  - `study:topic_list` (`GET /study/topics/`): Full curriculum topics filterable by subject, chapter, completion status, and priority.
+  - `study:topic_create` (`GET/POST /study/topics/create/`): Add new topics under a subject with chapter grouping.
+  - `study:topic_update` (`GET/POST /study/topics/<pk>/edit/`): Edit title, description, chapter, duration estimates, and notes.
+  - `study:topic_delete` (`GET/POST /study/topics/<pk>/delete/`): Delete topic with confirmation.
+  - `study:topic_toggle` (`POST /study/topics/<pk>/toggle/`): Quick toggle between completed and pending with auto-date stamping.
+
+### 4. Syllabus Tracker
+- **Route**: `GET /study/syllabus/`
+- **Deliverables**:
+  - Subject-by-subject curriculum completion cards (`completed / total * 100`).
+  - Behind-schedule alerts highlighting active subjects with `target_date < today and completion < 100%`.
+  - Chapter and topic breakdown with priority indicators and direct toggle actions.
+
+### 5. Study Planner
+- **Routes**:
+  - `study:planner` (`GET /study/planner/`): Temporal views (`Today`, `Upcoming`, `This Week`, `Past`, `All`) with planned date filtering.
+  - `study:planner_create` (`GET/POST /study/planner/create/`): Schedule future study commitments (subject, optional topic, date, time slot, estimated minutes, priority).
+  - `study:planner_update` (`GET/POST /study/planner/<pk>/edit/`): Update planned session parameters.
+  - `study:planner_delete` (`GET/POST /study/planner/<pk>/delete/`): Remove plan with confirmation.
+  - `study:planner_status` (`POST /study/planner/<pk>/status/`): Action endpoint transitioning plan status between `PLANNED`, `COMPLETED`, `SKIPPED`, and `RESCHEDULED`.
+
+### 6. Study Sessions & Time Tracking
+- **Routes**:
+  - `study:sessions` (`GET /study/sessions/`): Central study tracker featuring real-time stopwatch, active session indicator, duration statistics, and historical logs.
+  - `study:session_start` (`POST /study/sessions/start/`): Start live stopwatch timer; auto-closes any previously running active session to prevent dangling open timers.
+  - `study:session_stop` (`POST /study/sessions/<pk>/stop/`): Stop timer, calculate elapsed duration in minutes, and optionally record focus rating (1–10) and notes.
+  - `study:session_create` (`GET/POST /study/sessions/create/`): Manual historical session logging with start/end time duration calculation.
+  - `study:session_update` (`GET/POST /study/sessions/<pk>/edit/`): Edit recorded session details.
+  - `study:session_delete` (`GET/POST /study/sessions/<pk>/delete/`): Delete session entry with confirmation.
+
+### 7. Revision Planner
+- **Routes**:
+  - `study:revisions` (`GET /study/revisions/`): Spaced revision tracking organized into four temporal sections: Overdue, Today, Upcoming, and Completed.
+  - `study:revision_create` (`GET/POST /study/revisions/create/`): Schedule revision with auto-incrementing iteration numbers (`Revision #1`, `#2`, etc.).
+  - `study:revision_toggle` (`POST /study/revisions/<pk>/toggle/`): Toggle completion status with timestamping.
+  - `study:revision_reschedule` (`POST /study/revisions/<pk>/reschedule/`): Quick date reschedule via POST.
+  - `study:revision_delete` (`GET/POST /study/revisions/<pk>/delete/`): Delete scheduled revision.
+
+### 8. Exams & Assessments
+- **Routes**:
+  - `study:exams` (`GET /study/exams/`): Examination management with countdown badges ("X days left", "Due Today!", "Y days overdue") and historical score outcomes.
+  - `study:exam_create` (`GET/POST /study/exams/create/`): Schedule exam with date, type, weightage, and max score.
+  - `study:exam_update` (`GET/POST /study/exams/<pk>/edit/`): Update exam details or record achieved score with validation ensuring `score <= max_score`.
+  - `study:exam_delete` (`GET/POST /study/exams/<pk>/delete/`): Delete exam with confirmation dialog.
+
+### 9. Study Analytics
+- **Routes**: `GET /study/analytics/`, alias `GET /core/study-analytics/`
+- **Deliverables**:
+  - 4 KPI summary cards: 14-Day Study Volume, Daily Average, 14-Day Consistency Score, 30-Day Plan Adherence.
+  - 14-Day Study Rhythm: Daily CSS bar chart with duration tags and day labels.
+  - Time Invested by Subject: Proportional stacked bar and breakdown table with percentage shares and color identifiers.
+  - Syllabus Completion Velocity: Progress comparisons across all enrolled subjects.
+  - Plan vs. Actual Adherence: Execution rate comparison between scheduled study commitments and logged actual sessions.
+
+### Automated Test Suite
+- **94 Automated Tests** across the entire application:
+  - 19 dedicated tests in `apps.study` verifying models, calculations, views, timer workflows, validation rules, and multi-user IDOR isolation.
+  - 100% pass rate (`Ran 94 tests in 93.364s — OK`).

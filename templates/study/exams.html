@@ -1,0 +1,163 @@
+{% extends 'layouts/app_layout.html' %}
+
+{% block title %}Exams & Assessments — LifeOS{% endblock %}
+{% block header_breadcrumb %}Study / Exams{% endblock %}
+
+{% block content %}
+<div class="content-container animate-fade-in">
+    <!-- Header -->
+    <div class="page-header" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: var(--space-4); flex-wrap: wrap; gap: var(--space-4);">
+        <div class="header-left">
+            <h1 class="page-title" style="font-size: var(--font-size-2xl); font-weight: 700; color: var(--color-text-primary); margin-bottom: var(--space-1);">Exams &amp; Assessments</h1>
+            <p class="text-secondary" style="font-size: var(--font-size-sm); color: var(--color-text-muted);">
+                Track upcoming examinations, countdown deadlines, and record assessment results.
+            </p>
+        </div>
+        <div class="header-actions">
+            <a href="{% url 'study:exam_create' %}" class="btn btn-primary" style="display: inline-flex; align-items: center; gap: var(--space-2);">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                </svg>
+                Schedule Exam
+            </a>
+        </div>
+    </div>
+
+    <!-- Sub-navigation Bar -->
+    {% with study_subnav='exams' %}
+        {% include 'study/study_nav.html' %}
+    {% endwith %}
+
+    <div style="display: flex; flex-direction: column; gap: var(--space-6);">
+        <!-- 1. Upcoming Examinations Section -->
+        <div class="card" style="padding: var(--space-5); background: var(--color-bg-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg);">
+            <div style="margin-bottom: var(--space-4);">
+                <h2 style="font-size: var(--font-size-lg); font-weight: 600; color: var(--color-text-primary); margin-bottom: 2px;">Upcoming Examinations</h2>
+                <p style="font-size: var(--font-size-xs); color: var(--color-text-muted);">Countdown to scheduled tests, midterms, and finals.</p>
+            </div>
+
+            {% if upcoming_exams %}
+                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: var(--space-4);">
+                    {% for item in upcoming_exams %}
+                        {% with exam=item.exam %}
+                        <div class="card" style="padding: var(--space-4); background: var(--color-bg-main); border: 1px solid var(--color-border); border-radius: var(--radius-md); border-top: 3px solid {{ exam.subject.color|default:'#818cf8' }};">
+                            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: var(--space-2); gap: var(--space-2);">
+                                <span class="badge" style="background: {{ exam.subject.color }}20; color: {{ exam.subject.color }}; border: 1px solid {{ exam.subject.color }}40; font-size: 11px;">
+                                    {{ exam.subject.name }}
+                                </span>
+                                <span class="badge {% if item.days_left == 0 %}badge-warning{% elif item.is_overdue %}badge-danger{% else %}badge-neutral{% endif %}" style="font-size: 11px;">
+                                    {% if item.days_left < 0 %}
+                                        {{ item.days_left|stringformat:"+d"|slice:"1:" }}d overdue
+                                    {% elif item.days_left == 0 %}
+                                        Due Today!
+                                    {% else %}
+                                        {{ item.days_left }} days left
+                                    {% endif %}
+                                </span>
+                            </div>
+
+                            <h3 style="font-size: var(--font-size-base); font-weight: 700; color: var(--color-text-primary); margin: 0 0 4px 0;">
+                                {{ exam.exam_name }}
+                            </h3>
+
+                            <div style="font-size: var(--font-size-xs); color: var(--color-text-muted); margin-bottom: var(--space-3);">
+                                Date: <strong style="color: var(--color-text-primary);">{{ exam.exam_date|date:"l, M d, Y" }}</strong> &bull; {{ exam.get_exam_type_display }}
+                                {% if exam.weight_percentage %}&bull; Weight: {{ exam.weight_percentage }}%{% endif %}
+                            </div>
+
+                            {% if exam.description %}
+                                <p style="font-size: var(--font-size-xs); color: var(--color-text-secondary); margin-bottom: var(--space-3); line-height: 1.4;">
+                                    {{ exam.description }}
+                                </p>
+                            {% endif %}
+
+                            <div style="display: flex; justify-content: flex-end; gap: var(--space-2); border-top: 1px solid var(--color-border); padding-top: var(--space-3);">
+                                <a href="{% url 'study:exam_update' exam.pk %}" class="btn btn-secondary btn-sm" style="font-size: 11px;">Record Score / Edit</a>
+                                <a href="{% url 'study:exam_delete' exam.pk %}" class="btn btn-ghost btn-sm" style="color: #ef4444; font-size: 11px;">Delete</a>
+                            </div>
+                        </div>
+                        {% endwith %}
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div style="text-align: center; padding: var(--space-6); color: var(--color-text-muted); font-size: var(--font-size-sm);">
+                    No upcoming exams scheduled.
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- 2. Completed Examinations Section -->
+        <div class="card" style="padding: var(--space-5); background: var(--color-bg-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg);">
+            <div style="margin-bottom: var(--space-4);">
+                <h2 style="font-size: var(--font-size-lg); font-weight: 600; color: var(--color-text-primary); margin-bottom: 2px;">Completed Examinations &amp; Scores</h2>
+                <p style="font-size: var(--font-size-xs); color: var(--color-text-muted);">Historical assessments and grade outcomes.</p>
+            </div>
+
+            {% if completed_exams %}
+                <div class="table-container" style="overflow-x: auto;">
+                    <table class="table" style="width: 100%; border-collapse: collapse; font-size: var(--font-size-sm);">
+                        <thead>
+                            <tr style="border-bottom: 1px solid var(--color-border); background: var(--color-bg-main); text-align: left; color: var(--color-text-muted); font-size: var(--font-size-xs); text-transform: uppercase;">
+                                <th style="padding: var(--space-3) var(--space-4);">Date</th>
+                                <th style="padding: var(--space-3) var(--space-4);">Exam Name</th>
+                                <th style="padding: var(--space-3) var(--space-4);">Subject</th>
+                                <th style="padding: var(--space-3) var(--space-4);">Type</th>
+                                <th style="padding: var(--space-3) var(--space-4);">Score / Max</th>
+                                <th style="padding: var(--space-3) var(--space-4);">Percentage</th>
+                                <th style="padding: var(--space-3) var(--space-4); text-align: right;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in completed_exams %}
+                                {% with exam=item.exam %}
+                                <tr style="border-bottom: 1px solid var(--color-border);">
+                                    <td style="padding: var(--space-3) var(--space-4); white-space: nowrap; font-size: var(--font-size-xs); color: var(--color-text-muted);">
+                                        {{ exam.exam_date|date:"M d, Y" }}
+                                    </td>
+                                    <td style="padding: var(--space-3) var(--space-4); font-weight: 600; color: var(--color-text-primary);">
+                                        {{ exam.exam_name }}
+                                    </td>
+                                    <td style="padding: var(--space-3) var(--space-4);">
+                                        <span class="badge" style="background: {{ exam.subject.color }}20; color: {{ exam.subject.color }}; border: 1px solid {{ exam.subject.color }}40; font-size: 11px;">
+                                            {{ exam.subject.name }}
+                                        </span>
+                                    </td>
+                                    <td style="padding: var(--space-3) var(--space-4); font-size: var(--font-size-xs);">
+                                        {{ exam.get_exam_type_display }}
+                                    </td>
+                                    <td style="padding: var(--space-3) var(--space-4); font-size: var(--font-size-xs);">
+                                        {% if exam.score_achieved is not None and exam.max_score %}
+                                            <strong>{{ exam.score_achieved }}</strong> / {{ exam.max_score }}
+                                        {% else %}
+                                            <span style="color: var(--color-text-muted);">Pending Score</span>
+                                        {% endif %}
+                                    </td>
+                                    <td style="padding: var(--space-3) var(--space-4);">
+                                        {% if item.percentage is not None %}
+                                            <span class="badge {% if item.percentage >= 75 %}badge-success{% elif item.percentage >= 50 %}badge-info{% else %}badge-danger{% endif %}" style="font-size: 11px;">
+                                                {{ item.percentage }}%
+                                            </span>
+                                        {% else %}
+                                            —
+                                        {% endif %}
+                                    </td>
+                                    <td style="padding: var(--space-3) var(--space-4); text-align: right; white-space: nowrap;">
+                                        <a href="{% url 'study:exam_update' exam.pk %}" class="btn btn-ghost btn-sm" style="padding: 2px 6px; font-size: 11px;">Edit</a>
+                                        <a href="{% url 'study:exam_delete' exam.pk %}" class="btn btn-ghost btn-sm" style="color: #ef4444; padding: 2px 6px; font-size: 11px;">Delete</a>
+                                    </td>
+                                </tr>
+                                {% endwith %}
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div style="text-align: center; padding: var(--space-6); color: var(--color-text-muted); font-size: var(--font-size-sm);">
+                    No completed examinations recorded yet.
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

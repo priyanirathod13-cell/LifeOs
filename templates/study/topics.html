@@ -1,0 +1,168 @@
+{% extends 'layouts/app_layout.html' %}
+
+{% block title %}Topics & Chapters — LifeOS{% endblock %}
+{% block header_breadcrumb %}Study / Topics{% endblock %}
+
+{% block content %}
+<div class="content-container animate-fade-in">
+    <!-- Header -->
+    <div class="page-header" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: var(--space-4); flex-wrap: wrap; gap: var(--space-4);">
+        <div class="header-left">
+            <h1 class="page-title" style="font-size: var(--font-size-2xl); font-weight: 700; color: var(--color-text-primary); margin-bottom: var(--space-1);">Topics &amp; Chapters</h1>
+            <p class="text-secondary" style="font-size: var(--font-size-sm); color: var(--color-text-muted);">
+                Browse, organize, and track discrete syllabus units across all subjects.
+            </p>
+        </div>
+        <div class="header-actions">
+            <a href="{% url 'study:topic_create' %}" class="btn btn-primary" style="display: inline-flex; align-items: center; gap: var(--space-2);">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                </svg>
+                Add Topic
+            </a>
+        </div>
+    </div>
+
+    <!-- Sub-navigation Bar -->
+    {% with study_subnav='topics' %}
+        {% include 'study/study_nav.html' %}
+    {% endwith %}
+
+    <!-- Filter and Search Toolbar -->
+    <div class="card" style="padding: var(--space-4); background: var(--color-bg-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); margin-bottom: var(--space-6);">
+        <form method="get" style="display: flex; gap: var(--space-3); flex-wrap: wrap; align-items: center;">
+            <div style="flex: 1; min-width: 200px;">
+                <input type="text" name="q" value="{{ q }}" class="form-control" placeholder="Search topics, chapters or notes..." style="padding: 8px 12px;">
+            </div>
+            <div style="min-width: 170px;">
+                <select name="subject" class="form-select" onchange="this.form.submit()">
+                    <option value="">All Subjects</option>
+                    {% for subj in user_subjects %}
+                        <option value="{{ subj.pk }}" {% if subject_filter == subj.pk %}selected{% endif %}>{{ subj.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div style="min-width: 150px;">
+                <select name="status" class="form-select" onchange="this.form.submit()">
+                    <option value="">All Statuses</option>
+                    {% for code, label in statuses %}
+                        <option value="{{ code }}" {% if status_filter == code %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div style="min-width: 140px;">
+                <select name="priority" class="form-select" onchange="this.form.submit()">
+                    <option value="">All Priorities</option>
+                    {% for code, label in priorities %}
+                        <option value="{{ code }}" {% if priority_filter == code %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            {% if q or subject_filter or status_filter or priority_filter %}
+                <a href="{% url 'study:topic_list' %}" class="btn btn-ghost btn-sm" style="color: var(--color-text-muted);">Reset</a>
+            {% endif %}
+        </form>
+    </div>
+
+    <!-- Topics List -->
+    {% if topics %}
+        <div class="card" style="padding: 0; background: var(--color-bg-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); overflow: hidden;">
+            <div class="table-container" style="overflow-x: auto;">
+                <table class="table" style="width: 100%; border-collapse: collapse; font-size: var(--font-size-sm);">
+                    <thead>
+                        <tr style="border-bottom: 1px solid var(--color-border); background: var(--color-bg-main); text-align: left; color: var(--color-text-muted); font-size: var(--font-size-xs); text-transform: uppercase;">
+                            <th style="padding: var(--space-3) var(--space-4); width: 44px;"></th>
+                            <th style="padding: var(--space-3) var(--space-4);">Topic Title</th>
+                            <th style="padding: var(--space-3) var(--space-4);">Subject</th>
+                            <th style="padding: var(--space-3) var(--space-4);">Chapter</th>
+                            <th style="padding: var(--space-3) var(--space-4);">Status</th>
+                            <th style="padding: var(--space-3) var(--space-4);">Priority</th>
+                            <th style="padding: var(--space-3) var(--space-4);">Est. Time</th>
+                            <th style="padding: var(--space-3) var(--space-4); text-align: right;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for topic in topics %}
+                            <tr style="border-bottom: 1px solid var(--color-border);">
+                                <td style="padding: var(--space-3) var(--space-4); text-align: center;">
+                                    <form method="post" action="{% url 'study:topic_toggle' topic.pk %}" style="display: inline;">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                                        <button type="submit" style="background: none; border: none; cursor: pointer; padding: 0; color: {% if topic.is_completed %}#10b981{% else %}var(--color-border){% endif %};" title="Toggle completion">
+                                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                {% if topic.is_completed %}
+                                                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                                                    <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                                                {% else %}
+                                                    <circle cx="12" cy="12" r="10"></circle>
+                                                {% endif %}
+                                            </svg>
+                                        </button>
+                                    </form>
+                                </td>
+                                <td style="padding: var(--space-3) var(--space-4);">
+                                    <span style="font-weight: 500; color: var(--color-text-primary); {% if topic.is_completed %}text-decoration: line-through; color: var(--color-text-muted);{% endif %}">
+                                        {{ topic.title }}
+                                    </span>
+                                </td>
+                                <td style="padding: var(--space-3) var(--space-4);">
+                                    <span class="badge" style="background: {{ topic.subject.color }}20; color: {{ topic.subject.color }}; border: 1px solid {{ topic.subject.color }}40; font-size: 11px;">
+                                        {{ topic.subject.name }}
+                                    </span>
+                                </td>
+                                <td style="padding: var(--space-3) var(--space-4); color: var(--color-text-muted); font-size: var(--font-size-xs);">
+                                    {{ topic.chapter|default:"—" }}
+                                </td>
+                                <td style="padding: var(--space-3) var(--space-4);">
+                                    <span class="badge {% if topic.is_completed %}badge-success{% elif topic.status == 'IN_PROGRESS' %}badge-primary{% elif topic.status == 'NEEDS_REVISION' %}badge-warning{% else %}badge-neutral{% endif %}" style="font-size: 11px;">
+                                        {{ topic.get_status_display }}
+                                    </span>
+                                </td>
+                                <td style="padding: var(--space-3) var(--space-4);">
+                                    <span class="badge {% if topic.priority == 'urgent' %}badge-danger{% elif topic.priority == 'high' %}badge-warning{% elif topic.priority == 'medium' %}badge-info{% else %}badge-neutral{% endif %}" style="font-size: 11px;">
+                                        {{ topic.get_priority_display }}
+                                    </span>
+                                </td>
+                                <td style="padding: var(--space-3) var(--space-4); font-size: var(--font-size-xs); color: var(--color-text-muted);">
+                                    {% if topic.estimated_minutes %}{{ topic.estimated_minutes }} mins{% else %}—{% endif %}
+                                </td>
+                                <td style="padding: var(--space-3) var(--space-4); text-align: right; white-space: nowrap;">
+                                    <a href="{% url 'study:topic_update' topic.pk %}" class="btn btn-ghost btn-sm" style="padding: 2px 6px; font-size: 11px;">Edit</a>
+                                    <a href="{% url 'study:topic_delete' topic.pk %}" class="btn btn-ghost btn-sm" style="color: #ef4444; padding: 2px 6px; font-size: 11px;">Delete</a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    {% else %}
+        <div class="card" style="padding: var(--space-12); text-align: center; background: var(--color-bg-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg);">
+            <div style="width: 56px; height: 56px; border-radius: 50%; background: var(--color-bg-main); color: var(--color-text-muted); display: flex; align-items: center; justify-content: center; margin: 0 auto var(--space-4);">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="8" y1="6" x2="21" y2="6"></line>
+                    <line x1="8" y1="12" x2="21" y2="12"></line>
+                    <line x1="8" y1="18" x2="21" y2="18"></line>
+                    <line x1="3" y1="6" x2="3.01" y2="6"></line>
+                    <line x1="3" y1="12" x2="3.01" y2="12"></line>
+                    <line x1="3" y1="18" x2="3.01" y2="18"></line>
+                </svg>
+            </div>
+            <h3 style="font-size: var(--font-size-lg); font-weight: 600; color: var(--color-text-primary); margin-bottom: var(--space-2);">No Topics Found</h3>
+            <p style="color: var(--color-text-muted); font-size: var(--font-size-sm); margin-bottom: var(--space-4); max-width: 440px; margin-left: auto; margin-right: auto;">
+                {% if q or subject_filter or status_filter or priority_filter %}
+                    No topics match your active filters. Try clearing your filters.
+                {% else %}
+                    You haven't added any syllabus topics yet. Create topics to break down your subjects into manageable units.
+                {% endif %}
+            </p>
+            {% if q or subject_filter or status_filter or priority_filter %}
+                <a href="{% url 'study:topic_list' %}" class="btn btn-secondary">Clear Filters</a>
+            {% else %}
+                <a href="{% url 'study:topic_create' %}" class="btn btn-primary">Add Your First Topic</a>
+            {% endif %}
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

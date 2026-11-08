@@ -1,0 +1,137 @@
+{% extends 'layouts/app_layout.html' %}
+
+{% block title %}Study Planner — LifeOS{% endblock %}
+{% block header_breadcrumb %}Study / Planner{% endblock %}
+
+{% block content %}
+<div class="content-container animate-fade-in">
+    <!-- Header -->
+    <div class="page-header" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: var(--space-4); flex-wrap: wrap; gap: var(--space-4);">
+        <div class="header-left">
+            <h1 class="page-title" style="font-size: var(--font-size-2xl); font-weight: 700; color: var(--color-text-primary); margin-bottom: var(--space-1);">Study Planner</h1>
+            <p class="text-secondary" style="font-size: var(--font-size-sm); color: var(--color-text-muted);">
+                Schedule targeted study sessions, establish priorities, and track plan adherence.
+            </p>
+        </div>
+        <div class="header-actions">
+            <a href="{% url 'study:planner_create' %}" class="btn btn-primary" style="display: inline-flex; align-items: center; gap: var(--space-2);">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                </svg>
+                Schedule Study Plan
+            </a>
+        </div>
+    </div>
+
+    <!-- Sub-navigation Bar -->
+    {% with study_subnav='planner' %}
+        {% include 'study/study_nav.html' %}
+    {% endwith %}
+
+    <!-- Planner Navigation Tabs -->
+    <div class="card" style="padding: var(--space-2) var(--space-3); background: var(--color-bg-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); margin-bottom: var(--space-6); overflow-x: auto; white-space: nowrap;">
+        <div style="display: flex; gap: var(--space-2); align-items: center;">
+            <a href="{% url 'study:planner' %}?tab=today" class="btn {% if tab == 'today' %}btn-secondary{% else %}btn-ghost{% endif %} btn-sm" style="font-size: var(--font-size-xs);">
+                Today ({{ today_count }})
+            </a>
+            <a href="{% url 'study:planner' %}?tab=upcoming" class="btn {% if tab == 'upcoming' %}btn-secondary{% else %}btn-ghost{% endif %} btn-sm" style="font-size: var(--font-size-xs);">
+                Upcoming ({{ upcoming_count }})
+            </a>
+            <a href="{% url 'study:planner' %}?tab=week" class="btn {% if tab == 'week' %}btn-secondary{% else %}btn-ghost{% endif %} btn-sm" style="font-size: var(--font-size-xs);">
+                This Week
+            </a>
+            <a href="{% url 'study:planner' %}?tab=past" class="btn {% if tab == 'past' %}btn-secondary{% else %}btn-ghost{% endif %} btn-sm" style="font-size: var(--font-size-xs);">
+                Past Plans
+            </a>
+            <a href="{% url 'study:planner' %}?tab=all" class="btn {% if tab == 'all' %}btn-secondary{% else %}btn-ghost{% endif %} btn-sm" style="font-size: var(--font-size-xs);">
+                All Plans
+            </a>
+        </div>
+    </div>
+
+    <!-- Plans List -->
+    {% if plans %}
+        <div style="display: flex; flex-direction: column; gap: var(--space-3);">
+            {% for plan in plans %}
+                <div class="card" style="padding: var(--space-4) var(--space-5); background: var(--color-bg-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: var(--space-3); border-left: 4px solid {{ plan.subject.color|default:'#818cf8' }};">
+                    <div>
+                        <div style="display: flex; align-items: center; gap: var(--space-2); margin-bottom: 4px; flex-wrap: wrap;">
+                            <span class="badge" style="background: {{ plan.subject.color }}20; color: {{ plan.subject.color }}; border: 1px solid {{ plan.subject.color }}40; font-size: 11px;">
+                                {{ plan.subject.name }}
+                            </span>
+                            <span class="badge {% if plan.priority == 'urgent' %}badge-danger{% elif plan.priority == 'high' %}badge-warning{% elif plan.priority == 'medium' %}badge-info{% else %}badge-neutral{% endif %}" style="font-size: 11px;">
+                                {{ plan.get_priority_display }}
+                            </span>
+                            <span class="badge {% if plan.status == 'COMPLETED' %}badge-success{% elif plan.status == 'SKIPPED' %}badge-danger{% elif plan.status == 'RESCHEDULED' %}badge-warning{% else %}badge-neutral{% endif %}" style="font-size: 11px;">
+                                {{ plan.get_status_display }}
+                            </span>
+                        </div>
+
+                        <h3 style="font-size: var(--font-size-base); font-weight: 600; color: var(--color-text-primary); margin: 0 0 4px 0; {% if plan.status == 'COMPLETED' %}text-decoration: line-through; color: var(--color-text-muted);{% endif %}">
+                            {{ plan.topic.title|default:"General Subject Study" }}
+                        </h3>
+
+                        <div style="font-size: var(--font-size-xs); color: var(--color-text-muted);">
+                            Date: <strong style="color: var(--color-text-primary);">{{ plan.planned_date|date:"l, M d, Y" }}</strong>
+                            {% if plan.preferred_time %}&bull; Time: {{ plan.preferred_time|time:"H:i" }}{% endif %}
+                            &bull; Duration: {{ plan.estimated_minutes }} mins est.
+                        </div>
+
+                        {% if plan.notes %}
+                            <div style="font-size: var(--font-size-xs); color: var(--color-text-secondary); margin-top: 4px; font-style: italic;">
+                                "{{ plan.notes }}"
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Quick Status Updates & Actions -->
+                    <div style="display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap;">
+                        {% if plan.status == 'PLANNED' %}
+                            <form method="post" action="{% url 'study:planner_status' plan.pk %}" style="display: inline;">
+                                {% csrf_token %}
+                                <input type="hidden" name="status" value="COMPLETED">
+                                <button type="submit" class="btn btn-ghost btn-sm" style="color: #10b981; font-size: 12px; border: 1px solid rgba(16, 185, 129, 0.3);">
+                                    ✓ Completed
+                                </button>
+                            </form>
+                            <form method="post" action="{% url 'study:planner_status' plan.pk %}" style="display: inline;">
+                                {% csrf_token %}
+                                <input type="hidden" name="status" value="SKIPPED">
+                                <button type="submit" class="btn btn-ghost btn-sm" style="color: var(--color-text-muted); font-size: 12px;">
+                                    Skip
+                                </button>
+                            </form>
+                        {% endif %}
+
+                        <a href="{% url 'study:planner_update' plan.pk %}" class="btn btn-ghost btn-sm" style="font-size: 12px;">Edit</a>
+                        <a href="{% url 'study:planner_delete' plan.pk %}" class="btn btn-ghost btn-sm" style="color: #ef4444; font-size: 12px;">Delete</a>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="card" style="padding: var(--space-12); text-align: center; background: var(--color-bg-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg);">
+            <div style="width: 56px; height: 56px; border-radius: 50%; background: var(--color-bg-main); color: var(--color-text-muted); display: flex; align-items: center; justify-content: center; margin: 0 auto var(--space-4);">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                    <line x1="16" y1="2" x2="16" y2="6"></line>
+                    <line x1="8" y1="2" x2="8" y2="6"></line>
+                    <line x1="3" y1="10" x2="21" y2="10"></line>
+                </svg>
+            </div>
+            <h3 style="font-size: var(--font-size-lg); font-weight: 600; color: var(--color-text-primary); margin-bottom: var(--space-2);">No Study Plans Found</h3>
+            <p style="color: var(--color-text-muted); font-size: var(--font-size-sm); margin-bottom: var(--space-4); max-width: 440px; margin-left: auto; margin-right: auto;">
+                {% if tab == 'today' %}
+                    No study activities planned for today. Select a subject and topic to schedule your study block.
+                {% elif tab == 'upcoming' %}
+                    No upcoming study sessions planned yet.
+                {% else %}
+                    No study plans match this view.
+                {% endif %}
+            </p>
+            <a href="{% url 'study:planner_create' %}" class="btn btn-primary">Schedule a Session</a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,189 @@
+{% extends 'layouts/app_layout.html' %}
+
+{% block title %}Revision Planner — LifeOS{% endblock %}
+{% block header_breadcrumb %}Study / Revisions{% endblock %}
+
+{% block content %}
+<div class="content-container animate-fade-in">
+    <!-- Header -->
+    <div class="page-header" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: var(--space-4); flex-wrap: wrap; gap: var(--space-4);">
+        <div class="header-left">
+            <h1 class="page-title" style="font-size: var(--font-size-2xl); font-weight: 700; color: var(--color-text-primary); margin-bottom: var(--space-1);">Revision Planner</h1>
+            <p class="text-secondary" style="font-size: var(--font-size-sm); color: var(--color-text-muted);">
+                Schedule spaced reviews for previously covered concepts to reinforce retention.
+            </p>
+        </div>
+        <div class="header-actions">
+            <a href="{% url 'study:revision_create' %}" class="btn btn-primary" style="display: inline-flex; align-items: center; gap: var(--space-2);">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                </svg>
+                Schedule Revision
+            </a>
+        </div>
+    </div>
+
+    <!-- Sub-navigation Bar -->
+    {% with study_subnav='revisions' %}
+        {% include 'study/study_nav.html' %}
+    {% endwith %}
+
+    <div style="display: flex; flex-direction: column; gap: var(--space-6);">
+        <!-- 1. Overdue Revisions (if any) -->
+        {% if overdue_revisions %}
+            <div class="card" style="padding: var(--space-5); background: var(--color-bg-surface); border: 1px solid rgba(239, 68, 68, 0.4); border-radius: var(--radius-lg); border-left: 4px solid #ef4444;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-3);">
+                    <div style="display: flex; align-items: center; gap: var(--space-2);">
+                        <span class="badge badge-danger">Attention Required</span>
+                        <h2 style="font-size: var(--font-size-base); font-weight: 700; color: #ef4444; margin: 0;">Overdue Revisions ({{ overdue_revisions.count }})</h2>
+                    </div>
+                </div>
+
+                <div style="display: flex; flex-direction: column; gap: var(--space-2);">
+                    {% for rev in overdue_revisions %}
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: var(--space-3); background: var(--color-bg-main); border: 1px solid var(--color-border); border-radius: var(--radius-md); flex-wrap: wrap; gap: var(--space-2);">
+                            <div>
+                                <div style="display: flex; align-items: center; gap: var(--space-2); margin-bottom: 2px;">
+                                    <span class="badge" style="background: {{ rev.subject.color }}20; color: {{ rev.subject.color }}; border: 1px solid {{ rev.subject.color }}40; font-size: 11px;">
+                                        {{ rev.subject.name }}
+                                    </span>
+                                    <span style="font-weight: 600; font-size: var(--font-size-sm); color: var(--color-text-primary);">
+                                        {{ rev.topic.title }}
+                                    </span>
+                                    <span class="badge badge-neutral" style="font-size: 10px;">Rev #{{ rev.revision_number }}</span>
+                                </div>
+                                <div style="font-size: var(--font-size-xs); color: #ef4444;">
+                                    Scheduled for {{ rev.revision_date|date:"M d, Y" }}
+                                    {% if rev.notes %}&bull; <span style="color: var(--color-text-muted);">{{ rev.notes }}</span>{% endif %}
+                                </div>
+                            </div>
+                            <div style="display: flex; gap: var(--space-2); align-items: center;">
+                                <form method="post" action="{% url 'study:revision_toggle' rev.pk %}" style="display: inline;">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-secondary btn-sm" style="font-size: 11px; color: #10b981;">✓ Mark Done</button>
+                                </form>
+                                <form method="post" action="{% url 'study:revision_reschedule' rev.pk %}" style="display: inline-flex; gap: 4px; align-items: center;">
+                                    {% csrf_token %}
+                                    <input type="date" name="revision_date" value="{{ today|date:'Y-m-d' }}" class="form-control" style="padding: 2px 6px; font-size: 11px; width: 130px;">
+                                    <button type="submit" class="btn btn-ghost btn-sm" style="font-size: 11px;">Move</button>
+                                </form>
+                                <a href="{% url 'study:revision_delete' rev.pk %}" class="btn btn-ghost btn-sm" style="color: #ef4444; font-size: 11px;">✕</a>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        {% endif %}
+
+        <!-- 2. Today's Revisions -->
+        <div class="card" style="padding: var(--space-5); background: var(--color-bg-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-4);">
+                <div>
+                    <h2 style="font-size: var(--font-size-base); font-weight: 600; color: var(--color-text-primary);">Today's Revisions</h2>
+                    <p style="font-size: var(--font-size-xs); color: var(--color-text-muted);">Concepts scheduled for review on {{ today|date:"l, M d" }}</p>
+                </div>
+            </div>
+
+            {% if today_revisions %}
+                <div style="display: flex; flex-direction: column; gap: var(--space-2);">
+                    {% for rev in today_revisions %}
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: var(--space-3); background: var(--color-bg-main); border: 1px solid var(--color-border); border-radius: var(--radius-md); flex-wrap: wrap; gap: var(--space-2);">
+                            <div>
+                                <div style="display: flex; align-items: center; gap: var(--space-2); margin-bottom: 2px;">
+                                    <span class="badge" style="background: {{ rev.subject.color }}20; color: {{ rev.subject.color }}; border: 1px solid {{ rev.subject.color }}40; font-size: 11px;">
+                                        {{ rev.subject.name }}
+                                    </span>
+                                    <span style="font-weight: 600; font-size: var(--font-size-sm); color: var(--color-text-primary);">
+                                        {{ rev.topic.title }}
+                                    </span>
+                                    <span class="badge badge-neutral" style="font-size: 10px;">Iteration #{{ rev.revision_number }}</span>
+                                </div>
+                                {% if rev.notes %}
+                                    <div style="font-size: var(--font-size-xs); color: var(--color-text-muted);">
+                                        {{ rev.notes }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div style="display: flex; gap: var(--space-2); align-items: center;">
+                                <form method="post" action="{% url 'study:revision_toggle' rev.pk %}" style="display: inline;">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-primary btn-sm" style="font-size: 11px;">✓ Complete</button>
+                                </form>
+                                <a href="{% url 'study:revision_delete' rev.pk %}" class="btn btn-ghost btn-sm" style="color: #ef4444; font-size: 11px;">Delete</a>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div style="text-align: center; padding: var(--space-6); color: var(--color-text-muted); font-size: var(--font-size-sm);">
+                    No revisions scheduled for today. You're up to date!
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- 3. Upcoming Revisions -->
+        <div class="card" style="padding: var(--space-5); background: var(--color-bg-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-4);">
+                <div>
+                    <h2 style="font-size: var(--font-size-base); font-weight: 600; color: var(--color-text-primary);">Upcoming Revisions</h2>
+                    <p style="font-size: var(--font-size-xs); color: var(--color-text-muted);">Future recall checkpoints</p>
+                </div>
+            </div>
+
+            {% if upcoming_revisions %}
+                <div style="display: flex; flex-direction: column; gap: var(--space-2);">
+                    {% for rev in upcoming_revisions %}
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: var(--space-3); background: var(--color-bg-main); border: 1px solid var(--color-border); border-radius: var(--radius-md); flex-wrap: wrap; gap: var(--space-2);">
+                            <div>
+                                <div style="display: flex; align-items: center; gap: var(--space-2); margin-bottom: 2px;">
+                                    <span class="badge" style="background: {{ rev.subject.color }}20; color: {{ rev.subject.color }}; border: 1px solid {{ rev.subject.color }}40; font-size: 11px;">
+                                        {{ rev.subject.name }}
+                                    </span>
+                                    <span style="font-weight: 500; font-size: var(--font-size-sm); color: var(--color-text-primary);">
+                                        {{ rev.topic.title }}
+                                    </span>
+                                </div>
+                                <div style="font-size: var(--font-size-xs); color: var(--color-text-muted);">
+                                    Scheduled on <strong style="color: var(--color-text-primary);">{{ rev.revision_date|date:"l, M d, Y" }}</strong> &bull; Rev #{{ rev.revision_number }}
+                                </div>
+                            </div>
+                            <div style="display: flex; gap: var(--space-2); align-items: center;">
+                                <a href="{% url 'study:revision_delete' rev.pk %}" class="btn btn-ghost btn-sm" style="color: #ef4444; font-size: 11px;">Delete</a>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div style="text-align: center; padding: var(--space-6); color: var(--color-text-muted); font-size: var(--font-size-sm);">
+                    No future revisions scheduled.
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- 4. Completed Revisions -->
+        {% if completed_revisions %}
+            <div class="card" style="padding: var(--space-5); background: var(--color-bg-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg);">
+                <div style="margin-bottom: var(--space-3);">
+                    <h2 style="font-size: var(--font-size-base); font-weight: 600; color: var(--color-text-primary);">Recently Completed Revisions</h2>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: var(--space-2);">
+                    {% for rev in completed_revisions %}
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: var(--space-3); background: var(--color-bg-main); border: 1px solid var(--color-border); border-radius: var(--radius-md);">
+                            <div style="display: flex; align-items: center; gap: var(--space-2);">
+                                <span style="color: #10b981; font-size: 14px;">✓</span>
+                                <span style="font-size: var(--font-size-sm); color: var(--color-text-muted); text-decoration: line-through;">
+                                    {{ rev.subject.name }}: {{ rev.topic.title }}
+                                </span>
+                            </div>
+                            <span style="font-size: var(--font-size-xs); color: var(--color-text-muted);">
+                                Completed on {{ rev.completed_at|date:"M d, Y" }}
+                            </span>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

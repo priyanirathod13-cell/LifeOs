@@ -1,0 +1,229 @@
+{% extends 'layouts/app_layout.html' %}
+
+{% block title %}Study Sessions & Time Tracking — LifeOS{% endblock %}
+{% block header_breadcrumb %}Study / Sessions{% endblock %}
+
+{% block content %}
+<div class="content-container animate-fade-in">
+    <!-- Header -->
+    <div class="page-header" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: var(--space-4); flex-wrap: wrap; gap: var(--space-4);">
+        <div class="header-left">
+            <h1 class="page-title" style="font-size: var(--font-size-2xl); font-weight: 700; color: var(--color-text-primary); margin-bottom: var(--space-1);">Study Sessions &amp; Time Tracking</h1>
+            <p class="text-secondary" style="font-size: var(--font-size-sm); color: var(--color-text-muted);">
+                Run live focus timers, review study history, and monitor active academic duration.
+            </p>
+        </div>
+        <div class="header-actions">
+            <a href="{% url 'study:session_create' %}" class="btn btn-secondary" style="display: inline-flex; align-items: center; gap: var(--space-2);">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                </svg>
+                Log Past Session
+            </a>
+        </div>
+    </div>
+
+    <!-- Sub-navigation Bar -->
+    {% with study_subnav='sessions' %}
+        {% include 'study/study_nav.html' %}
+    {% endwith %}
+
+    <!-- Live Timer Active Banner -->
+    {% if active_session %}
+        <div class="card" style="background: rgba(99, 102, 241, 0.12); border: 2px solid var(--color-accent-primary, #6366f1); border-radius: var(--radius-lg); padding: var(--space-5); margin-bottom: var(--space-6);">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: var(--space-4);">
+                <div style="display: flex; align-items: center; gap: var(--space-3);">
+                    <div style="width: 14px; height: 14px; border-radius: 50%; background: #10b981; animation: pulse 1.5s infinite;"></div>
+                    <div>
+                        <span style="font-size: var(--font-size-xs); text-transform: uppercase; font-weight: 700; color: var(--color-accent-primary, #6366f1); letter-spacing: 0.05em;">Timer In Progress</span>
+                        <h2 style="font-size: var(--font-size-xl); font-weight: 700; color: var(--color-text-primary); margin: 2px 0;">
+                            {{ active_session.subject.name }} {% if active_session.topic %}&bull; <span style="font-weight: 400; color: var(--color-text-secondary);">{{ active_session.topic.title }}</span>{% endif %}
+                        </h2>
+                        <div style="font-size: var(--font-size-xs); color: var(--color-text-muted);">
+                            Started at {{ active_session.start_time|time:"H:i" }} &bull; {{ active_session.get_session_type_display }}
+                        </div>
+                    </div>
+                </div>
+
+                <form method="post" action="{% url 'study:session_stop' active_session.pk %}" style="display: flex; gap: var(--space-3); align-items: center; flex-wrap: wrap;">
+                    {% csrf_token %}
+                    <div>
+                        <input type="number" name="focus_rating" min="1" max="10" placeholder="Focus (1-10)" class="form-control" style="width: 110px; padding: 6px 10px; font-size: 12px;">
+                    </div>
+                    <div>
+                        <input type="text" name="notes" placeholder="Session notes (optional)..." class="form-control" style="width: 200px; padding: 6px 10px; font-size: 12px;">
+                    </div>
+                    <button type="submit" class="btn" style="background: #ef4444; color: #fff; border: none; padding: 8px 18px; font-weight: 600; display: inline-flex; align-items: center; gap: var(--space-2);">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="6" y="6" width="12" height="12"></rect>
+                        </svg>
+                        Stop Session
+                    </button>
+                </form>
+            </div>
+        </div>
+    {% else %}
+        <!-- Quick Start Live Session Toolbar -->
+        <div class="card" style="padding: var(--space-5); background: var(--color-bg-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); margin-bottom: var(--space-6);">
+            <div style="margin-bottom: var(--space-3);">
+                <h2 style="font-size: var(--font-size-base); font-weight: 600; color: var(--color-text-primary);">Start Focused Study Timer</h2>
+                <p style="font-size: var(--font-size-xs); color: var(--color-text-muted);">Select your target subject and enter focus mode.</p>
+            </div>
+            <form method="post" action="{% url 'study:session_start' %}" style="display: flex; gap: var(--space-3); flex-wrap: wrap; align-items: center;">
+                {% csrf_token %}
+                <div style="flex: 1; min-width: 200px;">
+                    <select name="subject_id" class="form-select" required>
+                        <option value="">— Select Subject to Study —</option>
+                        {% for s in subjects %}
+                            <option value="{{ s.pk }}">{{ s.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div style="min-width: 170px;">
+                    <select name="session_type" class="form-select">
+                        <option value="THEORY">Theory &amp; Reading</option>
+                        <option value="PRACTICE">Practice &amp; Problem Solving</option>
+                        <option value="REVISION">Revision</option>
+                        <option value="EXAM_PREP">Exam Preparation</option>
+                        <option value="ASSIGNMENT">Assignment / Project</option>
+                        <option value="OTHER">Other</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary" style="display: inline-flex; align-items: center; gap: var(--space-2); white-space: nowrap;">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                    </svg>
+                    Start Study Timer
+                </button>
+            </form>
+        </div>
+    {% endif %}
+
+    <!-- 3 Duration Metrics -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: var(--space-4); margin-bottom: var(--space-6);">
+        <div class="card" style="padding: var(--space-4); background: var(--color-bg-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg);">
+            <div style="font-size: var(--font-size-xs); color: var(--color-text-muted); text-transform: uppercase; font-weight: 600; margin-bottom: var(--space-1);">Today's Study Time</div>
+            <div style="font-size: var(--font-size-2xl); font-weight: 700; color: #10b981;">{{ today_duration }}</div>
+        </div>
+        <div class="card" style="padding: var(--space-4); background: var(--color-bg-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg);">
+            <div style="font-size: var(--font-size-xs); color: var(--color-text-muted); text-transform: uppercase; font-weight: 600; margin-bottom: var(--space-1);">This Week (Mon–Sun)</div>
+            <div style="font-size: var(--font-size-2xl); font-weight: 700; color: var(--color-accent-primary, #6366f1);">{{ week_duration }}</div>
+        </div>
+        <div class="card" style="padding: var(--space-4); background: var(--color-bg-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg);">
+            <div style="font-size: var(--font-size-xs); color: var(--color-text-muted); text-transform: uppercase; font-weight: 600; margin-bottom: var(--space-1);">This Month Total</div>
+            <div style="font-size: var(--font-size-2xl); font-weight: 700; color: var(--color-text-primary);">{{ month_duration }}</div>
+        </div>
+    </div>
+
+    <!-- Filter Toolbar -->
+    <div class="card" style="padding: var(--space-4); background: var(--color-bg-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); margin-bottom: var(--space-6);">
+        <form method="get" style="display: flex; gap: var(--space-3); flex-wrap: wrap; align-items: center;">
+            <div style="min-width: 200px;">
+                <select name="subject" class="form-select" onchange="this.form.submit()">
+                    <option value="">All Subjects</option>
+                    {% for s in subjects %}
+                        <option value="{{ s.pk }}" {% if subject_filter == s.pk %}selected{% endif %}>{{ s.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div style="min-width: 170px;">
+                <input type="date" name="date" value="{{ date_filter }}" class="form-control" onchange="this.form.submit()">
+            </div>
+            {% if subject_filter or date_filter %}
+                <a href="{% url 'study:sessions' %}" class="btn btn-ghost btn-sm" style="color: var(--color-text-muted);">Reset Filters</a>
+            {% endif %}
+        </form>
+    </div>
+
+    <!-- Study Sessions Table -->
+    {% if sessions %}
+        <div class="card" style="padding: 0; background: var(--color-bg-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); overflow: hidden;">
+            <div class="table-container" style="overflow-x: auto;">
+                <table class="table" style="width: 100%; border-collapse: collapse; font-size: var(--font-size-sm);">
+                    <thead>
+                        <tr style="border-bottom: 1px solid var(--color-border); background: var(--color-bg-main); text-align: left; color: var(--color-text-muted); font-size: var(--font-size-xs); text-transform: uppercase;">
+                            <th style="padding: var(--space-3) var(--space-4);">Date</th>
+                            <th style="padding: var(--space-3) var(--space-4);">Subject</th>
+                            <th style="padding: var(--space-3) var(--space-4);">Topic</th>
+                            <th style="padding: var(--space-3) var(--space-4);">Duration</th>
+                            <th style="padding: var(--space-3) var(--space-4);">Type</th>
+                            <th style="padding: var(--space-3) var(--space-4);">Focus</th>
+                            <th style="padding: var(--space-3) var(--space-4);">Notes</th>
+                            <th style="padding: var(--space-3) var(--space-4); text-align: right;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for s in sessions %}
+                            <tr style="border-bottom: 1px solid var(--color-border);">
+                                <td style="padding: var(--space-3) var(--space-4); white-space: nowrap; font-size: var(--font-size-xs); color: var(--color-text-muted);">
+                                    {{ s.session_date|date:"M d, Y" }}
+                                </td>
+                                <td style="padding: var(--space-3) var(--space-4);">
+                                    <span class="badge" style="background: {{ s.subject.color }}20; color: {{ s.subject.color }}; border: 1px solid {{ s.subject.color }}40; font-size: 11px;">
+                                        {{ s.subject.name }}
+                                    </span>
+                                </td>
+                                <td style="padding: var(--space-3) var(--space-4); font-weight: 500; color: var(--color-text-primary);">
+                                    {{ s.topic.title|default:"General Study" }}
+                                </td>
+                                <td style="padding: var(--space-3) var(--space-4); color: #10b981; font-weight: 700; white-space: nowrap;">
+                                    {{ s.duration_minutes }} mins
+                                </td>
+                                <td style="padding: var(--space-3) var(--space-4); font-size: var(--font-size-xs);">
+                                    {{ s.get_session_type_display }}
+                                </td>
+                                <td style="padding: var(--space-3) var(--space-4); font-size: var(--font-size-xs);">
+                                    {% if s.focus_rating %}
+                                        <span class="badge {% if s.focus_rating >= 8 %}badge-success{% elif s.focus_rating >= 5 %}badge-info{% else %}badge-warning{% endif %}" style="font-size: 10px;">
+                                            {{ s.focus_rating }}/10
+                                        </span>
+                                    {% else %}
+                                        —
+                                    {% endif %}
+                                </td>
+                                <td style="padding: var(--space-3) var(--space-4); font-size: var(--font-size-xs); color: var(--color-text-secondary); max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                    {{ s.notes|default:"—" }}
+                                </td>
+                                <td style="padding: var(--space-3) var(--space-4); text-align: right; white-space: nowrap;">
+                                    <a href="{% url 'study:session_update' s.pk %}" class="btn btn-ghost btn-sm" style="padding: 2px 6px; font-size: 11px;">Edit</a>
+                                    <a href="{% url 'study:session_delete' s.pk %}" class="btn btn-ghost btn-sm" style="color: #ef4444; padding: 2px 6px; font-size: 11px;">Delete</a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            {% if page_obj.has_other_pages %}
+                <div style="display: flex; justify-content: center; gap: var(--space-2); padding: var(--space-4); border-top: 1px solid var(--color-border);">
+                    {% if page_obj.has_previous %}
+                        <a href="?page={{ page_obj.previous_page_number }}{% if subject_filter %}&subject={{ subject_filter }}{% endif %}{% if date_filter %}&date={{ date_filter }}{% endif %}" class="btn btn-secondary btn-sm">&larr; Previous</a>
+                    {% endif %}
+                    <span style="font-size: var(--font-size-xs); color: var(--color-text-muted); padding: 6px 12px;">
+                        Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+                    </span>
+                    {% if page_obj.has_next %}
+                        <a href="?page={{ page_obj.next_page_number }}{% if subject_filter %}&subject={{ subject_filter }}{% endif %}{% if date_filter %}&date={{ date_filter }}{% endif %}" class="btn btn-secondary btn-sm">Next &rarr;</a>
+                    {% endif %}
+                </div>
+            {% endif %}
+        </div>
+    {% else %}
+        <div class="card" style="padding: var(--space-12); text-align: center; background: var(--color-bg-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg);">
+            <div style="width: 56px; height: 56px; border-radius: 50%; background: var(--color-bg-main); color: var(--color-text-muted); display: flex; align-items: center; justify-content: center; margin: 0 auto var(--space-4);">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <polyline points="12 6 12 12 16 14"></polyline>
+                </svg>
+            </div>
+            <h3 style="font-size: var(--font-size-lg); font-weight: 600; color: var(--color-text-primary); margin-bottom: var(--space-2);">No Study Sessions Recorded</h3>
+            <p style="color: var(--color-text-muted); font-size: var(--font-size-sm); margin-bottom: var(--space-4); max-width: 440px; margin-left: auto; margin-right: auto;">
+                Start a live study timer or log a completed session to build your study history and analytics.
+            </p>
+            <a href="{% url 'study:session_create' %}" class="btn btn-primary">Log a Past Session</a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -62,7 +62,7 @@ LifeOS/
 │   ├── planning/               # Project, Goal, GoalTask
 │   ├── personal/               # JournalEntry, Decision, DecisionOption, DecisionOutcome, Mistake, DailyMetric
 │   ├── finance/                # Transaction
-│   └── study/                  # Subject, Topic, StudySession, Exam
+│   └── study/                  # Subject, Topic, StudySession, StudyPlan, Revision, Exam
 │
 ├── templates/                  # Django Template Architecture
 │   ├── base.html               # Foundational HTML5 shell and asset links
@@ -213,13 +213,13 @@ python manage.py check
 python manage.py test
 
 # Or run specific modules
-python manage.py test apps.productivity apps.planning
+python manage.py test apps.study
 ```
 
 Expected output:
 ```
 System check identified no issues (0 silenced).
-Ran 79 tests in ~53s
+Ran 94 tests in ~93s
 
 OK
 ```
@@ -241,6 +241,15 @@ python manage.py runserver
 - **User Login**: [http://127.0.0.1:8000/accounts/login/](http://127.0.0.1:8000/accounts/login/) (Sign in with email, password, and Remember Me toggle)
 - **Password Reset**: [http://127.0.0.1:8000/accounts/password-reset/](http://127.0.0.1:8000/accounts/password-reset/) (Console email delivery in development)
 - **Executive Dashboard**: [http://127.0.0.1:8000/dashboard/](http://127.0.0.1:8000/dashboard/) (Central control panel with live tasks, habits, study duration, goals, schedule blocks, recent activity, and quick actions)
+- **Study Dashboard**: [http://127.0.0.1:8000/study/](http://127.0.0.1:8000/study/) (7 summary KPI metrics, active timer banner, today's planned sessions, upcoming exams, weekly study rhythm)
+- **Subjects & Courses**: [http://127.0.0.1:8000/study/subjects/](http://127.0.0.1:8000/study/subjects/) (Course catalog, chapter grouping, progress bars, and cascade warnings)
+- **Topics & Chapters**: [http://127.0.0.1:8000/study/topics/](http://127.0.0.1:8000/study/topics/) (Curriculum breakdown, duration tracking, priority, instant completion toggle)
+- **Syllabus Tracker**: [http://127.0.0.1:8000/study/syllabus/](http://127.0.0.1:8000/study/syllabus/) (Subject mastery progress and behind-schedule alerts)
+- **Study Planner**: [http://127.0.0.1:8000/study/planner/](http://127.0.0.1:8000/study/planner/) (Commitment scheduling with temporal tabs: Today, Upcoming, This Week, Past, All)
+- **Study Sessions & Stopwatch**: [http://127.0.0.1:8000/study/sessions/](http://127.0.0.1:8000/study/sessions/) (Live stopwatch timer, auto-closing dangling sessions, focus ratings 1-10, manual logging)
+- **Revision Planner**: [http://127.0.0.1:8000/study/revisions/](http://127.0.0.1:8000/study/revisions/) (Spaced revision iterations, overdue/today/upcoming groupings, quick reschedule)
+- **Exams & Assessments**: [http://127.0.0.1:8000/study/exams/](http://127.0.0.1:8000/study/exams/) (Exam scheduling, deadline countdowns, score tracking)
+- **Study Analytics**: [http://127.0.0.1:8000/study/analytics/](http://127.0.0.1:8000/study/analytics/) (14-day study rhythm bar chart, subject time share, syllabus velocity, plan adherence)
 - **Task Management**: [http://127.0.0.1:8000/productivity/tasks/](http://127.0.0.1:8000/productivity/tasks/) or `/tasks/` (Full CRUD, filtering, sorting, pagination, search, duration tracking)
 - **Category Management**: [http://127.0.0.1:8000/productivity/categories/](http://127.0.0.1:8000/productivity/categories/) (Color-coded categories with safe unlinking)
 - **Habit Tracker**: [http://127.0.0.1:8000/productivity/habits/](http://127.0.0.1:8000/productivity/habits/) or `/habits/` (Daily/weekly streaks, 30-day matrix, pause/resume)

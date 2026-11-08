@@ -255,39 +255,68 @@ Monetary transaction recording personal income, expense, or allocation.
 Academic course, syllabus module, or self-directed learning subject.
 - **Primary Key**: `id` (`BIGINT`)
 - **Foreign Keys**: `user_id` -> `accounts_user(id)` ON DELETE CASCADE
-- **Columns**: `name` (`VARCHAR(150)`), `code` (`VARCHAR(50)`), `description` (`LONGTEXT`), `subject_type` (`VARCHAR(30)`: COLLEGE/SELF_LEARNING/CERTIFICATION/COMPETITIVE_EXAM), `color` (`VARCHAR(20)`), `created_at`, `updated_at`
+- **Columns**: `name` (`VARCHAR(150)`), `code` (`VARCHAR(50)`), `description` (`LONGTEXT`), `subject_type` (`VARCHAR(30)`: COLLEGE/EXAM_PREP/SKILL/PROJECT/PERSONAL), `color` (`VARCHAR(20)`), `status` (`VARCHAR(20)`: ACTIVE/COMPLETED/ARCHIVED), `start_date` (`DATE`, NULLABLE), `target_date` (`DATE`, NULLABLE), `created_at`, `updated_at`
 - **Constraints**:
   - `UniqueConstraint(fields=['user', 'name'], name='unique_user_subject_name')`
-- **Indexes**: `['user', 'name']`
+- **Indexes**: `['user', 'name']`, `['user', 'status']`
 
 #### 2. `study_topic`
 Discrete concept, chapter, or syllabus unit under a Subject.
 - **Primary Key**: `id` (`BIGINT`)
 - **Foreign Keys**: `subject_id` -> `study_subject(id)` ON DELETE CASCADE
-- **Columns**: `title` (`VARCHAR(200)`), `description` (`LONGTEXT`), `status` (`VARCHAR(20)`: NOT_STARTED/IN_PROGRESS/MASTERED/NEEDS_REVISION), `estimated_minutes` (`INT UNSIGNED`, NULLABLE), `order` (`INT UNSIGNED`, DEFAULT 0), `created_at`, `updated_at`
+- **Columns**: `title` (`VARCHAR(200)`), `description` (`LONGTEXT`), `chapter` (`VARCHAR(150)`), `status` (`VARCHAR(20)`: NOT_STARTED/IN_PROGRESS/COMPLETED/MASTERED/NEEDS_REVISION), `priority` (`VARCHAR(20)`: LOW/MEDIUM/HIGH/CRITICAL), `estimated_minutes` (`INT UNSIGNED`, NULLABLE), `completion_date` (`DATE`, NULLABLE), `notes` (`LONGTEXT`), `order` (`INT UNSIGNED`, DEFAULT 0), `created_at`, `updated_at`
+- **Indexes**: `['subject', 'status']`, `['subject', 'order']`
 
 #### 3. `study_studysession`
-Focused study or revision block logged towards a subject and topic.
+Focused study or revision block logged towards a subject and topic (supports real-time stopwatch and manual logging).
 - **Primary Key**: `id` (`BIGINT`)
 - **Foreign Keys**:
   - `user_id` -> `accounts_user(id)` ON DELETE CASCADE
   - `subject_id` -> `study_subject(id)` ON DELETE CASCADE
   - `topic_id` -> `study_topic(id)` ON DELETE SET_NULL (NULLABLE)
-- **Columns**: `session_date` (`DATE`), `start_time` (`TIME(6)`, NULLABLE), `end_time` (`TIME(6)`, NULLABLE), `duration_minutes` (`INT UNSIGNED`), `notes` (`LONGTEXT`), `created_at`
+- **Columns**: `session_date` (`DATE`), `start_time` (`TIME(6)`, NULLABLE), `end_time` (`TIME(6)`, NULLABLE), `start_datetime` (`DATETIME(6)`, NULLABLE), `end_datetime` (`DATETIME(6)`, NULLABLE), `duration_minutes` (`INT UNSIGNED`, NULLABLE), `session_type` (`VARCHAR(30)`: THEORY/PRACTICE/REVISION/EXAM_PREP/ASSIGNMENT/OTHER), `focus_rating` (`INT UNSIGNED`, NULLABLE), `notes` (`LONGTEXT`), `created_at`
 - **Constraints**:
-  - `CheckConstraint(duration_minutes > 0)`
-- **Validation**: `duration_minutes > 0`, `subject.user_id == user_id`, `topic.subject_id == subject_id`
-- **Indexes**: `['user', 'session_date']`
+  - `CheckConstraint(duration_minutes > 0 | duration_minutes IS NULL)`
+- **Validation**: `duration_minutes > 0` (or active timer), `subject.user_id == user_id`, `topic.subject_id == subject_id`
+- **Indexes**: `['user', 'session_date']`, `['user', 'subject']`
 
-#### 4. `study_exam`
-Scheduled milestone exam, quiz, mid-term, or test.
+#### 4. `study_studyplan`
+Scheduled future study commitment independent of actual recorded sessions.
 - **Primary Key**: `id` (`BIGINT`)
 - **Foreign Keys**:
   - `user_id` -> `accounts_user(id)` ON DELETE CASCADE
   - `subject_id` -> `study_subject(id)` ON DELETE CASCADE
-- **Columns**: `exam_name` (`VARCHAR(150)`), `exam_date` (`DATE`), `weight_percentage` (`DECIMAL(5,2)`, NULLABLE), `score_achieved` (`DECIMAL(5,2)`, NULLABLE), `max_score` (`DECIMAL(5,2)`, NULLABLE), `description` (`LONGTEXT`), `created_at`
-- **Validation**: `subject.user_id == user_id`
-- **Indexes**: `['user', 'exam_date']`
+  - `topic_id` -> `study_topic(id)` ON DELETE SET_NULL (NULLABLE)
+- **Columns**: `planned_date` (`DATE`), `preferred_time` (`TIME(6)`, NULLABLE), `estimated_minutes` (`INT UNSIGNED`, DEFAULT 60), `priority` (`VARCHAR(20)`: LOW/MEDIUM/HIGH/CRITICAL), `status` (`VARCHAR(20)`: PLANNED/COMPLETED/SKIPPED/RESCHEDULED), `notes` (`LONGTEXT`), `created_at`, `updated_at`
+- **Constraints**:
+  - `CheckConstraint(estimated_minutes > 0)`
+- **Validation**: `subject.user_id == user_id`, `topic.subject_id == subject_id`
+- **Indexes**: `['user', 'planned_date']`, `['user', 'status']`
+
+#### 5. `study_revision`
+Spaced revision tracking milestone for topics with iteration numbering.
+- **Primary Key**: `id` (`BIGINT`)
+- **Foreign Keys**:
+  - `user_id` -> `accounts_user(id)` ON DELETE CASCADE
+  - `subject_id` -> `study_subject(id)` ON DELETE CASCADE
+  - `topic_id` -> `study_topic(id)` ON DELETE CASCADE
+- **Columns**: `revision_date` (`DATE`), `revision_number` (`INT UNSIGNED`, DEFAULT 1), `status` (`VARCHAR(20)`: PENDING/COMPLETED/SKIPPED), `completed_at` (`DATETIME(6)`, NULLABLE), `notes` (`LONGTEXT`), `created_at`, `updated_at`
+- **Constraints**:
+  - `CheckConstraint(revision_number >= 1)`
+- **Validation**: `subject.user_id == user_id`, `topic.subject_id == subject_id`
+- **Indexes**: `['user', 'revision_date']`, `['user', 'status']`
+
+#### 6. `study_exam`
+Scheduled milestone exam, quiz, mid-term, or competitive test.
+- **Primary Key**: `id` (`BIGINT`)
+- **Foreign Keys**:
+  - `user_id` -> `accounts_user(id)` ON DELETE CASCADE
+  - `subject_id` -> `study_subject(id)` ON DELETE CASCADE
+- **Columns**: `exam_name` (`VARCHAR(150)`), `exam_date` (`DATE`), `exam_type` (`VARCHAR(30)`: QUIZ/MIDTERM/FINAL/COMPETITIVE/PRACTICE/ASSIGNMENT), `status` (`VARCHAR(20)`: UPCOMING/COMPLETED/CANCELLED), `weight_percentage` (`DECIMAL(5,2)`, NULLABLE), `score_achieved` (`DECIMAL(5,2)`, NULLABLE), `max_score` (`DECIMAL(5,2)`, NULLABLE), `description` (`LONGTEXT`), `created_at`
+- **Constraints**:
+  - `CheckConstraint(score_achieved <= max_score)`
+- **Validation**: `subject.user_id == user_id`, `score_achieved <= max_score`
+- **Indexes**: `['user', 'exam_date']`, `['user', 'status']`
 
 ---
 

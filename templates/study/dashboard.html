@@ -1,0 +1,324 @@
+{% extends 'layouts/app_layout.html' %}
+
+{% block title %}Study Dashboard — LifeOS{% endblock %}
+{% block header_breadcrumb %}Study / Dashboard{% endblock %}
+
+{% block content %}
+<div class="content-container animate-fade-in">
+    <!-- Header Section -->
+    <div class="page-header" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: var(--space-4); flex-wrap: wrap; gap: var(--space-4);">
+        <div class="header-left">
+            <h1 class="page-title" style="font-size: var(--font-size-2xl); font-weight: 700; color: var(--color-text-primary); margin-bottom: var(--space-1);">Study Dashboard</h1>
+            <p class="text-secondary" style="font-size: var(--font-size-sm); color: var(--color-text-muted);">
+                Organize academic courses, track syllabus mastery, and monitor study consistency.
+            </p>
+        </div>
+        <div class="header-actions" style="display: flex; gap: var(--space-2); flex-wrap: wrap;">
+            <a href="{% url 'study:subject_create' %}" class="btn btn-secondary" style="display: inline-flex; align-items: center; gap: var(--space-2);">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                </svg>
+                Add Subject
+            </a>
+            <a href="{% url 'study:session_create' %}" class="btn btn-secondary" style="display: inline-flex; align-items: center; gap: var(--space-2);">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <polyline points="12 6 12 12 16 14"></polyline>
+                </svg>
+                Log Session
+            </a>
+            <a href="{% url 'study:sessions' %}" class="btn btn-primary" style="display: inline-flex; align-items: center; gap: var(--space-2);">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                </svg>
+                Start Timer
+            </a>
+        </div>
+    </div>
+
+    <!-- Sub-navigation Bar -->
+    {% with study_subnav='dashboard' %}
+        {% include 'study/study_nav.html' %}
+    {% endwith %}
+
+    <!-- Active Timer Banner (if active session running) -->
+    {% if active_session %}
+        <div class="card" style="background: rgba(99, 102, 241, 0.1); border: 1px solid var(--color-accent-primary, #6366f1); border-radius: var(--radius-lg); padding: var(--space-4) var(--space-5); margin-bottom: var(--space-6); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: var(--space-3);">
+            <div style="display: flex; align-items: center; gap: var(--space-3);">
+                <div style="width: 12px; height: 12px; border-radius: 50%; background: #10b981; animation: pulse 1.5s infinite;"></div>
+                <div>
+                    <span style="font-size: var(--font-size-xs); text-transform: uppercase; font-weight: 700; color: var(--color-accent-primary, #6366f1); letter-spacing: 0.05em;">Live Study Session Active</span>
+                    <h3 style="font-size: var(--font-size-base); font-weight: 600; color: var(--color-text-primary); margin: 2px 0;">
+                        {{ active_session.subject.name }} {% if active_session.topic %}&bull; <span style="font-weight: 400; color: var(--color-text-secondary);">{{ active_session.topic.title }}</span>{% endif %}
+                    </h3>
+                    <div style="font-size: var(--font-size-xs); color: var(--color-text-muted);">
+                        Started at {{ active_session.start_time|time:"H:i" }} &bull; {{ active_session.get_session_type_display }}
+                    </div>
+                </div>
+            </div>
+            <form method="post" action="{% url 'study:session_stop' active_session.pk %}" style="display: flex; gap: var(--space-2); align-items: center;">
+                {% csrf_token %}
+                <button type="submit" class="btn" style="background: #ef4444; color: #fff; border: none; display: inline-flex; align-items: center; gap: var(--space-2); padding: 8px 16px;">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="6" y="6" width="12" height="12"></rect>
+                    </svg>
+                    Stop &amp; Save Session
+                </button>
+            </form>
+        </div>
+    {% endif %}
+
+    <!-- 7 Summary Metric Cards -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: var(--space-4); margin-bottom: var(--space-6);">
+        <div class="card" style="padding: var(--space-4); background: var(--color-bg-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg);">
+            <div style="font-size: var(--font-size-xs); color: var(--color-text-muted); text-transform: uppercase; font-weight: 600; margin-bottom: var(--space-1);">Total Subjects</div>
+            <div style="font-size: var(--font-size-2xl); font-weight: 700; color: var(--color-text-primary);">
+                {{ total_subjects }} <span style="font-size: var(--font-size-xs); font-weight: 400; color: var(--color-text-muted);">({{ active_subjects }} active)</span>
+            </div>
+        </div>
+
+        <div class="card" style="padding: var(--space-4); background: var(--color-bg-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg);">
+            <div style="font-size: var(--font-size-xs); color: var(--color-text-muted); text-transform: uppercase; font-weight: 600; margin-bottom: var(--space-1);">Topics &amp; Chapters</div>
+            <div style="font-size: var(--font-size-2xl); font-weight: 700; color: var(--color-text-primary);">
+                {{ total_topics }} <span style="font-size: var(--font-size-xs); font-weight: 400; color: #10b981;">({{ completed_topics }} done)</span>
+            </div>
+        </div>
+
+        <div class="card" style="padding: var(--space-4); background: var(--color-bg-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg);">
+            <div style="font-size: var(--font-size-xs); color: var(--color-text-muted); text-transform: uppercase; font-weight: 600; margin-bottom: var(--space-1);">Syllabus Mastery</div>
+            <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px;">
+                <span style="font-size: var(--font-size-2xl); font-weight: 700; color: var(--color-accent-primary, #6366f1);">{{ overall_syllabus_pct }}%</span>
+                <span style="font-size: var(--font-size-xs); color: var(--color-text-muted);">Overall</span>
+            </div>
+            <div style="height: 4px; width: 100%; background: var(--color-bg-main); border-radius: 999px; overflow: hidden;">
+                <div style="height: 100%; width: {{ overall_syllabus_pct }}%; background: var(--color-accent-primary, #6366f1); border-radius: 999px;"></div>
+            </div>
+        </div>
+
+        <div class="card" style="padding: var(--space-4); background: var(--color-bg-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg);">
+            <div style="font-size: var(--font-size-xs); color: var(--color-text-muted); text-transform: uppercase; font-weight: 600; margin-bottom: var(--space-1);">This Week Study</div>
+            <div style="font-size: var(--font-size-2xl); font-weight: 700; color: #10b981;">{{ week_duration_str }}</div>
+        </div>
+
+        <div class="card" style="padding: var(--space-4); background: var(--color-bg-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg);">
+            <div style="font-size: var(--font-size-xs); color: var(--color-text-muted); text-transform: uppercase; font-weight: 600; margin-bottom: var(--space-1);">This Month Study</div>
+            <div style="font-size: var(--font-size-2xl); font-weight: 700; color: var(--color-text-primary);">{{ month_duration_str }}</div>
+        </div>
+
+        <div class="card" style="padding: var(--space-4); background: var(--color-bg-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg);">
+            <div style="font-size: var(--font-size-xs); color: var(--color-text-muted); text-transform: uppercase; font-weight: 600; margin-bottom: var(--space-1);">Upcoming Exams</div>
+            <div style="font-size: var(--font-size-2xl); font-weight: 700; color: {% if upcoming_exams_count > 0 %}#f59e0b{% else %}var(--color-text-primary){% endif %};">
+                {{ upcoming_exams_count }}
+            </div>
+        </div>
+
+        <div class="card" style="padding: var(--space-4); background: var(--color-bg-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg);">
+            <div style="font-size: var(--font-size-xs); color: var(--color-text-muted); text-transform: uppercase; font-weight: 600; margin-bottom: var(--space-1);">Pending Revisions</div>
+            <div style="font-size: var(--font-size-2xl); font-weight: 700; color: {% if pending_revisions_count > 0 %}#818cf8{% else %}var(--color-text-primary){% endif %};">
+                {{ pending_revisions_count }}
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Grid -->
+    <div style="display: grid; grid-template-columns: 2fr 1fr; gap: var(--space-6); align-items: start;">
+        <!-- Left Column -->
+        <div style="display: flex; flex-direction: column; gap: var(--space-6);">
+
+            <!-- Today's Planned Study Sessions -->
+            <div class="card" style="padding: var(--space-5); background: var(--color-bg-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-4);">
+                    <div>
+                        <h2 style="font-size: var(--font-size-base); font-weight: 600; color: var(--color-text-primary);">Today's Planned Study</h2>
+                        <p style="font-size: var(--font-size-xs); color: var(--color-text-muted);">Commitments scheduled for {{ today|date:"l, M d" }}</p>
+                    </div>
+                    <a href="{% url 'study:planner_create' %}" class="btn btn-ghost btn-sm" style="color: var(--color-accent-primary, #6366f1); font-size: var(--font-size-xs);">+ Schedule Study</a>
+                </div>
+
+                {% if today_plans %}
+                    <div style="display: flex; flex-direction: column; gap: var(--space-2);">
+                        {% for plan in today_plans %}
+                            <div style="display: flex; justify-content: space-between; align-items: center; padding: var(--space-3); background: var(--color-bg-main); border: 1px solid var(--color-border); border-radius: var(--radius-md); flex-wrap: wrap; gap: var(--space-2);">
+                                <div>
+                                    <div style="display: flex; align-items: center; gap: var(--space-2); margin-bottom: 2px;">
+                                        <span class="badge" style="background: {{ plan.subject.color }}20; color: {{ plan.subject.color }}; border: 1px solid {{ plan.subject.color }}40; font-size: 11px;">
+                                            {{ plan.subject.name }}
+                                        </span>
+                                        <span style="font-weight: 500; font-size: var(--font-size-sm); color: var(--color-text-primary); {% if plan.status == 'COMPLETED' %}text-decoration: line-through; color: var(--color-text-muted);{% endif %}">
+                                            {{ plan.topic.title|default:"General Subject Study" }}
+                                        </span>
+                                    </div>
+                                    <div style="font-size: var(--font-size-xs); color: var(--color-text-muted);">
+                                        {% if plan.preferred_time %}At {{ plan.preferred_time|time:"H:i" }} &bull; {% endif %}{{ plan.estimated_minutes }} mins est. &bull; Priority: {{ plan.get_priority_display }}
+                                    </div>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: var(--space-2);">
+                                    <span class="badge {% if plan.status == 'COMPLETED' %}badge-success{% elif plan.status == 'SKIPPED' %}badge-danger{% elif plan.status == 'RESCHEDULED' %}badge-warning{% else %}badge-neutral{% endif %}" style="font-size: 11px;">
+                                        {{ plan.get_status_display }}
+                                    </span>
+                                    {% if plan.status == 'PLANNED' %}
+                                        <form method="post" action="{% url 'study:planner_status' plan.pk %}" style="display: inline;">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="status" value="COMPLETED">
+                                            <button type="submit" class="btn btn-ghost btn-sm" style="color: #10b981; padding: 2px 8px; font-size: 11px;">Complete</button>
+                                        </form>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div style="text-align: center; padding: var(--space-6); color: var(--color-text-muted); font-size: var(--font-size-sm);">
+                        No study sessions planned for today.
+                        <div style="margin-top: 8px;">
+                            <a href="{% url 'study:planner_create' %}" class="btn btn-secondary btn-sm">Plan Today's Session</a>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Weekly Study Duration Chart (Past 7 Days) -->
+            <div class="card" style="padding: var(--space-5); background: var(--color-bg-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-4);">
+                    <div>
+                        <h2 style="font-size: var(--font-size-base); font-weight: 600; color: var(--color-text-primary);">Weekly Study Rhythm</h2>
+                        <p style="font-size: var(--font-size-xs); color: var(--color-text-muted);">Active study duration over the past 7 days</p>
+                    </div>
+                    <a href="{% url 'study:analytics' %}" class="btn btn-ghost btn-sm" style="color: var(--color-accent-primary, #6366f1); font-size: var(--font-size-xs);">Full Analytics &rarr;</a>
+                </div>
+
+                <div style="display: flex; justify-content: space-between; align-items: flex-end; height: 140px; padding-top: var(--space-4); border-bottom: 1px solid var(--color-border); gap: var(--space-2);">
+                    {% for day in weekly_chart_data %}
+                        <div style="display: flex; flex-direction: column; align-items: center; flex: 1; height: 100%; justify-content: flex-end;">
+                            <div style="font-size: 10px; color: var(--color-text-muted); margin-bottom: 4px;">
+                                {% if day.minutes > 0 %}{{ day.hours }}h{% endif %}
+                            </div>
+                            <div style="width: 100%; max-width: 32px; background: {% if day.is_today %}var(--color-accent-primary, #6366f1){% else %}rgba(99, 102, 241, 0.35){% endif %}; height: {{ day.height_pct }}%; border-radius: 4px 4px 0 0; min-height: {% if day.minutes > 0 %}4px{% else %}0px{% endif %}; transition: height 0.3s;" title="{{ day.date }}: {{ day.formatted }}"></div>
+                        </div>
+                    {% endfor %}
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-top: 8px;">
+                    {% for day in weekly_chart_data %}
+                        <div style="flex: 1; text-align: center; font-size: var(--font-size-xs); color: {% if day.is_today %}var(--color-accent-primary, #6366f1); font-weight: 700;{% else %}var(--color-text-muted);{% endif %}">
+                            {{ day.day_name }}
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Incomplete Syllabus Overview -->
+            <div class="card" style="padding: var(--space-5); background: var(--color-bg-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-4);">
+                    <div>
+                        <h2 style="font-size: var(--font-size-base); font-weight: 600; color: var(--color-text-primary);">Syllabus Progress</h2>
+                        <p style="font-size: var(--font-size-xs); color: var(--color-text-muted);">Active subjects requiring syllabus completion</p>
+                    </div>
+                    <a href="{% url 'study:syllabus' %}" class="btn btn-ghost btn-sm" style="color: var(--color-accent-primary, #6366f1); font-size: var(--font-size-xs);">View Syllabus Tracker &rarr;</a>
+                </div>
+
+                {% if incomplete_subjects %}
+                    <div style="display: flex; flex-direction: column; gap: var(--space-4);">
+                        {% for item in incomplete_subjects %}
+                            {% with s=item.subject %}
+                            <div>
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                                    <div style="display: flex; align-items: center; gap: var(--space-2);">
+                                        <a href="{% url 'study:subject_detail' s.pk %}" style="color: var(--color-text-primary); text-decoration: none; font-weight: 600; font-size: var(--font-size-sm);">
+                                            {{ s.name }}
+                                        </a>
+                                        {% if item.is_behind %}
+                                            <span class="badge badge-danger" style="font-size: 10px;">Behind Schedule</span>
+                                        {% endif %}
+                                    </div>
+                                    <span style="font-size: var(--font-size-xs); font-weight: 600; color: var(--color-text-secondary);">
+                                        {{ item.completed_topics }}/{{ item.total_topics }} topics ({{ item.pct }}%)
+                                    </span>
+                                </div>
+                                <div style="height: 6px; width: 100%; background: var(--color-bg-main); border-radius: 999px; overflow: hidden;">
+                                    <div style="height: 100%; width: {{ item.pct }}%; background: {% if item.is_behind %}#ef4444{% else %}var(--color-accent-primary, #6366f1){% endif %}; border-radius: 999px;"></div>
+                                </div>
+                            </div>
+                            {% endwith %}
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div style="text-align: center; padding: var(--space-6); color: var(--color-text-muted); font-size: var(--font-size-sm);">
+                        All active subjects have 100% completed syllabi or no subjects configured yet.
+                    </div>
+                {% endif %}
+            </div>
+
+        </div>
+
+        <!-- Right Column -->
+        <div style="display: flex; flex-direction: column; gap: var(--space-6);">
+
+            <!-- Upcoming Examinations -->
+            <div class="card" style="padding: var(--space-5); background: var(--color-bg-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-4);">
+                    <h2 style="font-size: var(--font-size-base); font-weight: 600; color: var(--color-text-primary);">Upcoming Exams</h2>
+                    <a href="{% url 'study:exams' %}" class="btn btn-ghost btn-sm" style="color: var(--color-accent-primary, #6366f1); font-size: var(--font-size-xs);">View All</a>
+                </div>
+
+                {% if upcoming_exams %}
+                    <div style="display: flex; flex-direction: column; gap: var(--space-3);">
+                        {% for exam in upcoming_exams %}
+                            <div style="padding: var(--space-3); background: var(--color-bg-main); border: 1px solid var(--color-border); border-radius: var(--radius-md);">
+                                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 2px;">
+                                    <span style="font-weight: 600; font-size: var(--font-size-sm); color: var(--color-text-primary);">
+                                        {{ exam.exam_name }}
+                                    </span>
+                                    <span class="badge {% if exam.exam_date == today %}badge-warning{% else %}badge-neutral{% endif %}" style="font-size: 10px;">
+                                        {{ exam.exam_date|date:"M d" }}
+                                    </span>
+                                </div>
+                                <div style="font-size: var(--font-size-xs); color: var(--color-text-muted);">
+                                    {{ exam.subject.name }} &bull; {{ exam.get_exam_type_display }}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div style="text-align: center; padding: var(--space-6); color: var(--color-text-muted); font-size: var(--font-size-sm);">
+                        No upcoming exams scheduled.
+                        <div style="margin-top: 8px;">
+                            <a href="{% url 'study:exam_create' %}" class="btn btn-secondary btn-sm">+ Schedule Exam</a>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Recent Study Activity -->
+            <div class="card" style="padding: var(--space-5); background: var(--color-bg-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-4);">
+                    <h2 style="font-size: var(--font-size-base); font-weight: 600; color: var(--color-text-primary);">Recent Sessions</h2>
+                    <a href="{% url 'study:sessions' %}" class="btn btn-ghost btn-sm" style="color: var(--color-accent-primary, #6366f1); font-size: var(--font-size-xs);">All Logs</a>
+                </div>
+
+                {% if recent_sessions %}
+                    <div style="display: flex; flex-direction: column; gap: var(--space-3);">
+                        {% for s in recent_sessions %}
+                            <div style="border-left: 3px solid {{ s.subject.color|default:'#6366f1' }}; padding-left: var(--space-3);">
+                                <div style="display: flex; justify-content: space-between; font-size: var(--font-size-xs); margin-bottom: 2px;">
+                                    <span style="font-weight: 600; color: var(--color-text-primary);">{{ s.subject.name }}</span>
+                                    <span style="color: #10b981; font-weight: 600;">{{ s.duration_minutes }}m</span>
+                                </div>
+                                <div style="font-size: var(--font-size-xs); color: var(--color-text-muted);">
+                                    {{ s.session_date|date:"M d" }} &bull; {{ s.get_session_type_display }}
+                                    {% if s.focus_rating %}&bull; Focus: {{ s.focus_rating }}/10{% endif %}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div style="text-align: center; padding: var(--space-6); color: var(--color-text-muted); font-size: var(--font-size-sm);">
+                        No study sessions logged yet.
+                    </div>
+                {% endif %}
+            </div>
+
+        </div>
+    </div>
+</div>
+{% endblock %}

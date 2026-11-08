@@ -123,3 +123,31 @@ Established in Step 06:
   - Task completion rates and goal progress percentages are computed on-the-fly (`round((completed / total) * 100) if total > 0 else None`).
   - Habit streaks are evaluated dynamically across daily or weekly frequencies by traversing chronological `HabitLog` records.
   - Activity durations are derived from `end_time - start_time` when closed, leaving open sessions marked as live.
+
+
+---
+
+## 8. Study Management Architecture (Step 07)
+
+Established in Step 07:
+- **Module Structure (`apps.study`)**:
+  - `Subject`: Coursework or learning area with status (`ACTIVE`, `COMPLETED`, `ARCHIVED`), type (`COLLEGE`, `EXAM_PREP`, `SKILL`, `PROJECT`, `PERSONAL`), color, and target dates.
+  - `Topic`: Discrete concept or syllabus unit organized under chapters, tracking mastery status (`NOT_STARTED`, `IN_PROGRESS`, `COMPLETED`, `MASTERED`, `NEEDS_REVISION`) and priority.
+  - `StudySession`: Logged active recall or study sessions supporting both real-time stopwatch timers (with auto-closing of dangling sessions) and manual historical time recording.
+  - `StudyPlan`: Daily/weekly study commitment scheduling independent of actual recorded sessions, supporting temporal views (`Today`, `Upcoming`, `This Week`, `Past`, `All`) and status transitions (`PLANNED`, `COMPLETED`, `SKIPPED`, `RESCHEDULED`).
+  - `Revision`: Iterative spaced revision tracking with auto-incrementing iteration numbers (`Revision #1, #2`), completion toggling, and date rescheduling.
+  - `Exam`: Assessment scheduling with deadline countdown badges, exam types, scoring, and percentage computation.
+- **Data Isolation & IDOR Protection**:
+  - All 28 controller views rigorously isolate records to `request.user`.
+  - Forms enforce user-scoped foreign keys (`subject`, `topic`) and validate cross-user mismatch prevention in `clean()`.
+- **9 Core Functional Sections**:
+  1. Study Dashboard (`/study/`): 7 summary KPI cards, active timer banner, today's planned sessions, upcoming exams countdown, incomplete syllabus progress, recent session activity, weekly rhythm chart.
+  2. Subjects & Courses (`/study/subjects/`): CRUD, chapter grouping, status filters, search, and safe deletion with cascade impact warnings.
+  3. Topics & Chapters (`/study/topics/`): Chapter grouping, CRUD, duration tracking, completion toggle with auto-date stamping, priority rankings.
+  4. Syllabus Tracker (`/study/syllabus/`): Dynamic progress bars (`completed / total * 100`), behind-schedule detection (`target_date < today and pct < 100%`).
+  5. Study Planner (`/study/planner/`): Commitment scheduling, temporal tabs, and status actions.
+  6. Study Sessions & Time Tracking (`/study/sessions/`): Stopwatch timer, quick-start, focus ratings (1–10), and manual logging.
+  7. Revision Planner (`/study/revisions/`): Spaced revision iterations, overdue/today/upcoming groupings, quick reschedule.
+  8. Exams & Assessments (`/study/exams/`): Exam scheduling, deadline countdowns, score tracking (`score_achieved / max_score`).
+  9. Study Analytics (`/study/analytics/`): 14-day daily rhythm bar chart, subject time share, syllabus velocity, and plan adherence.
+

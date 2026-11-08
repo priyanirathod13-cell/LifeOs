@@ -1,0 +1,112 @@
+{% extends 'layouts/app_layout.html' %}
+
+{% block title %}{% if plan %}Edit Study Plan{% else %}Schedule Study Plan{% endif %} — LifeOS{% endblock %}
+{% block header_breadcrumb %}Study / Planner / {% if plan %}Edit Plan{% else %}New Plan{% endif %}{% endblock %}
+
+{% block content %}
+<div class="content-container animate-fade-in" style="max-width: 680px; margin: 0 auto;">
+    <div class="page-header" style="margin-bottom: var(--space-6);">
+        <div class="header-left">
+            <a href="{% url 'study:planner' %}" class="btn btn-ghost btn-sm" style="margin-bottom: var(--space-2); display: inline-flex; align-items: center; gap: var(--space-1); color: var(--color-text-muted);">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="19" y1="12" x2="5" y2="12"></line>
+                    <polyline points="12 19 5 12 12 5"></polyline>
+                </svg>
+                Back to Planner
+            </a>
+            <h1 class="page-title" style="font-size: var(--font-size-2xl); font-weight: 700; color: var(--color-text-primary);">
+                {% if plan %}Edit Study Plan{% else %}Schedule Study Plan{% endif %}
+            </h1>
+            <p class="text-secondary" style="font-size: var(--font-size-sm); color: var(--color-text-muted);">
+                Set planned date, preferred time, target duration, and session scope.
+            </p>
+        </div>
+    </div>
+
+    <div class="card" style="padding: var(--space-6); background: var(--color-bg-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg);">
+        <form method="post" novalidate>
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
+                <div class="alert alert-error" style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.2); color: #ef4444; padding: var(--space-3) var(--space-4); border-radius: var(--radius-md); margin-bottom: var(--space-4); font-size: var(--font-size-sm);">
+                    {% for error in form.non_field_errors %}
+                        <div>{{ error }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            <div class="form-group" style="margin-bottom: var(--space-4);">
+                <label for="{{ form.subject.id_for_label }}" class="form-label" style="display: block; margin-bottom: var(--space-1); font-weight: 500; font-size: var(--font-size-sm); color: var(--color-text-secondary);">
+                    Subject <span style="color: var(--color-danger, #ef4444);">*</span>
+                </label>
+                {{ form.subject }}
+                {% if form.subject.errors %}
+                    <div class="form-text" style="color: #ef4444; font-size: var(--font-size-xs); margin-top: 4px;">{{ form.subject.errors.0 }}</div>
+                {% endif %}
+            </div>
+
+            <div class="form-group" style="margin-bottom: var(--space-4);">
+                <label for="{{ form.topic.id_for_label }}" class="form-label" style="display: block; margin-bottom: var(--space-1); font-weight: 500; font-size: var(--font-size-sm); color: var(--color-text-secondary);">
+                    Topic (Optional)
+                </label>
+                {{ form.topic }}
+                {% if form.topic.errors %}
+                    <div class="form-text" style="color: #ef4444; font-size: var(--font-size-xs); margin-top: 4px;">{{ form.topic.errors.0 }}</div>
+                {% endif %}
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4); margin-bottom: var(--space-4);">
+                <div class="form-group">
+                    <label for="{{ form.planned_date.id_for_label }}" class="form-label" style="display: block; margin-bottom: var(--space-1); font-weight: 500; font-size: var(--font-size-sm); color: var(--color-text-secondary);">
+                        Planned Date <span style="color: var(--color-danger, #ef4444);">*</span>
+                    </label>
+                    {{ form.planned_date }}
+                    {% if form.planned_date.errors %}
+                        <div class="form-text" style="color: #ef4444; font-size: var(--font-size-xs); margin-top: 4px;">{{ form.planned_date.errors.0 }}</div>
+                    {% endif %}
+                </div>
+                <div class="form-group">
+                    <label for="{{ form.preferred_time.id_for_label }}" class="form-label" style="display: block; margin-bottom: var(--space-1); font-weight: 500; font-size: var(--font-size-sm); color: var(--color-text-secondary);">
+                        Preferred Time (Optional)
+                    </label>
+                    {{ form.preferred_time }}
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4); margin-bottom: var(--space-4);">
+                <div class="form-group">
+                    <label for="{{ form.estimated_minutes.id_for_label }}" class="form-label" style="display: block; margin-bottom: var(--space-1); font-weight: 500; font-size: var(--font-size-sm); color: var(--color-text-secondary);">
+                        Estimated Duration (Minutes)
+                    </label>
+                    {{ form.estimated_minutes }}
+                </div>
+                <div class="form-group">
+                    <label for="{{ form.priority.id_for_label }}" class="form-label" style="display: block; margin-bottom: var(--space-1); font-weight: 500; font-size: var(--font-size-sm); color: var(--color-text-secondary);">
+                        Priority
+                    </label>
+                    {{ form.priority }}
+                </div>
+            </div>
+
+            <div class="form-group" style="margin-bottom: var(--space-4);">
+                <label for="{{ form.status.id_for_label }}" class="form-label" style="display: block; margin-bottom: var(--space-1); font-weight: 500; font-size: var(--font-size-sm); color: var(--color-text-secondary);">
+                    Status
+                </label>
+                {{ form.status }}
+            </div>
+
+            <div class="form-group" style="margin-bottom: var(--space-5);">
+                <label for="{{ form.notes.id_for_label }}" class="form-label" style="display: block; margin-bottom: var(--space-1); font-weight: 500; font-size: var(--font-size-sm); color: var(--color-text-secondary);">
+                    Session Notes / Specific Goal
+                </label>
+                {{ form.notes }}
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: var(--space-3); padding-top: var(--space-4); border-top: 1px solid var(--color-border);">
+                <a href="{% url 'study:planner' %}" class="btn btn-secondary">Cancel</a>
+                <button type="submit" class="btn btn-primary">{% if plan %}Update Plan{% else %}Save Plan{% endif %}</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

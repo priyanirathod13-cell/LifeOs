@@ -1,0 +1,146 @@
+{% extends 'layouts/app_layout.html' %}
+
+{% block title %}Syllabus Tracker — LifeOS{% endblock %}
+{% block header_breadcrumb %}Study / Syllabus Tracker{% endblock %}
+
+{% block content %}
+<div class="content-container animate-fade-in">
+    <!-- Header -->
+    <div class="page-header" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: var(--space-4); flex-wrap: wrap; gap: var(--space-4);">
+        <div class="header-left">
+            <h1 class="page-title" style="font-size: var(--font-size-2xl); font-weight: 700; color: var(--color-text-primary); margin-bottom: var(--space-1);">Syllabus Tracker</h1>
+            <p class="text-secondary" style="font-size: var(--font-size-sm); color: var(--color-text-muted);">
+                High-level mastery tracking, subject completion rates, and deadline alignment.
+            </p>
+        </div>
+        <div class="header-actions">
+            <a href="{% url 'study:topic_create' %}" class="btn btn-primary" style="display: inline-flex; align-items: center; gap: var(--space-2);">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                </svg>
+                Add Topic
+            </a>
+        </div>
+    </div>
+
+    <!-- Sub-navigation Bar -->
+    {% with study_subnav='syllabus' %}
+        {% include 'study/study_nav.html' %}
+    {% endwith %}
+
+    <!-- Overall Syllabus Mastery Banner -->
+    <div class="card" style="padding: var(--space-5); background: var(--color-bg-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); margin-bottom: var(--space-6);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-3); flex-wrap: wrap; gap: var(--space-2);">
+            <div>
+                <span style="font-size: var(--font-size-xs); text-transform: uppercase; font-weight: 700; color: var(--color-text-muted);">Total Curriculum Coverage</span>
+                <h2 style="font-size: var(--font-size-xl); font-weight: 700; color: var(--color-text-primary); margin: 2px 0;">
+                    Overall Syllabus Mastery: <span style="color: var(--color-accent-primary, #6366f1);">{{ overall_pct }}%</span>
+                </h2>
+            </div>
+            <div style="font-size: var(--font-size-sm); color: var(--color-text-secondary);">
+                <strong>{{ completed_topics_all }}</strong> of <strong>{{ total_topics_all }}</strong> total syllabus units completed
+            </div>
+        </div>
+        <div style="height: 10px; width: 100%; background: var(--color-bg-main); border-radius: 999px; overflow: hidden;">
+            <div style="height: 100%; width: {{ overall_pct }}%; background: var(--color-accent-primary, #6366f1); border-radius: 999px; transition: width 0.4s;"></div>
+        </div>
+    </div>
+
+    <!-- Subject-Wise Progress Cards Grid -->
+    {% if subjects_progress %}
+        <div style="display: flex; flex-direction: column; gap: var(--space-6);">
+            {% for sp in subjects_progress %}
+                {% with s=sp.subject %}
+                <div class="card" style="padding: var(--space-5); background: var(--color-bg-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); border-left: 5px solid {{ s.color|default:'#818cf8' }};">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: var(--space-3); flex-wrap: wrap; gap: var(--space-3);">
+                        <div>
+                            <div style="display: flex; align-items: center; gap: var(--space-2); margin-bottom: 2px;">
+                                <h3 style="font-size: var(--font-size-lg); font-weight: 700; color: var(--color-text-primary); margin: 0;">
+                                    <a href="{% url 'study:subject_detail' s.pk %}" style="color: inherit; text-decoration: none;">{{ s.name }}</a>
+                                </h3>
+                                {% if s.code %}
+                                    <span style="font-size: var(--font-size-xs); color: var(--color-accent-primary, #6366f1); font-weight: 600;">({{ s.code }})</span>
+                                {% endif %}
+                                {% if sp.is_behind %}
+                                    <span class="badge badge-danger" style="font-size: 11px;">Behind Target Date</span>
+                                {% endif %}
+                            </div>
+                            <div style="font-size: var(--font-size-xs); color: var(--color-text-muted);">
+                                {{ s.get_subject_type_display }}
+                                {% if s.target_date %}
+                                    &bull; Target: <strong>{{ s.target_date|date:"M d, Y" }}</strong>
+                                    {% if sp.days_left is not None %}
+                                        {% if sp.days_left < 0 %}
+                                            <span style="color: #ef4444;">({{ sp.days_left|stringformat:"+d"|slice:"1:" }}d overdue)</span>
+                                        {% elif sp.days_left == 0 %}
+                                            <span style="color: #f59e0b;">(Target is today)</span>
+                                        {% else %}
+                                            <span>({{ sp.days_left }} days left)</span>
+                                        {% endif %}
+                                    {% endif %}
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Topics Breakdown Badges -->
+                        <div style="display: flex; gap: var(--space-2); flex-wrap: wrap;">
+                            <span class="badge badge-success" style="font-size: 11px;">
+                                Completed: {{ sp.completed_count }}
+                            </span>
+                            <span class="badge badge-primary" style="font-size: 11px;">
+                                In Progress: {{ sp.in_progress_count }}
+                            </span>
+                            <span class="badge badge-neutral" style="font-size: 11px;">
+                                Not Started: {{ sp.not_started_count }}
+                            </span>
+                            <span style="font-size: var(--font-size-sm); font-weight: 700; color: {% if sp.progress_pct == 100 %}#10b981{% elif sp.is_behind %}#ef4444{% else %}var(--color-accent-primary, #6366f1){% endif %}; margin-left: 6px;">
+                                {{ sp.progress_pct }}%
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Progress Bar -->
+                    <div style="height: 8px; width: 100%; background: var(--color-bg-main); border-radius: 999px; overflow: hidden; margin-bottom: var(--space-4);">
+                        <div style="height: 100%; width: {{ sp.progress_pct }}%; background: {% if sp.is_behind %}#ef4444{% else %}{{ s.color|default:'#818cf8' }}{% endif %}; border-radius: 999px;"></div>
+                    </div>
+
+                    <!-- Topics Details (Collapsible/Preview) -->
+                    {% if sp.topics %}
+                        <div style="display: flex; flex-wrap: wrap; gap: var(--space-2); max-height: 120px; overflow-y: auto; padding: 2px;">
+                            {% for top in sp.topics %}
+                                <div style="display: inline-flex; align-items: center; gap: 6px; padding: 4px 8px; background: var(--color-bg-main); border: 1px solid var(--color-border); border-radius: var(--radius-sm); font-size: 11px;">
+                                    <span style="width: 8px; height: 8px; border-radius: 50%; background: {% if top.is_completed %}#10b981{% elif top.status == 'IN_PROGRESS' %}#6366f1{% else %}var(--color-border){% endif %};"></span>
+                                    <span style="{% if top.is_completed %}text-decoration: line-through; color: var(--color-text-muted);{% else %}color: var(--color-text-primary);{% endif %}">
+                                        {{ top.title }}
+                                    </span>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div style="font-size: var(--font-size-xs); color: var(--color-text-muted);">
+                            No topics added to this subject yet. <a href="{% url 'study:topic_create' %}?subject={{ s.pk }}" style="color: var(--color-accent-primary, #6366f1);">Add topics</a> to track syllabus.
+                        </div>
+                    {% endif %}
+                </div>
+                {% endwith %}
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="card" style="padding: var(--space-12); text-align: center; background: var(--color-bg-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg);">
+            <div style="width: 56px; height: 56px; border-radius: 50%; background: var(--color-bg-main); color: var(--color-text-muted); display: flex; align-items: center; justify-content: center; margin: 0 auto var(--space-4);">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"></path>
+                    <path d="M2 12h20"></path>
+                </svg>
+            </div>
+            <h3 style="font-size: var(--font-size-lg); font-weight: 600; color: var(--color-text-primary); margin-bottom: var(--space-2);">No Syllabus to Track</h3>
+            <p style="color: var(--color-text-muted); font-size: var(--font-size-sm); margin-bottom: var(--space-4); max-width: 440px; margin-left: auto; margin-right: auto;">
+                Create subjects and add curriculum topics to see visual progress bars and milestone indicators.
+            </p>
+            <a href="{% url 'study:subject_create' %}" class="btn btn-primary">Add a Subject</a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

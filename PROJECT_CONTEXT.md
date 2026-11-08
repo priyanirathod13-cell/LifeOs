@@ -85,3 +85,18 @@ Established in Step 04:
   - Normalization to 3NF: Computed values (e.g. `Activity.duration_minutes`) are derived dynamically on-the-fly rather than storing redundant columns.
 - **Legacy Preservation**:
   - Legacy records from `lifeos` database migrated into `lifeos_db` via `python manage.py import_legacy_data` with zero data loss.
+
+
+---
+
+## 6. Main Dashboard Architecture & Central Control Panel (Step 05)
+
+Established in Step 05:
+- **Central Control Panel**: Live authenticated dashboard at `/dashboard/` integrating real domain models across tasks, habits, studies, schedules, goals, biometrics, and recent activity.
+- **Timezone-Aware Temporal Processing**: User greeting and daily boundaries respect `request.user.timezone_pref` with fallback to `settings.TIME_ZONE`.
+- **Zero-Division and Empty State Resilience**: All statistics (task completion percentage, habit completion percentage, goal progress) feature defensive zero-division safeguards (`round((completed / total) * 100) if total > 0 else 0`).
+- **Interactive Quick Actions & Security**:
+  - `toggle_task_view` (`POST /dashboard/toggle-task/<id>/`): Toggles task completion state with IDOR protection (`get_object_or_404(Task, id=id, user=request.user)`).
+  - `toggle_habit_view` (`POST /dashboard/toggle-habit/<id>/`): Logs or unlogs habit execution for the current date with IDOR protection.
+  - `quick_add_task_view` (`POST /dashboard/quick-add-task/`): Modal-driven task creation with category ownership validation.
+  - `quick_checkin_view` (`POST /dashboard/quick-checkin/`): Modal-driven biometric logging updating `DailyMetric` for the current date.

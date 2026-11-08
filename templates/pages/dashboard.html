@@ -4,55 +4,58 @@
 {% block header_breadcrumb %}Dashboard{% endblock %}
 
 {% block content %}
-<!-- Page Header -->
-<div class="page-header">
+<!-- Welcome & Personalized Greeting Header -->
+<div class="page-header" style="margin-bottom: var(--space-6);">
     <div class="page-header-info">
-        <h1 class="page-title">Behavioral Dashboard</h1>
-        <p class="page-subtitle">Unified view of your daily routines, deep work focus, and behavioral rhythm.</p>
+        <h1 class="page-title">{{ greeting_time }}, {{ user_display_name }}.</h1>
+        <p class="page-subtitle">
+            <span style="color: var(--accent-primary); font-weight: var(--font-weight-medium);">{{ formatted_date }}</span>
+            &bull; Here's your behavioral overview and execution priorities for today.
+        </p>
     </div>
-    <div class="page-actions">
-        <a href="{% url 'core:ui_system' %}" class="btn btn-secondary">
+    <div class="page-actions" style="display: flex; gap: var(--space-3); flex-wrap: wrap;">
+        <button type="button" class="btn btn-secondary" data-modal-target="quickCheckinModal">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
-                <polyline points="2 17 12 22 22 17"></polyline>
-                <polyline points="2 12 12 17 22 12"></polyline>
+                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
             </svg>
-            Explore Design System
-        </a>
-        <button type="button" class="btn btn-primary" data-modal-target="quickCheckinModal">
+            Daily Check-in
+        </button>
+        <button type="button" class="btn btn-primary" data-modal-target="quickTaskModal">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <line x1="12" y1="5" x2="12" y2="19"></line>
                 <line x1="5" y1="12" x2="19" y2="12"></line>
             </svg>
-            Quick Check-in
+            Add Task
         </button>
     </div>
 </div>
 
-<!-- Key Performance Metrics Row -->
-<div class="grid grid-cols-4 gap-4" style="margin-bottom: var(--space-8);">
+<!-- 4 Key Performance Overview Cards -->
+<div class="grid grid-cols-4 gap-4" style="margin-bottom: var(--space-6);">
+    <!-- Tasks Card -->
     <div class="metric-card">
         <div class="metric-header">
-            <span class="metric-label">Daily Focus Index</span>
-            <div class="metric-icon-wrap">
+            <span class="metric-label">Today's Tasks</span>
+            <div class="metric-icon-wrap" style="background-color: var(--accent-primary-subtle); color: var(--accent-primary);">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                    <polyline points="9 11 12 14 22 4"></polyline>
+                    <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
                 </svg>
             </div>
         </div>
-        <div class="metric-value">91%</div>
-        <div class="metric-trend trend-up">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
-                <polyline points="17 6 23 6 23 12"></polyline>
-            </svg>
-            <span>+6% over 7-day baseline</span>
+        <div class="metric-value">{{ tasks_completed_count }} / {{ tasks_total_count }}</div>
+        <div class="metric-trend {% if tasks_completion_pct >= 50 %}trend-up{% else %}trend-neutral{% endif %}">
+            <span>{{ tasks_completion_pct }}% completed &bull; {{ tasks_pending_count }} pending</span>
+        </div>
+        <div class="progress-track" style="margin-top: var(--space-2); height: 4px;">
+            <div class="progress-fill {% if tasks_completion_pct == 100 %}success{% endif %}" style="width: {{ tasks_completion_pct }}%;"></div>
         </div>
     </div>
 
+    <!-- Habits Card -->
     <div class="metric-card">
         <div class="metric-header">
-            <span class="metric-label">Habits Completed</span>
+            <span class="metric-label">Daily Habits</span>
             <div class="metric-icon-wrap" style="background-color: var(--success-subtle); color: var(--success);">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
@@ -60,234 +63,579 @@
                 </svg>
             </div>
         </div>
-        <div class="metric-value">6 / 8</div>
-        <div class="metric-trend trend-up">
-            <span>75% completion rate</span>
+        <div class="metric-value">{{ habits_completed_count }} / {{ habits_total_count }}</div>
+        <div class="metric-trend {% if habits_completion_pct >= 50 %}trend-up{% else %}trend-neutral{% endif %}">
+            <span>{{ habits_completion_pct }}% completed &bull; {{ habits_remaining_count }} remaining</span>
+        </div>
+        <div class="progress-track" style="margin-top: var(--space-2); height: 4px;">
+            <div class="progress-fill success" style="width: {{ habits_completion_pct }}%;"></div>
         </div>
     </div>
 
+    <!-- Study Card -->
     <div class="metric-card">
         <div class="metric-header">
-            <span class="metric-label">Deep Work Hours</span>
+            <span class="metric-label">Study Duration</span>
             <div class="metric-icon-wrap" style="background-color: var(--accent-secondary-subtle); color: var(--accent-secondary);">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <circle cx="12" cy="12" r="10"></circle>
-                    <polyline points="12 6 12 12 16 14"></polyline>
+                    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
                 </svg>
             </div>
         </div>
-        <div class="metric-value">5.2 hrs</div>
+        <div class="metric-value">{{ study_time_display }}</div>
         <div class="metric-trend trend-neutral">
-            <span>Goal: 6.0 hrs / day</span>
+            <span>{{ study_sessions_count }} session{{ study_sessions_count|pluralize }} &bull; {{ study_subjects_count }} subject{{ study_subjects_count|pluralize }}</span>
+        </div>
+        <div class="progress-track" style="margin-top: var(--space-2); height: 4px;">
+            <div class="progress-fill secondary" style="width: {% if total_study_minutes > 120 %}100{% else %}{{ total_study_minutes|default:0 }}{% endif %}%;"></div>
         </div>
     </div>
 
+    <!-- Goals Card -->
     <div class="metric-card">
         <div class="metric-header">
-            <span class="metric-label">Energy Rating</span>
+            <span class="metric-label">Active Goals</span>
             <div class="metric-icon-wrap" style="background-color: var(--warning-subtle); color: var(--warning);">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <polygon points="12 8 8 12 12 16 16 12 12 8"></polygon>
                 </svg>
             </div>
         </div>
-        <div class="metric-value">8.2 / 10</div>
-        <div class="metric-trend trend-up">
-            <span>High subjective vigor</span>
+        <div class="metric-value">{{ goals_active_count }}</div>
+        <div class="metric-trend {% if goals_approaching_count > 0 %}trend-warning{% else %}trend-up{% endif %}">
+            <span>{{ goals_approaching_count }} approaching target date (30d)</span>
+        </div>
+        <div class="progress-track" style="margin-top: var(--space-2); height: 4px;">
+            <div class="progress-fill warning" style="width: {% if goals_active_count > 0 %}75{% else %}0{% endif %}%;"></div>
         </div>
     </div>
 </div>
 
-<!-- Main Two-Column Layout -->
+<!-- Quick Action Pills Row -->
+<div style="display: flex; gap: var(--space-2); flex-wrap: wrap; margin-bottom: var(--space-6); padding: var(--space-3) var(--space-4); background-color: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); align-items: center;">
+    <span style="font-size: var(--font-size-xs); font-weight: var(--font-weight-semibold); text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-right: var(--space-2);">Quick Actions:</span>
+    <button type="button" class="btn btn-secondary btn-sm" data-modal-target="quickTaskModal">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+        New Task
+    </button>
+    <button type="button" class="btn btn-secondary btn-sm" data-modal-target="quickCheckinModal">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+        Log Check-in
+    </button>
+    <a href="{% url 'core:study' %}" class="btn btn-secondary btn-sm">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+        Study Session
+    </a>
+    <a href="{% url 'core:journal' %}" class="btn btn-secondary btn-sm">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+        Reflection Journal
+    </a>
+    <a href="{% url 'core:timetable' %}" class="btn btn-secondary btn-sm">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+        Timetable
+    </a>
+</div>
+
+<!-- Main Two-Column Dashboard Layout -->
 <div class="grid grid-cols-3 gap-6">
-    <!-- Left Column: Priority Focus & Habit Tracker (2 cols wide) -->
+    <!-- Left Column: Tasks, Habits, Study Overview (2 Columns Wide) -->
     <div style="grid-column: span 2; display: flex; flex-direction: column; gap: var(--space-6);">
-        <!-- Priority Tasks Card -->
+
+        <!-- Section 1: Today's Tasks -->
         <div class="card">
             <div class="card-header">
                 <div>
-                    <h2 class="card-title">Today's Priority Focus</h2>
-                    <p class="card-subtitle">Highest leverage tasks aligned with current goals</p>
+                    <h2 class="card-title">Today's Tasks & Execution</h2>
+                    <p class="card-subtitle">Prioritized actions due today or in progress</p>
                 </div>
-                <a href="{% url 'core:tasks' %}" class="btn btn-ghost btn-sm">View All Tasks →</a>
+                <div style="display: flex; gap: var(--space-2); align-items: center;">
+                    <button type="button" class="btn btn-secondary btn-sm" data-modal-target="quickTaskModal">+ Add Task</button>
+                    <a href="{% url 'core:tasks' %}" class="btn btn-ghost btn-sm">All Tasks &rarr;</a>
+                </div>
             </div>
             <div class="card-body flex flex-col gap-3">
-                <div class="flex items-center justify-between p-3" style="background-color: var(--bg-input); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); padding: var(--space-3);">
-                    <label class="custom-checkbox">
-                        <input type="checkbox" checked>
-                        <div>
-                            <span style="font-weight: var(--font-weight-medium); color: var(--text-primary);">Architect LifeOS UI & Design System Component Modules</span>
-                            <div style="font-size: var(--font-size-xs); color: var(--text-muted);">Step 02 Frontend Architecture • 2 hrs</div>
-                        </div>
-                    </label>
-                    <span class="badge badge-success">Completed</span>
-                </div>
+                {% if todays_tasks %}
+                    {% for task in todays_tasks %}
+                        <div class="flex items-center justify-between p-3" style="background-color: var(--bg-input); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); padding: var(--space-3); transition: background-color var(--transition-fast);">
+                            <div class="flex items-center gap-3" style="flex: 1; min-width: 0;">
+                                <form method="POST" action="{% url 'core:toggle_task' task.id %}" style="display: inline; margin: 0;">
+                                    {% csrf_token %}
+                                    <button type="submit" style="background: none; border: none; padding: 0; cursor: pointer; color: inherit; display: flex; align-items: center;" aria-label="Toggle task status">
+                                        {% if task.status == 'COMPLETED' %}
+                                            <span style="display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: var(--radius-xs); background-color: var(--success); color: #0F1117;">
+                                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                            </span>
+                                        {% else %}
+                                            <span style="display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: var(--radius-xs); border: 2px solid var(--border-focus); background-color: var(--bg-card);"></span>
+                                        {% endif %}
+                                    </button>
+                                </form>
+                                <div style="min-width: 0; flex: 1;">
+                                    <div style="font-weight: var(--font-weight-medium); color: {% if task.status == 'COMPLETED' %}var(--text-muted); text-decoration: line-through;{% else %}var(--text-primary);{% endif %}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                        {{ task.title }}
+                                    </div>
+                                    <div style="font-size: var(--font-size-xs); color: var(--text-muted); display: flex; gap: var(--space-2); align-items: center; margin-top: 2px;">
+                                        {% if task.category %}
+                                            <span style="display: inline-flex; align-items: center; gap: 4px;">
+                                                <span style="display: inline-block; width: 6px; height: 6px; border-radius: 50%; background-color: {{ task.category.color }};"></span>
+                                                {{ task.category.name }}
+                                            </span>
+                                            &bull;
+                                        {% endif %}
+                                        {% if task.estimated_minutes %}
+                                            <span>{{ task.estimated_minutes }} mins</span>
+                                            &bull;
+                                        {% endif %}
+                                        {% if task.due_date %}
+                                            <span>Due {{ task.due_date|date:"M d" }}</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                {% if task.is_overdue %}
+                                    <span class="badge badge-danger">Overdue</span>
+                                {% endif %}
 
-                <div class="flex items-center justify-between p-3" style="background-color: var(--bg-input); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); padding: var(--space-3);">
-                    <label class="custom-checkbox">
-                        <input type="checkbox">
-                        <div>
-                            <span style="font-weight: var(--font-weight-medium); color: var(--text-primary);">Review Distributed Consensus & Raft Protocols</span>
-                            <div style="font-size: var(--font-size-xs); color: var(--text-muted);">Study Management • 1.5 hrs</div>
-                        </div>
-                    </label>
-                    <span class="badge badge-warning">In Progress</span>
-                </div>
+                                {% if task.priority == 'URGENT' %}
+                                    <span class="badge badge-danger">Urgent</span>
+                                {% elif task.priority == 'HIGH' %}
+                                    <span class="badge badge-warning">High</span>
+                                {% elif task.priority == 'MEDIUM' %}
+                                    <span class="badge badge-accent">Medium</span>
+                                {% else %}
+                                    <span class="badge badge-neutral">Low</span>
+                                {% endif %}
 
-                <div class="flex items-center justify-between p-3" style="background-color: var(--bg-input); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); padding: var(--space-3);">
-                    <label class="custom-checkbox">
-                        <input type="checkbox">
-                        <div>
-                            <span style="font-weight: var(--font-weight-medium); color: var(--text-primary);">Evening Energy & Cognitive Load Reflection</span>
-                            <div style="font-size: var(--font-size-xs); color: var(--text-muted);">Journal & Biometrics • 20 mins</div>
+                                {% if task.status == 'COMPLETED' %}
+                                    <span class="badge badge-success">Done</span>
+                                {% endif %}
+                            </div>
                         </div>
-                    </label>
-                    <span class="badge badge-neutral">Scheduled 21:00</span>
-                </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="empty-state" style="padding: var(--space-8) var(--space-4);">
+                        <div class="empty-state-icon">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                                <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                            </svg>
+                        </div>
+                        <h3 class="empty-state-title">No tasks due today</h3>
+                        <p class="empty-state-desc">You are completely caught up for today! Plan upcoming tasks or add a new action item.</p>
+                        <button type="button" class="btn btn-primary btn-sm" data-modal-target="quickTaskModal">+ Add Task</button>
+                    </div>
+                {% endif %}
             </div>
         </div>
 
-        <!-- Habits Consistency Tracker -->
+        <!-- Section 2: Habit Overview -->
         <div class="card">
             <div class="card-header">
                 <div>
                     <h2 class="card-title">Daily Habit Consistency</h2>
-                    <p class="card-subtitle">Active streaks and behavioral momentum</p>
+                    <p class="card-subtitle">Active habits and daily streak execution</p>
                 </div>
-                <a href="{% url 'core:habits' %}" class="btn btn-ghost btn-sm">Manage Habits →</a>
-            </div>
-            <div class="card-body flex flex-col gap-4">
-                <div class="progress-bar-wrap">
-                    <div class="progress-header">
-                        <span class="progress-label">Morning Hydration & Sunlight (21-day streak)</span>
-                        <span class="progress-value">100%</span>
-                    </div>
-                    <div class="progress-track">
-                        <div class="progress-fill success" style="width: 100%;"></div>
-                    </div>
-                </div>
-
-                <div class="progress-bar-wrap">
-                    <div class="progress-header">
-                        <span class="progress-label">Continuous Reading & Technical Synthesis (14-day streak)</span>
-                        <span class="progress-value">80%</span>
-                    </div>
-                    <div class="progress-track">
-                        <div class="progress-fill" style="width: 80%;"></div>
-                    </div>
-                </div>
-
-                <div class="progress-bar-wrap">
-                    <div class="progress-header">
-                        <span class="progress-label">Physical Conditioning (3-day streak)</span>
-                        <span class="progress-value">60%</span>
-                    </div>
-                    <div class="progress-track">
-                        <div class="progress-fill warning" style="width: 60%;"></div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Right Column: Intelligence & Timetable Preview (1 col wide) -->
-    <div style="display: flex; flex-direction: column; gap: var(--space-6);">
-        <!-- Intelligence Insights Card -->
-        <div class="card">
-            <div class="card-header">
-                <h2 class="card-title">Behavioral Insight</h2>
-                <span class="badge badge-accent">AI Pattern</span>
+                <a href="{% url 'core:habits' %}" class="btn btn-ghost btn-sm">Manage Habits &rarr;</a>
             </div>
             <div class="card-body flex flex-col gap-3">
-                <p style="font-size: var(--font-size-sm); color: var(--text-primary); line-height: 1.6;">
-                    Deep work sessions started before <strong>10:00 AM</strong> have an <strong>82% higher completion rate</strong> and report lower subjective fatigue compared to afternoon sessions.
-                </p>
-                <div style="padding: var(--space-3); background-color: var(--accent-primary-subtle); border-radius: var(--radius-sm); border-left: 3px solid var(--accent-primary); font-size: var(--font-size-xs); color: var(--accent-secondary);">
-                    Recommendation: Protect the 08:30 - 11:30 block tomorrow from administrative tasks.
-                </div>
+                {% if habits_display %}
+                    <div class="grid grid-cols-2 gap-3">
+                        {% for item in habits_display %}
+                            <div class="flex items-center justify-between p-3" style="background-color: var(--bg-input); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); padding: var(--space-3);">
+                                <div class="flex items-center gap-3">
+                                    <form method="POST" action="{% url 'core:toggle_habit' item.habit.id %}" style="display: inline; margin: 0;">
+                                        {% csrf_token %}
+                                        <button type="submit" style="background: none; border: none; padding: 0; cursor: pointer; color: inherit; display: flex; align-items: center;" aria-label="Toggle habit completion">
+                                            {% if item.completed %}
+                                                <span style="display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 50%; background-color: var(--success); color: #0F1117;">
+                                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                                </span>
+                                            {% else %}
+                                                <span style="display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--border-focus); background-color: var(--bg-card);"></span>
+                                            {% endif %}
+                                        </button>
+                                    </form>
+                                    <div>
+                                        <div style="font-weight: var(--font-weight-medium); color: {% if item.completed %}var(--text-muted); text-decoration: line-through;{% else %}var(--text-primary);{% endif %};">
+                                            {{ item.habit.name }}
+                                        </div>
+                                        <div style="font-size: var(--font-size-xs); color: var(--text-muted); display: flex; gap: var(--space-2); align-items: center; margin-top: 2px;">
+                                            <span>{{ item.habit.get_frequency_display }}</span>
+                                            {% if item.habit.category %}
+                                                &bull;
+                                                <span>{{ item.habit.category.name }}</span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div>
+                                    {% if item.completed %}
+                                        <span class="badge badge-success">Completed</span>
+                                    {% else %}
+                                        <form method="POST" action="{% url 'core:toggle_habit' item.habit.id %}" style="display: inline; margin: 0;">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-secondary btn-sm" style="font-size: var(--font-size-xs); padding: 0.25rem 0.6rem;">Check In</button>
+                                        </form>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="empty-state" style="padding: var(--space-8) var(--space-4);">
+                        <div class="empty-state-icon">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <polyline points="12 6 12 12 16 14"></polyline>
+                            </svg>
+                        </div>
+                        <h3 class="empty-state-title">No habits configured yet</h3>
+                        <p class="empty-state-desc">Establish recurring daily or weekly habits to begin building behavioral momentum.</p>
+                        <a href="{% url 'core:habits' %}" class="btn btn-primary btn-sm">Configure Habits</a>
+                    </div>
+                {% endif %}
             </div>
         </div>
 
-        <!-- Schedule Preview -->
+        <!-- Section 3: Study Overview & Upcoming Exams -->
         <div class="card">
             <div class="card-header">
-                <h2 class="card-title">Schedule Blocks</h2>
+                <div>
+                    <h2 class="card-title">Study & Academic Overview</h2>
+                    <p class="card-subtitle">Focused learning sessions and milestone exam readiness</p>
+                </div>
+                <a href="{% url 'core:study' %}" class="btn btn-ghost btn-sm">Study Management &rarr;</a>
+            </div>
+            <div class="card-body flex flex-col gap-4">
+                {% if total_study_minutes > 0 or upcoming_exams %}
+                    <div class="grid grid-cols-2 gap-4">
+                        <!-- Today's Study Stats -->
+                        <div style="background-color: var(--bg-input); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); padding: var(--space-4);">
+                            <div style="font-size: var(--font-size-xs); color: var(--text-muted); text-transform: uppercase; font-weight: var(--font-weight-semibold); margin-bottom: var(--space-1);">Study Logged Today</div>
+                            <div style="font-size: var(--font-size-2xl); font-weight: var(--font-weight-bold); color: var(--accent-secondary);">{{ study_time_display }}</div>
+                            <p style="font-size: var(--font-size-sm); color: var(--text-secondary); margin-top: var(--space-2);">
+                                {{ study_sessions_count }} focused session{{ study_sessions_count|pluralize }} logged across {{ study_subjects_count }} subject{{ study_subjects_count|pluralize }}.
+                            </p>
+                            <a href="{% url 'core:study' %}" class="btn btn-secondary btn-sm" style="margin-top: var(--space-3);">+ Log Study Session</a>
+                        </div>
+
+                        <!-- Upcoming Exams -->
+                        <div style="background-color: var(--bg-input); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); padding: var(--space-4);">
+                            <div style="font-size: var(--font-size-xs); color: var(--text-muted); text-transform: uppercase; font-weight: var(--font-weight-semibold); margin-bottom: var(--space-2);">Upcoming Milestone Exams</div>
+                            {% if upcoming_exams %}
+                                <div class="flex flex-col gap-2">
+                                    {% for exam in upcoming_exams %}
+                                        <div class="flex items-center justify-between" style="padding-bottom: var(--space-2); border-bottom: 1px solid var(--border-subtle);">
+                                            <div>
+                                                <div style="font-size: var(--font-size-sm); font-weight: var(--font-weight-medium); color: var(--text-primary);">{{ exam.exam_name }}</div>
+                                                <div style="font-size: var(--font-size-xs); color: var(--text-muted);">{{ exam.subject.name }} &bull; {{ exam.exam_date|date:"M d, Y" }}</div>
+                                            </div>
+                                            <span class="badge {% if exam.days_remaining <= 7 %}badge-danger{% elif exam.days_remaining <= 14 %}badge-warning{% else %}badge-neutral{% endif %}">
+                                                In {{ exam.days_remaining }} day{{ exam.days_remaining|pluralize }}
+                                            </span>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                <p style="font-size: var(--font-size-sm); color: var(--text-muted); margin: var(--space-3) 0;">No exams scheduled in the next 30 days.</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% else %}
+                    <div class="empty-state" style="padding: var(--space-8) var(--space-4);">
+                        <div class="empty-state-icon">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                            </svg>
+                        </div>
+                        <h3 class="empty-state-title">Your study journey starts here</h3>
+                        <p class="empty-state-desc">Track course subjects, active recall sessions, and prepare for upcoming exams systematically.</p>
+                        <a href="{% url 'core:study' %}" class="btn btn-primary btn-sm">Explore Study Management</a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Right Column: Schedule, Goals, Recent Activity, Biometrics (1 Column Wide) -->
+    <div style="display: flex; flex-direction: column; gap: var(--space-6);">
+
+        <!-- Section 4: Daily Productivity & Biometrics Check-in -->
+        <div class="card">
+            <div class="card-header">
+                <div>
+                    <h2 class="card-title">Daily State & Metrics</h2>
+                    <p class="card-subtitle">Subjective readiness & energy</p>
+                </div>
+                <button type="button" class="btn btn-ghost btn-sm" data-modal-target="quickCheckinModal">Edit &rarr;</button>
+            </div>
+            <div class="card-body flex flex-col gap-3">
+                {% if today_metric %}
+                    <div class="grid grid-cols-2 gap-3" style="text-align: center;">
+                        <div style="padding: var(--space-2); background-color: var(--bg-input); border-radius: var(--radius-sm);">
+                            <div style="font-size: var(--font-size-xs); color: var(--text-muted);">Mood</div>
+                            <div style="font-size: var(--font-size-xl); font-weight: var(--font-weight-bold); color: var(--accent-primary);">{{ today_metric.mood_score|default:"-" }} / 10</div>
+                        </div>
+                        <div style="padding: var(--space-2); background-color: var(--bg-input); border-radius: var(--radius-sm);">
+                            <div style="font-size: var(--font-size-xs); color: var(--text-muted);">Energy</div>
+                            <div style="font-size: var(--font-size-xl); font-weight: var(--font-weight-bold); color: var(--warning);">{{ today_metric.energy_score|default:"-" }} / 10</div>
+                        </div>
+                        <div style="padding: var(--space-2); background-color: var(--bg-input); border-radius: var(--radius-sm);">
+                            <div style="font-size: var(--font-size-xs); color: var(--text-muted);">Stress</div>
+                            <div style="font-size: var(--font-size-xl); font-weight: var(--font-weight-bold); color: var(--danger);">{{ today_metric.stress_score|default:"-" }} / 10</div>
+                        </div>
+                        <div style="padding: var(--space-2); background-color: var(--bg-input); border-radius: var(--radius-sm);">
+                            <div style="font-size: var(--font-size-xs); color: var(--text-muted);">Sleep</div>
+                            <div style="font-size: var(--font-size-xl); font-weight: var(--font-weight-bold); color: var(--success);">{{ today_metric.sleep_hours|default:"-" }} hrs</div>
+                        </div>
+                    </div>
+                    {% if today_metric.notes %}
+                        <div style="font-size: var(--font-size-xs); color: var(--text-secondary); background-color: var(--bg-input); padding: var(--space-2) var(--space-3); border-radius: var(--radius-sm); border-left: 2px solid var(--accent-primary);">
+                            "{{ today_metric.notes }}"
+                        </div>
+                    {% endif %}
+                {% else %}
+                    <div class="empty-state" style="padding: var(--space-4);">
+                        <p style="font-size: var(--font-size-sm); color: var(--text-muted); margin-bottom: var(--space-3);">No biometric check-in recorded for today yet.</p>
+                        <button type="button" class="btn btn-secondary btn-sm" data-modal-target="quickCheckinModal">Record Daily Check-in</button>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Section 5: Daily Schedule & Time Blocks -->
+        <div class="card">
+            <div class="card-header">
+                <div>
+                    <h2 class="card-title">Schedule Blocks</h2>
+                    <p class="card-subtitle">Calendar commitments for today</p>
+                </div>
                 <a href="{% url 'core:timetable' %}" class="btn btn-ghost btn-sm">Full View</a>
             </div>
             <div class="card-body flex flex-col gap-3">
-                <div class="flex items-center justify-between" style="font-size: var(--font-size-sm); padding-bottom: var(--space-2); border-bottom: 1px solid var(--border-subtle);">
-                    <div>
-                        <div style="color: var(--text-primary); font-weight: var(--font-weight-medium);">08:30 — 11:30</div>
-                        <div style="color: var(--text-muted); font-size: var(--font-size-xs);">Deep Architecture Block</div>
+                {% if schedule_blocks %}
+                    {% for block in schedule_blocks %}
+                        <div class="flex items-center justify-between" style="font-size: var(--font-size-sm); padding-bottom: var(--space-2); border-bottom: 1px solid var(--border-subtle);">
+                            <div>
+                                <div style="color: var(--text-primary); font-weight: var(--font-weight-medium);">{{ block.start_time|time:"H:i" }} &mdash; {{ block.end_time|time:"H:i" }}</div>
+                                <div style="color: var(--text-muted); font-size: var(--font-size-xs);">{{ block.title }}</div>
+                            </div>
+                            {% if block.time_state == 'active' %}
+                                <span class="badge badge-accent">Active Now</span>
+                            {% elif block.time_state == 'completed' %}
+                                <span class="badge badge-success">Done</span>
+                            {% elif block.time_state == 'past' %}
+                                <span class="badge badge-neutral">Past</span>
+                            {% else %}
+                                <span class="badge badge-warning">Upcoming</span>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="empty-state" style="padding: var(--space-4);">
+                        <p style="font-size: var(--font-size-sm); color: var(--text-muted); margin-bottom: var(--space-3);">No schedule blocks planned for today.</p>
+                        <a href="{% url 'core:timetable' %}" class="btn btn-secondary btn-sm">Plan Day on Timetable</a>
                     </div>
-                    <span class="badge badge-success">Done</span>
-                </div>
-
-                <div class="flex items-center justify-between" style="font-size: var(--font-size-sm); padding-bottom: var(--space-2); border-bottom: 1px solid var(--border-subtle);">
-                    <div>
-                        <div style="color: var(--text-primary); font-weight: var(--font-weight-medium);">14:00 — 16:00</div>
-                        <div style="color: var(--text-muted); font-size: var(--font-size-xs);">Algorithm Studies & Practice</div>
-                    </div>
-                    <span class="badge badge-warning">Next Up</span>
-                </div>
-
-                <div class="flex items-center justify-between" style="font-size: var(--font-size-sm);">
-                    <div>
-                        <div style="color: var(--text-primary); font-weight: var(--font-weight-medium);">20:30 — 21:00</div>
-                        <div style="color: var(--text-muted); font-size: var(--font-size-xs);">Day-end Retrospective & Journal</div>
-                    </div>
-                    <span class="badge badge-neutral">Scheduled</span>
-                </div>
+                {% endif %}
             </div>
         </div>
+
+        <!-- Section 6: Active Strategic Goals -->
+        <div class="card">
+            <div class="card-header">
+                <div>
+                    <h2 class="card-title">Strategic Goals</h2>
+                    <p class="card-subtitle">Long-term objectives and targets</p>
+                </div>
+                <a href="{% url 'core:goals' %}" class="btn btn-ghost btn-sm">All Goals &rarr;</a>
+            </div>
+            <div class="card-body flex flex-col gap-4">
+                {% if goals_preview %}
+                    {% for item in goals_preview %}
+                        <div style="background-color: var(--bg-input); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); padding: var(--space-3);">
+                            <div class="flex items-center justify-between" style="margin-bottom: var(--space-1);">
+                                <span style="font-weight: var(--font-weight-semibold); color: var(--text-primary); font-size: var(--font-size-sm);">{{ item.goal.title }}</span>
+                                {% if item.days_left is not None %}
+                                    <span class="badge {% if item.days_left <= 7 %}badge-danger{% elif item.days_left <= 30 %}badge-warning{% else %}badge-neutral{% endif %}" style="font-size: var(--font-size-xs);">
+                                        {% if item.days_left >= 0 %}{{ item.days_left }}d left{% else %}Target passed{% endif %}
+                                    </span>
+                                {% endif %}
+                            </div>
+                            <div style="font-size: var(--font-size-xs); color: var(--text-muted); margin-bottom: var(--space-2);">
+                                {% if item.total_tasks > 0 %}
+                                    {{ item.completed_tasks }} of {{ item.total_tasks }} linked tasks completed ({{ item.progress_pct }}%)
+                                {% else %}
+                                    Target: {{ item.goal.target_date|default:"Ongoing" }}
+                                {% endif %}
+                            </div>
+                            {% if item.progress_pct is not None %}
+                                <div class="progress-track" style="height: 4px;">
+                                    <div class="progress-fill {% if item.progress_pct == 100 %}success{% endif %}" style="width: {{ item.progress_pct }}%;"></div>
+                                </div>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="empty-state" style="padding: var(--space-4);">
+                        <p style="font-size: var(--font-size-sm); color: var(--text-muted); margin-bottom: var(--space-3);">No active goals defined yet.</p>
+                        <a href="{% url 'core:goals' %}" class="btn btn-secondary btn-sm">Set Strategic Goals</a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Section 7: Recent Activity Feed -->
+        <div class="card">
+            <div class="card-header">
+                <div>
+                    <h2 class="card-title">Recent Activity</h2>
+                    <p class="card-subtitle">Recent actions logged by your account</p>
+                </div>
+            </div>
+            <div class="card-body flex flex-col gap-3">
+                {% if recent_activities %}
+                    {% for item in recent_activities %}
+                        <div class="flex items-start justify-between gap-2" style="padding-bottom: var(--space-2); border-bottom: 1px solid var(--border-subtle); font-size: var(--font-size-xs);">
+                            <div>
+                                <span class="badge {{ item.badge_class }}" style="font-size: 10px; margin-bottom: 2px;">{{ item.badge_text }}</span>
+                                <div style="color: var(--text-primary); font-weight: var(--font-weight-medium); margin-top: 2px;">{{ item.title }}</div>
+                            </div>
+                            <span style="color: var(--text-muted); white-space: nowrap;">{{ item.timestamp|timesince }} ago</span>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="empty-state" style="padding: var(--space-4);">
+                        <p style="font-size: var(--font-size-sm); color: var(--text-muted);">No recent activity recorded yet.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
     </div>
 </div>
 {% endblock %}
 
 {% block modals %}
-<!-- Quick Check-in Modal -->
-<div class="modal-backdrop" id="quickCheckinModal" role="dialog" aria-labelledby="checkinModalTitle" aria-modal="true">
+<!-- Modal 1: Quick Add Task -->
+<div class="modal-backdrop" id="quickTaskModal" role="dialog" aria-labelledby="quickTaskModalTitle" aria-modal="true">
     <div class="modal-dialog">
-        <div class="modal-header">
-            <h3 class="modal-title" id="checkinModalTitle">Daily Quick Check-in</h3>
-            <button type="button" class="modal-close-btn" data-modal-close aria-label="Close modal">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <line x1="18" y1="6" x2="6" y2="18"></line>
-                    <line x1="6" y1="6" x2="18" y2="18"></line>
-                </svg>
-            </button>
-        </div>
-        <div class="modal-body flex flex-col gap-4">
-            <div class="form-group">
-                <label class="form-label" for="energySlider">Energy Level (1 to 10)</label>
-                <input type="range" id="energySlider" min="1" max="10" value="8" style="width: 100%; accent-color: var(--accent-primary);">
-                <div class="flex justify-between" style="font-size: var(--font-size-xs); color: var(--text-muted);">
-                    <span>1 (Depleted)</span>
-                    <span>5 (Moderate)</span>
-                    <span>10 (Peak Vigor)</span>
+        <form method="POST" action="{% url 'core:quick_add_task' %}">
+            {% csrf_token %}
+            <div class="modal-header">
+                <h3 class="modal-title" id="quickTaskModalTitle">Add New Task</h3>
+                <button type="button" class="modal-close-btn" data-modal-close aria-label="Close modal">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+            <div class="modal-body flex flex-col gap-4">
+                <div class="form-group">
+                    <label class="form-label" for="taskTitle">Task Title <span style="color: var(--danger);">*</span></label>
+                    <input type="text" id="taskTitle" name="title" class="form-control" placeholder="What needs to be accomplished?" required autofocus>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="form-group">
+                        <label class="form-label" for="taskPriority">Priority</label>
+                        <select id="taskPriority" name="priority" class="form-select">
+                            <option value="URGENT">Urgent</option>
+                            <option value="HIGH">High</option>
+                            <option value="MEDIUM" selected>Medium</option>
+                            <option value="LOW">Low</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="taskDueDate">Due Date</label>
+                        <input type="date" id="taskDueDate" name="due_date" class="form-control">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="form-group">
+                        <label class="form-label" for="taskCategory">Category</label>
+                        <select id="taskCategory" name="category_id" class="form-select">
+                            <option value="">No Category</option>
+                            {% for cat in user_categories %}
+                                <option value="{{ cat.id }}">{{ cat.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="taskEstMinutes">Estimated Minutes</label>
+                        <input type="number" id="taskEstMinutes" name="estimated_minutes" class="form-control" placeholder="e.g. 45" min="0" step="5">
+                    </div>
                 </div>
             </div>
-
-            <div class="form-group">
-                <label class="form-label" for="moodSelect">Mood Classification</label>
-                <select id="moodSelect" class="form-select">
-                    <option value="calm_focused">Calm & Focused</option>
-                    <option value="energetic">Energetic & Driven</option>
-                    <option value="neutral">Neutral & Balanced</option>
-                    <option value="fatigued">Fatigued / Low Bandwidth</option>
-                    <option value="stressed">Overwhelmed / Frustrated</option>
-                </select>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-modal-close>Cancel</button>
+                <button type="submit" class="btn btn-primary">Create Task</button>
             </div>
+        </form>
+    </div>
+</div>
 
-            <div class="form-group">
-                <label class="form-label" for="checkinNote">Quick One-line Reflection</label>
-                <input type="text" id="checkinNote" class="form-control" placeholder="What dominated your attention today?">
+<!-- Modal 2: Daily Biometric Check-in -->
+<div class="modal-backdrop" id="quickCheckinModal" role="dialog" aria-labelledby="checkinModalTitle" aria-modal="true">
+    <div class="modal-dialog">
+        <form method="POST" action="{% url 'core:quick_checkin' %}">
+            {% csrf_token %}
+            <div class="modal-header">
+                <h3 class="modal-title" id="checkinModalTitle">Daily Biometric & State Check-in</h3>
+                <button type="button" class="modal-close-btn" data-modal-close aria-label="Close modal">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
             </div>
-        </div>
-        <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-modal-close>Cancel</button>
-            <button type="button" class="btn btn-primary" data-modal-close onclick="alert('Check-in logged for today.');">Record Check-in</button>
-        </div>
+            <div class="modal-body flex flex-col gap-4">
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="form-group">
+                        <label class="form-label" for="moodScore">Mood Score (1-10)</label>
+                        <input type="number" id="moodScore" name="mood_score" class="form-control" min="1" max="10" value="{{ today_metric.mood_score|default:'8' }}" required>
+                        <span style="font-size: var(--font-size-xs); color: var(--text-muted);">1 (Depressed) &bull; 10 (Euphoric)</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="energyScore">Energy Score (1-10)</label>
+                        <input type="number" id="energyScore" name="energy_score" class="form-control" min="1" max="10" value="{{ today_metric.energy_score|default:'8' }}" required>
+                        <span style="font-size: var(--font-size-xs); color: var(--text-muted);">1 (Exhausted) &bull; 10 (Peak Vigor)</span>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="form-group">
+                        <label class="form-label" for="stressScore">Stress Score (1-10)</label>
+                        <input type="number" id="stressScore" name="stress_score" class="form-control" min="1" max="10" value="{{ today_metric.stress_score|default:'3' }}" required>
+                        <span style="font-size: var(--font-size-xs); color: var(--text-muted);">1 (Completely Relaxed) &bull; 10 (Crisis)</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="sleepHours">Sleep Duration (Hours)</label>
+                        <input type="number" id="sleepHours" name="sleep_hours" class="form-control" min="0" max="24" step="0.25" value="{{ today_metric.sleep_hours|default:'7.5' }}">
+                        <span style="font-size: var(--font-size-xs); color: var(--text-muted);">Hours slept last night (0-24)</span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="checkinNotes">One-line Reflection / Cognitive State</label>
+                    <input type="text" id="checkinNotes" name="notes" class="form-control" placeholder="What is dominating your mental bandwidth today?" value="{{ today_metric.notes|default:'' }}">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-modal-close>Cancel</button>
+                <button type="submit" class="btn btn-primary">Save Check-in</button>
+            </div>
+        </form>
     </div>
 </div>
 {% endblock %}

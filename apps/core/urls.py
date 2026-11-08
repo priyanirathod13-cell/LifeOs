@@ -14,6 +14,8 @@ from .views import (
     mistakes_view,
     productivity_analytics_view,
     projects_view,
+    quick_add_task_view,
+    quick_checkin_view,
     recommendations_view,
     routines_view,
     settings_view,
@@ -21,6 +23,8 @@ from .views import (
     study_view,
     tasks_view,
     timetable_view,
+    toggle_habit_view,
+    toggle_task_view,
     ui_system,
 )
 
@@ -35,6 +39,10 @@ urlpatterns = [
 
     # Protected Executive Dashboard
     path('dashboard/', dashboard, name='dashboard'),
+    path('dashboard/toggle-task/<int:task_id>/', toggle_task_view, name='toggle_task'),
+    path('dashboard/toggle-habit/<int:habit_id>/', toggle_habit_view, name='toggle_habit'),
+    path('dashboard/quick-add-task/', quick_add_task_view, name='quick_add_task'),
+    path('dashboard/quick-checkin/', quick_checkin_view, name='quick_checkin'),
 
     # UI System Showcase
     path('ui-system/', ui_system, name='ui_system'),

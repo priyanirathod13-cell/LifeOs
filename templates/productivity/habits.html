@@ -1,0 +1,139 @@
+{% extends 'layouts/app_layout.html' %}
+
+{% block title %}Habits & Routines — LifeOS{% endblock %}
+{% block header_breadcrumb %}Habits{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="page-header-info">
+        <h1 class="page-title">Habits & Daily Rituals</h1>
+        <p class="page-subtitle">Track daily streaks, maintain momentum, and build consistency in key behavioral routines.</p>
+    </div>
+    <div class="page-actions">
+        <a href="{% url 'productivity:habit_create' %}" class="btn btn-primary">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+            + Create Habit
+        </a>
+    </div>
+</div>
+
+<!-- Habit Summary Cards -->
+<div class="grid grid-cols-4 gap-4" style="margin-bottom: var(--space-6);">
+    <div class="metric-card">
+        <div class="metric-header"><span class="metric-label">Active Habits</span></div>
+        <div class="metric-value">{{ active_count }}</div>
+        <div class="metric-trend trend-neutral"><span>Currently tracked</span></div>
+    </div>
+    <div class="metric-card">
+        <div class="metric-header"><span class="metric-label">Completed Today</span></div>
+        <div class="metric-value" style="color: var(--success);">{{ total_completed_today }} / {{ active_count }}</div>
+        <div class="metric-trend trend-up"><span>{{ completion_rate }}% completed</span></div>
+    </div>
+    <div class="metric-card">
+        <div class="metric-header"><span class="metric-label">Today's Date</span></div>
+        <div class="metric-value" style="font-size: var(--font-size-xl);">{{ today|date:"M d, Y" }}</div>
+        <div class="metric-trend trend-neutral"><span>Current logging window</span></div>
+    </div>
+    <div class="metric-card">
+        <div class="metric-header"><span class="metric-label">Status Filter</span></div>
+        <div style="margin-top: var(--space-2); display: flex; gap: var(--space-2);">
+            <a href="?status=active" class="btn btn-sm {% if status_filter == 'active' %}btn-primary{% else %}btn-secondary{% endif %}">Active</a>
+            <a href="?status=archived" class="btn btn-sm {% if status_filter == 'archived' %}btn-primary{% else %}btn-secondary{% endif %}">Paused</a>
+            <a href="?status=all" class="btn btn-sm {% if status_filter == 'all' %}btn-primary{% else %}btn-secondary{% endif %}">All</a>
+        </div>
+    </div>
+</div>
+
+<!-- Habits Grid -->
+<div class="card">
+    <div class="card-header">
+        <div>
+            <h2 class="card-title">Habit Trackers</h2>
+            <p class="card-subtitle">Showing {{ habits_data|length }} habit{{ habits_data|length|pluralize }}</p>
+        </div>
+    </div>
+    <div class="card-body">
+        {% if habits_data %}
+            <div class="grid grid-cols-2 gap-4">
+                {% for item in habits_data %}
+                    <div style="background-color: var(--bg-input); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); padding: var(--space-4); display: flex; flex-direction: column; justify-content: space-between; gap: var(--space-4);">
+                        <!-- Habit Info -->
+                        <div>
+                            <div class="flex items-center justify-between" style="margin-bottom: var(--space-2);">
+                                <div class="flex items-center gap-2">
+                                    <span class="badge badge-accent">{{ item.habit.get_frequency_display }}</span>
+                                    {% if item.habit.category %}
+                                        <span style="display: inline-flex; align-items: center; gap: 4px; font-size: var(--font-size-xs); color: var(--text-muted);">
+                                            <span style="display: inline-block; width: 6px; height: 6px; border-radius: 50%; background-color: {{ item.habit.category.color }};"></span>
+                                            {{ item.habit.category.name }}
+                                        </span>
+                                    {% endif %}
+                                </div>
+                                <div>
+                                    {% if not item.habit.is_active %}
+                                        <span class="badge badge-neutral">Paused</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <a href="{% url 'productivity:habit_detail' item.habit.id %}" style="font-size: var(--font-size-base); font-weight: var(--font-weight-semibold); color: var(--text-primary); text-decoration: none;">
+                                {{ item.habit.name }}
+                            </a>
+                            {% if item.habit.description %}
+                                <p style="font-size: var(--font-size-xs); color: var(--text-muted); margin: 4px 0 0; line-height: 1.5;">{{ item.habit.description }}</p>
+                            {% endif %}
+                        </div>
+
+                        <!-- Streak & Daily Check-in Footer -->
+                        <div style="border-top: 1px solid var(--border-subtle); padding-top: var(--space-3); display: flex; justify-content: space-between; align-items: center;">
+                            <div style="display: flex; gap: var(--space-3); font-size: var(--font-size-xs);">
+                                <div>
+                                    <span style="color: var(--text-muted);">Streak:</span>
+                                    <strong style="color: {% if item.current_streak > 0 %}var(--warning){% else %}var(--text-muted){% endif %};">
+                                        {{ item.current_streak }} {% if item.habit.frequency == 'WEEKLY' %}wk{% else %}d{% endif %}
+                                    </strong>
+                                </div>
+                                <div>
+                                    <span style="color: var(--text-muted);">Best:</span>
+                                    <strong style="color: var(--text-primary);">{{ item.best_streak }}</strong>
+                                </div>
+                            </div>
+
+                            <div style="display: flex; gap: var(--space-2); align-items: center;">
+                                <form method="POST" action="{% url 'productivity:habit_log' item.habit.id %}" style="margin: 0;">
+                                    {% csrf_token %}
+                                    {% if item.completed_today %}
+                                        <button type="submit" class="btn btn-secondary btn-sm" style="background-color: var(--success-subtle); border-color: var(--success); color: var(--success);">
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                            Done Today
+                                        </button>
+                                    {% else %}
+                                        <button type="submit" class="btn btn-secondary btn-sm">
+                                            Log Today
+                                        </button>
+                                    {% endif %}
+                                </form>
+                                <a href="{% url 'productivity:habit_detail' item.habit.id %}" class="btn btn-ghost btn-sm">Details</a>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="empty-state" style="padding: var(--space-12) var(--space-6);">
+                <div class="empty-state-icon">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                    </svg>
+                </div>
+                <h3 class="empty-state-title">No habits found</h3>
+                <p class="empty-state-desc">Start building consistent behavioral habits by defining your daily or weekly routines.</p>
+                <a href="{% url 'productivity:habit_create' %}" class="btn btn-primary">+ Create First Habit</a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

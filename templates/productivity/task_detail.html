@@ -1,0 +1,160 @@
+{% extends 'layouts/app_layout.html' %}
+
+{% block title %}{{ task.title }} — LifeOS{% endblock %}
+{% block header_breadcrumb %}<a href="{% url 'productivity:task_list' %}">Tasks</a> / Details{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="page-header-info">
+        <div style="display: flex; align-items: center; gap: var(--space-3); margin-bottom: var(--space-2);">
+            <h1 class="page-title" style="margin: 0; {% if task.status == 'COMPLETED' %}text-decoration: line-through; color: var(--text-muted);{% endif %}">{{ task.title }}</h1>
+            {% if task.is_overdue %}
+                <span class="badge badge-danger">Overdue</span>
+            {% endif %}
+            {% if task.priority == 'URGENT' %}
+                <span class="badge badge-danger">Urgent</span>
+            {% elif task.priority == 'HIGH' %}
+                <span class="badge badge-warning">High</span>
+            {% elif task.priority == 'MEDIUM' %}
+                <span class="badge badge-accent">Medium</span>
+            {% else %}
+                <span class="badge badge-neutral">Low</span>
+            {% endif %}
+            {% if task.status == 'COMPLETED' %}
+                <span class="badge badge-success">Completed</span>
+            {% elif task.status == 'IN_PROGRESS' %}
+                <span class="badge badge-warning">In Progress</span>
+            {% else %}
+                <span class="badge badge-neutral">Pending</span>
+            {% endif %}
+        </div>
+        <p class="page-subtitle">Created {{ task.created_at|date:"M d, Y H:i" }} &bull; Last updated {{ task.updated_at|timesince }} ago</p>
+    </div>
+    <div class="page-actions" style="display: flex; gap: var(--space-2);">
+        <form method="POST" action="{% url 'productivity:task_toggle_complete' task.id %}" style="display: inline; margin: 0;">
+            {% csrf_token %}
+            {% if task.status == 'COMPLETED' %}
+                <button type="submit" class="btn btn-secondary">Reopen Task</button>
+            {% else %}
+                <button type="submit" class="btn btn-primary">Mark as Completed</button>
+            {% endif %}
+        </form>
+        <a href="{% url 'productivity:task_update' task.id %}" class="btn btn-secondary">Edit</a>
+        <a href="{% url 'productivity:task_delete' task.id %}" class="btn btn-secondary" style="color: var(--danger);">Delete</a>
+    </div>
+</div>
+
+<div class="grid grid-cols-3 gap-6">
+    <!-- Main Left Column -->
+    <div style="grid-column: span 2; display: flex; flex-direction: column; gap: var(--space-6);">
+        <!-- Description Card -->
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">Description & Scope</h2>
+            </div>
+            <div class="card-body">
+                {% if task.description %}
+                    <p style="color: var(--text-primary); line-height: 1.7; white-space: pre-wrap;">{{ task.description }}</p>
+                {% else %}
+                    <p style="color: var(--text-muted); font-style: italic;">No description provided for this task.</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Linked Goals Card -->
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">Strategic Goal Alignment</h2>
+            </div>
+            <div class="card-body">
+                {% if goal_links %}
+                    <div class="flex flex-col gap-2">
+                        {% for link in goal_links %}
+                            <div class="flex items-center justify-between p-3" style="background-color: var(--bg-input); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm);">
+                                <div>
+                                    <a href="{% url 'planning:goal_detail' link.goal.id %}" style="font-weight: var(--font-weight-medium); color: var(--accent-primary);">
+                                        {{ link.goal.title }}
+                                    </a>
+                                    <div style="font-size: var(--font-size-xs); color: var(--text-muted);">
+                                        Status: {{ link.goal.get_status_display }} &bull; Target: {{ link.goal.target_date|default:"Ongoing" }}
+                                    </div>
+                                </div>
+                                <span class="badge badge-accent">Linked Goal</span>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p style="color: var(--text-muted); font-size: var(--font-size-sm); margin: 0;">
+                        This task is not currently associated with any strategic goal. You can link it from the <a href="{% url 'planning:goal_list' %}" style="color: var(--accent-primary);">Goals module</a>.
+                    </p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Sidebar Metadata Card -->
+    <div>
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Task Metadata</h3>
+            </div>
+            <div class="card-body flex flex-col gap-4" style="font-size: var(--font-size-sm);">
+                <div>
+                    <span style="color: var(--text-muted); font-size: var(--font-size-xs); text-transform: uppercase;">Category</span>
+                    <div style="margin-top: 4px;">
+                        {% if task.category %}
+                            <span style="display: inline-flex; align-items: center; gap: 6px;">
+                                <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background-color: {{ task.category.color }};"></span>
+                                {{ task.category.name }}
+                            </span>
+                        {% else %}
+                            <span style="color: var(--text-muted);">Uncategorized</span>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div>
+                    <span style="color: var(--text-muted); font-size: var(--font-size-xs); text-transform: uppercase;">Parent Project</span>
+                    <div style="margin-top: 4px;">
+                        {% if task.project %}
+                            <a href="{% url 'planning:project_detail' task.project.id %}" style="color: var(--accent-secondary); font-weight: var(--font-weight-medium);">
+                                {{ task.project.title }}
+                            </a>
+                        {% else %}
+                            <span style="color: var(--text-muted);">Independent Task</span>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div>
+                    <span style="color: var(--text-muted); font-size: var(--font-size-xs); text-transform: uppercase;">Due Date</span>
+                    <div style="margin-top: 4px; font-weight: var(--font-weight-medium); color: {% if task.is_overdue %}var(--danger){% else %}var(--text-primary){% endif %};">
+                        {{ task.due_date|date:"F d, Y"|default:"No due date specified" }}
+                    </div>
+                </div>
+
+                <div style="border-top: 1px solid var(--border-subtle); padding-top: var(--space-3);">
+                    <span style="color: var(--text-muted); font-size: var(--font-size-xs); text-transform: uppercase;">Duration Analysis</span>
+                    <div style="display: flex; justify-content: space-between; margin-top: 6px;">
+                        <span style="color: var(--text-secondary);">Estimated:</span>
+                        <span style="font-weight: var(--font-weight-semibold); color: var(--text-primary);">{{ task.estimated_minutes|default:"—" }} mins</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-top: 4px;">
+                        <span style="color: var(--text-secondary);">Actual Time:</span>
+                        <span style="font-weight: var(--font-weight-semibold); color: var(--text-primary);">{{ task.actual_minutes|default:"—" }} mins</span>
+                    </div>
+                </div>
+
+                {% if task.completed_at %}
+                    <div style="border-top: 1px solid var(--border-subtle); padding-top: var(--space-3);">
+                        <span style="color: var(--text-muted); font-size: var(--font-size-xs); text-transform: uppercase;">Completed At</span>
+                        <div style="margin-top: 4px; color: var(--success); font-weight: var(--font-weight-medium);">
+                            {{ task.completed_at|date:"M d, Y H:i" }}
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

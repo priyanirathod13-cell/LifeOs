@@ -100,3 +100,26 @@ Established in Step 05:
   - `toggle_habit_view` (`POST /dashboard/toggle-habit/<id>/`): Logs or unlogs habit execution for the current date with IDOR protection.
   - `quick_add_task_view` (`POST /dashboard/quick-add-task/`): Modal-driven task creation with category ownership validation.
   - `quick_checkin_view` (`POST /dashboard/quick-checkin/`): Modal-driven biometric logging updating `DailyMetric` for the current date.
+
+
+---
+
+## 7. Productivity Management Architecture (Step 06)
+
+Established in Step 06:
+- **Modular Division of Labor**:
+  - `apps.productivity`: Focused on execution mechanics — individual action items (`Task`), user classifications (`Category`), behavioral loops (`Habit`, `HabitLog`), and continuous time investment (`Activity`).
+  - `apps.planning`: Focused on strategic direction — multi-task initiatives (`Project`), outcome horizons (`Goal`), and explicit task contributions (`GoalTask`).
+- **Data Isolation & IDOR Protection**:
+  - Every view rigorously queries `request.user` (e.g. `get_object_or_404(Task, pk=pk, user=request.user)`).
+  - Model forms explicitly scope foreign key querysets (`category`, `project`, `task`) to `self.user`.
+  - In `clean()` methods, cross-user associations between `Task`, `Category`, `Project`, and `Goal` raise `ValidationError`.
+  - Attempts by User A to access, edit, delete, or link records belonging to User B reliably return HTTP 404.
+- **Safe Cascade & Referential Integrity**:
+  - Deleting a `Category` sets `category_id = NULL` on linked tasks, habits, and activities; records are never destroyed.
+  - Deleting a `Project` sets `project_id = NULL` on child tasks; tasks remain available in the user's backlog.
+  - Deleting a `Goal` only destroys the junction records (`GoalTask`); the underlying tasks remain intact.
+- **Dynamic Derived Calculations**:
+  - Task completion rates and goal progress percentages are computed on-the-fly (`round((completed / total) * 100) if total > 0 else None`).
+  - Habit streaks are evaluated dynamically across daily or weekly frequencies by traversing chronological `HabitLog` records.
+  - Activity durations are derived from `end_time - start_time` when closed, leaving open sessions marked as live.

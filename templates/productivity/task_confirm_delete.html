@@ -1,0 +1,41 @@
+{% extends 'layouts/app_layout.html' %}
+
+{% block title %}Delete Task — LifeOS{% endblock %}
+{% block header_breadcrumb %}<a href="{% url 'productivity:task_list' %}">Tasks</a> / Delete{% endblock %}
+
+{% block content %}
+<div style="max-width: 560px; margin: var(--space-8) auto;">
+    <div class="card" style="border-color: var(--danger);">
+        <div class="card-header" style="background-color: var(--danger-subtle);">
+            <div style="display: flex; align-items: center; gap: var(--space-3);">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--danger)" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="8" x2="12" y2="12"></line>
+                    <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                </svg>
+                <h2 class="card-title" style="color: var(--danger); margin: 0;">Confirm Task Deletion</h2>
+            </div>
+        </div>
+        <div class="card-body">
+            <p style="color: var(--text-primary); margin-bottom: var(--space-4);">
+                Are you sure you want to delete the task:
+                <br>
+                <strong style="font-size: var(--font-size-base); color: var(--text-primary);">"{{ task.title }}"</strong>?
+            </p>
+            <p style="font-size: var(--font-size-xs); color: var(--text-muted); margin-bottom: var(--space-6);">
+                This action is permanent and cannot be undone. Any associations with goals or timetable blocks will be automatically removed.
+            </p>
+
+            <form method="POST">
+                {% csrf_token %}
+                <div style="display: flex; justify-content: flex-end; gap: var(--space-3);">
+                    <a href="{% url 'productivity:task_detail' task.id %}" class="btn btn-secondary">Cancel</a>
+                    <button type="submit" class="btn btn-secondary" style="background-color: var(--danger); border-color: var(--danger); color: #0F1117; font-weight: var(--font-weight-semibold);">
+                        Yes, Delete Task
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

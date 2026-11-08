@@ -211,12 +211,15 @@ python manage.py check
 
 # Run automated test suite across all 7 applications
 python manage.py test
+
+# Or run specific modules
+python manage.py test apps.productivity apps.planning
 ```
 
 Expected output:
 ```
 System check identified no issues (0 silenced).
-Ran 59 tests in ~50s
+Ran 79 tests in ~53s
 
 OK
 ```
@@ -238,9 +241,12 @@ python manage.py runserver
 - **User Login**: [http://127.0.0.1:8000/accounts/login/](http://127.0.0.1:8000/accounts/login/) (Sign in with email, password, and Remember Me toggle)
 - **Password Reset**: [http://127.0.0.1:8000/accounts/password-reset/](http://127.0.0.1:8000/accounts/password-reset/) (Console email delivery in development)
 - **Executive Dashboard**: [http://127.0.0.1:8000/dashboard/](http://127.0.0.1:8000/dashboard/) (Central control panel with live tasks, habits, study duration, goals, schedule blocks, recent activity, and quick actions)
-- **User Profile & Settings**: [http://127.0.0.1:8000/accounts/profile/](http://127.0.0.1:8000/accounts/profile/) (Update full name, bio, timezone, and change password)
-- **UI Design System Showcase**: [http://127.0.0.1:8000/ui-system/](http://127.0.0.1:8000/ui-system/) (Interactive 16-component catalog)
-- **Health-Check API Endpoint**: [http://127.0.0.1:8000/health/](http://127.0.0.1:8000/health/) (Preserved from Step 01)
+- **Task Management**: [http://127.0.0.1:8000/productivity/tasks/](http://127.0.0.1:8000/productivity/tasks/) or `/tasks/` (Full CRUD, filtering, sorting, pagination, search, duration tracking)
+- **Category Management**: [http://127.0.0.1:8000/productivity/categories/](http://127.0.0.1:8000/productivity/categories/) (Color-coded categories with safe unlinking)
+- **Habit Tracker**: [http://127.0.0.1:8000/productivity/habits/](http://127.0.0.1:8000/productivity/habits/) or `/habits/` (Daily/weekly streaks, 30-day matrix, pause/resume)
+- **Activities & Time Tracking**: [http://127.0.0.1:8000/productivity/activities/](http://127.0.0.1:8000/productivity/activities/) or `/activities/` (Live stopwatch timer, duration aggregations, manual logs)
+- **Goals & Milestones**: [http://127.0.0.1:8000/planning/goals/](http://127.0.0.1:8000/planning/goals/) or `/goals/` (Outcome tracking, target countdowns, task linkage & progress bars)
+- **Projects**: [http://127.0.0.1:8000/planning/projects/](http://127.0.0.1:8000/planning/projects/) or `/projects/` (Initiatives portfolio, deliverable deadlines, child tasks)
 - **User Profile & Settings**: [http://127.0.0.1:8000/accounts/profile/](http://127.0.0.1:8000/accounts/profile/) (Update full name, bio, timezone, and change password)
 - **UI Design System Showcase**: [http://127.0.0.1:8000/ui-system/](http://127.0.0.1:8000/ui-system/) (Interactive 16-component catalog)
 - **Health-Check API Endpoint**: [http://127.0.0.1:8000/health/](http://127.0.0.1:8000/health/) (Preserved from Step 01)

@@ -1,0 +1,179 @@
+{% extends 'layouts/app_layout.html' %}
+
+{% block content %}
+<div class="content-container animate-fade-in" style="max-width: 900px; margin: 0 auto;">
+    <!-- Top Navigation -->
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-4); flex-wrap: wrap; gap: var(--space-3);">
+        <a href="{% url 'planning:project_list' %}" class="btn btn-ghost btn-sm" style="display: inline-flex; align-items: center; gap: var(--space-1); color: var(--color-text-muted);">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="19" y1="12" x2="5" y2="12"></line>
+                <polyline points="12 19 5 12 12 5"></polyline>
+            </svg>
+            Back to Projects
+        </a>
+        <div style="display: flex; gap: var(--space-2);">
+            <a href="{% url 'planning:project_update' project.pk %}" class="btn btn-secondary btn-sm" style="display: inline-flex; align-items: center; gap: var(--space-1);">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 20h9"></path>
+                    <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+                </svg>
+                Edit Project
+            </a>
+            <a href="{% url 'planning:project_delete' project.pk %}" class="btn btn-ghost btn-sm" style="color: #ef4444; display: inline-flex; align-items: center; gap: var(--space-1);">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="3 6 5 6 21 6"></polyline>
+                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                </svg>
+                Delete
+            </a>
+        </div>
+    </div>
+
+    <!-- Main Project Card -->
+    <div class="card" style="padding: var(--space-6); background: var(--color-bg-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); margin-bottom: var(--space-6);">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: var(--space-3); flex-wrap: wrap; gap: var(--space-2);">
+            <div style="display: flex; gap: var(--space-2); align-items: center; flex-wrap: wrap;">
+                {% if project.category %}
+                    <span class="badge" style="background: {{ project.category.color }}20; color: {{ project.category.color }}; border: 1px solid {{ project.category.color }}40; font-size: 12px;">
+                        {{ project.category.name }}
+                    </span>
+                {% endif %}
+                <span class="badge {% if project.priority == 'urgent' %}badge-danger{% elif project.priority == 'high' %}badge-warning{% elif project.priority == 'medium' %}badge-info{% else %}badge-neutral{% endif %}" style="font-size: 12px;">
+                    {{ project.get_priority_display }} Priority
+                </span>
+                <span class="badge {% if project.status == 'completed' %}badge-success{% elif project.status == 'in_progress' %}badge-primary{% elif project.status == 'cancelled' %}badge-danger{% elif project.status == 'on_hold' %}badge-warning{% else %}badge-neutral{% endif %}" style="font-size: 12px;">
+                    {{ project.get_status_display }}
+                </span>
+            </div>
+
+            {% if project.target_date %}
+                <div style="font-size: var(--font-size-xs); color: var(--color-text-muted); display: flex; align-items: center; gap: var(--space-1);">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <polyline points="12 6 12 12 16 14"></polyline>
+                    </svg>
+                    {% if project.status == 'completed' %}
+                        <span style="color: #10b981; font-weight: 600;">Completed {% if project.completed_at %}on {{ project.completed_at|date:"M d, Y" }}{% endif %}</span>
+                    {% elif is_overdue %}
+                        <span style="color: #ef4444; font-weight: 600;">Overdue by {{ days_left|stringformat:"+d"|slice:"1:" }} days</span>
+                    {% elif days_left == 0 %}
+                        <span style="color: #f59e0b; font-weight: 600;">Target date is today!</span>
+                    {% else %}
+                        <span><strong>{{ days_left }} days remaining</strong> ({{ project.target_date|date:"M d, Y" }})</span>
+                    {% endif %}
+                </div>
+            {% endif %}
+        </div>
+
+        <h1 style="font-size: var(--font-size-2xl); font-weight: 700; color: var(--color-text-primary); margin-bottom: var(--space-3);">
+            {{ project.title }}
+        </h1>
+
+        {% if project.description %}
+            <p style="font-size: var(--font-size-base); color: var(--color-text-secondary); line-height: 1.6; margin-bottom: var(--space-5);">
+                {{ project.description }}
+            </p>
+        {% endif %}
+
+        <!-- Timeline Info -->
+        <div style="display: flex; gap: var(--space-6); font-size: var(--font-size-xs); color: var(--color-text-muted); border-top: 1px solid var(--color-border); padding-top: var(--space-4); flex-wrap: wrap;">
+            <div>
+                <span style="display: block; text-transform: uppercase; font-weight: 600; margin-bottom: 2px;">Start Date</span>
+                <span style="color: var(--color-text-primary);">{{ project.start_date|date:"M d, Y"|default:"Not specified" }}</span>
+            </div>
+            <div>
+                <span style="display: block; text-transform: uppercase; font-weight: 600; margin-bottom: 2px;">Target Date</span>
+                <span style="color: var(--color-text-primary);">{{ project.target_date|date:"M d, Y"|default:"Open-ended" }}</span>
+            </div>
+            <div>
+                <span style="display: block; text-transform: uppercase; font-weight: 600; margin-bottom: 2px;">Created On</span>
+                <span style="color: var(--color-text-primary);">{{ project.created_at|date:"M d, Y" }}</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Progress Metrics Section -->
+    <div class="card" style="padding: var(--space-5); background: var(--color-bg-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); margin-bottom: var(--space-6);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-2);">
+            <h3 style="font-size: var(--font-size-base); font-weight: 600; color: var(--color-text-primary);">Execution Progress</h3>
+            <span style="font-size: var(--font-size-sm); font-weight: 700; color: {% if project.status == 'completed' %}#10b981{% else %}var(--color-accent-primary, #6366f1){% endif %};">
+                {% if progress_pct is not None %}{{ progress_pct }}% Completed ({{ completed_tasks }} of {{ total_tasks }} tasks){% else %}No tasks assigned{% endif %}
+            </span>
+        </div>
+        <div style="height: 8px; width: 100%; background: var(--color-bg-main); border-radius: 999px; overflow: hidden;">
+            <div style="height: 100%; width: {{ progress_pct|default:0 }}%; background: {% if project.status == 'completed' %}#10b981{% else %}var(--color-accent-primary, #6366f1){% endif %}; border-radius: 999px; transition: width 0.3s;"></div>
+        </div>
+    </div>
+
+    <!-- Child Tasks Section -->
+    <div class="card" style="padding: var(--space-6); background: var(--color-bg-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-4); flex-wrap: wrap; gap: var(--space-3);">
+            <div>
+                <h2 style="font-size: var(--font-size-lg); font-weight: 600; color: var(--color-text-primary); margin-bottom: 2px;">Project Tasks</h2>
+                <p style="font-size: var(--font-size-xs); color: var(--color-text-muted);">Actionable items and deliverables assigned to this project.</p>
+            </div>
+            <a href="{% url 'productivity:task_create' %}" class="btn btn-secondary btn-sm" style="display: inline-flex; align-items: center; gap: var(--space-1);">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                </svg>
+                New Task
+            </a>
+        </div>
+
+        {% if tasks %}
+            <div class="table-container" style="overflow-x: auto;">
+                <table class="table" style="width: 100%; border-collapse: collapse; font-size: var(--font-size-sm);">
+                    <thead>
+                        <tr style="border-bottom: 1px solid var(--color-border); text-align: left; color: var(--color-text-muted); font-size: var(--font-size-xs); text-transform: uppercase;">
+                            <th style="padding: var(--space-3);">Task</th>
+                            <th style="padding: var(--space-3);">Status</th>
+                            <th style="padding: var(--space-3);">Priority</th>
+                            <th style="padding: var(--space-3);">Due Date</th>
+                            <th style="padding: var(--space-3); text-align: right;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for t in tasks %}
+                            <tr style="border-bottom: 1px solid var(--color-border);">
+                                <td style="padding: var(--space-3);">
+                                    <a href="{% url 'productivity:task_detail' t.pk %}" style="color: var(--color-text-primary); text-decoration: none; font-weight: 500; {% if t.status == 'completed' %}text-decoration: line-through; color: var(--color-text-muted);{% endif %}">
+                                        {{ t.title }}
+                                    </a>
+                                    {% if t.category %}
+                                        <span class="badge" style="background: {{ t.category.color }}20; color: {{ t.category.color }}; border: 1px solid {{ t.category.color }}40; font-size: 10px; margin-left: 6px;">
+                                            {{ t.category.name }}
+                                        </span>
+                                    {% endif %}
+                                </td>
+                                <td style="padding: var(--space-3);">
+                                    <span class="badge {% if t.status == 'completed' %}badge-success{% elif t.status == 'in_progress' %}badge-primary{% elif t.status == 'cancelled' %}badge-danger{% else %}badge-neutral{% endif %}" style="font-size: 11px;">
+                                        {{ t.get_status_display }}
+                                    </span>
+                                </td>
+                                <td style="padding: var(--space-3);">
+                                    <span class="badge {% if t.priority == 'urgent' %}badge-danger{% elif t.priority == 'high' %}badge-warning{% elif t.priority == 'medium' %}badge-info{% else %}badge-neutral{% endif %}" style="font-size: 11px;">
+                                        {{ t.get_priority_display }}
+                                    </span>
+                                </td>
+                                <td style="padding: var(--space-3); color: var(--color-text-muted); font-size: var(--font-size-xs);">
+                                    {{ t.due_date|date:"M d, Y"|default:"—" }}
+                                </td>
+                                <td style="padding: var(--space-3); text-align: right;">
+                                    <a href="{% url 'productivity:task_detail' t.pk %}" class="btn btn-ghost btn-sm" style="padding: 2px 8px; color: var(--color-text-secondary);">
+                                        View
+                                    </a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div style="text-align: center; padding: var(--space-6); color: var(--color-text-muted); font-size: var(--font-size-sm);">
+                No tasks currently associated with this project. Click "New Task" above and assign it to this project.
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

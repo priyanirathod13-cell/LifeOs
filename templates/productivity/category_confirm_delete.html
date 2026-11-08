@@ -1,0 +1,51 @@
+{% extends 'layouts/app_layout.html' %}
+
+{% block title %}Delete Category — LifeOS{% endblock %}
+{% block header_breadcrumb %}<a href="{% url 'productivity:category_list' %}">Categories</a> / Delete{% endblock %}
+
+{% block content %}
+<div style="max-width: 560px; margin: var(--space-8) auto;">
+    <div class="card" style="border-color: var(--danger);">
+        <div class="card-header" style="background-color: var(--danger-subtle);">
+            <div style="display: flex; align-items: center; gap: var(--space-3);">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--danger)" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="8" x2="12" y2="12"></line>
+                    <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                </svg>
+                <h2 class="card-title" style="color: var(--danger); margin: 0;">Confirm Category Deletion</h2>
+            </div>
+        </div>
+        <div class="card-body">
+            <p style="color: var(--text-primary); margin-bottom: var(--space-3);">
+                Are you sure you want to delete the category:
+                <br>
+                <strong style="font-size: var(--font-size-base); color: var(--text-primary);">"{{ category.name }}"</strong>?
+            </p>
+
+            {% if associated_count > 0 %}
+                <div style="background-color: var(--bg-input); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); padding: var(--space-3); margin-bottom: var(--space-4);">
+                    <div style="font-weight: var(--font-weight-medium); color: var(--warning); margin-bottom: 4px;">
+                        Associated Records Notice
+                    </div>
+                    <p style="font-size: var(--font-size-xs); color: var(--text-secondary); margin: 0; line-height: 1.5;">
+                        This category is referenced by <strong>{{ associated_count }} record{{ associated_count|pluralize }}</strong> across tasks, habits, and activities.
+                        <br>
+                        Deleting it will safely clear the category association (set to <em>None</em>). <strong>Your tasks, habits, and activities will NOT be deleted.</strong>
+                    </p>
+                </div>
+            {% endif %}
+
+            <form method="POST">
+                {% csrf_token %}
+                <div style="display: flex; justify-content: flex-end; gap: var(--space-3);">
+                    <a href="{% url 'productivity:category_list' %}" class="btn btn-secondary">Cancel</a>
+                    <button type="submit" class="btn btn-secondary" style="background-color: var(--danger); border-color: var(--danger); color: #0F1117; font-weight: var(--font-weight-semibold);">
+                        Yes, Delete Category
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

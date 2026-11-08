@@ -161,9 +161,9 @@ class Task(models.Model):
     def clean(self):
         super().clean()
         # Enforce multi-user data isolation: category and project must belong to same user
-        if self.category and self.category.user_id != self.user_id:
+        if self.user_id and self.category and self.category.user_id != self.user_id:
             raise ValidationError({'category': 'Cannot associate with a category belonging to another user.'})
-        if self.project and self.project.user_id != self.user_id:
+        if self.user_id and self.project and self.project.user_id != self.user_id:
             raise ValidationError({'project': 'Cannot associate with a project belonging to another user.'})
 
     def __str__(self):
@@ -214,7 +214,7 @@ class Habit(models.Model):
 
     def clean(self):
         super().clean()
-        if self.category and self.category.user_id != self.user_id:
+        if self.user_id and self.category and self.category.user_id != self.user_id:
             raise ValidationError({'category': 'Cannot associate with a category belonging to another user.'})
 
     def __str__(self):
@@ -310,7 +310,7 @@ class Activity(models.Model):
 
     def clean(self):
         super().clean()
-        if self.category and self.category.user_id != self.user_id:
+        if self.user_id and self.category and self.category.user_id != self.user_id:
             raise ValidationError({'category': 'Cannot associate with a category belonging to another user.'})
         if self.end_time and self.start_time and self.end_time < self.start_time:
             raise ValidationError({'end_time': 'End time cannot be prior to start time.'})

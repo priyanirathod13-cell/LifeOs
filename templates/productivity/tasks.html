@@ -1,0 +1,307 @@
+{% extends 'layouts/app_layout.html' %}
+
+{% block title %}Tasks & Productivity — LifeOS{% endblock %}
+{% block header_breadcrumb %}Tasks{% endblock %}
+
+{% block content %}
+<!-- Module Header -->
+<div class="page-header">
+    <div class="page-header-info">
+        <h1 class="page-title">Tasks & Productivity</h1>
+        <p class="page-subtitle">Prioritize, organize, and execute daily action items aligned with your goals.</p>
+    </div>
+    <div class="page-actions" style="display: flex; gap: var(--space-3); flex-wrap: wrap;">
+        <a href="{% url 'productivity:category_list' %}" class="btn btn-secondary">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="3" width="7" height="7"></rect>
+                <rect x="14" y="3" width="7" height="7"></rect>
+                <rect x="14" y="14" width="7" height="7"></rect>
+                <rect x="3" y="14" width="7" height="7"></rect>
+            </svg>
+            Manage Categories
+        </a>
+        <a href="{% url 'productivity:task_create' %}" class="btn btn-primary">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+            + Create Task
+        </a>
+    </div>
+</div>
+
+<!-- Task Summary Cards -->
+<div class="grid grid-cols-5 gap-4" style="margin-bottom: var(--space-6);">
+    <div class="metric-card">
+        <div class="metric-header"><span class="metric-label">Total Backlog</span></div>
+        <div class="metric-value">{{ total_count }}</div>
+        <div class="metric-trend trend-neutral"><span>All recorded tasks</span></div>
+    </div>
+    <div class="metric-card">
+        <div class="metric-header"><span class="metric-label">Pending</span></div>
+        <div class="metric-value">{{ pending_count }}</div>
+        <div class="metric-trend trend-neutral"><span>Awaiting execution</span></div>
+    </div>
+    <div class="metric-card">
+        <div class="metric-header"><span class="metric-label">In Progress</span></div>
+        <div class="metric-value" style="color: var(--warning);">{{ in_progress_count }}</div>
+        <div class="metric-trend trend-warning"><span>Active focus</span></div>
+    </div>
+    <div class="metric-card">
+        <div class="metric-header"><span class="metric-label">Completed</span></div>
+        <div class="metric-value" style="color: var(--success);">{{ completed_count }}</div>
+        <div class="metric-trend trend-up"><span>Finished tasks</span></div>
+    </div>
+    <div class="metric-card">
+        <div class="metric-header"><span class="metric-label">Overdue</span></div>
+        <div class="metric-value" style="color: {% if overdue_count > 0 %}var(--danger){% else %}var(--text-muted){% endif %};">{{ overdue_count }}</div>
+        <div class="metric-trend {% if overdue_count > 0 %}trend-warning{% else %}trend-neutral{% endif %}"><span>Past due date</span></div>
+    </div>
+</div>
+
+<!-- Filter & Search Toolbar -->
+<div class="card" style="margin-bottom: var(--space-6);">
+    <div class="card-body" style="padding: var(--space-4);">
+        <form method="GET" action="{% url 'productivity:task_list' %}" class="flex flex-wrap items-center gap-3">
+            <!-- Search input -->
+            <div style="flex: 2; min-width: 200px;">
+                <input type="text" name="q" value="{{ q }}" class="form-control" placeholder="Search tasks by title or description...">
+            </div>
+
+            <!-- Status filter -->
+            <div style="flex: 1; min-width: 130px;">
+                <select name="status" class="form-select">
+                    <option value="">All Statuses</option>
+                    {% for val, label in statuses %}
+                        <option value="{{ val }}" {% if status_filter == val %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Priority filter -->
+            <div style="flex: 1; min-width: 130px;">
+                <select name="priority" class="form-select">
+                    <option value="">All Priorities</option>
+                    {% for val, label in priorities %}
+                        <option value="{{ val }}" {% if priority_filter == val %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Category filter -->
+            <div style="flex: 1; min-width: 140px;">
+                <select name="category" class="form-select">
+                    <option value="">All Categories</option>
+                    {% for cat in categories %}
+                        <option value="{{ cat.id }}" {% if category_filter == cat.id|stringformat:"s" %}selected{% endif %}>{{ cat.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Due Date filter -->
+            <div style="flex: 1; min-width: 130px;">
+                <select name="due" class="form-select">
+                    <option value="">All Dates</option>
+                    <option value="today" {% if due_filter == 'today' %}selected{% endif %}>Due Today</option>
+                    <option value="overdue" {% if due_filter == 'overdue' %}selected{% endif %}>Overdue</option>
+                    <option value="upcoming" {% if due_filter == 'upcoming' %}selected{% endif %}>Upcoming</option>
+                    <option value="nodate" {% if due_filter == 'nodate' %}selected{% endif %}>No Due Date</option>
+                </select>
+            </div>
+
+            <!-- Sorting -->
+            <div style="flex: 1; min-width: 130px;">
+                <select name="sort" class="form-select">
+                    <option value="default" {% if sort == 'default' %}selected{% endif %}>Sort: Smart Priority</option>
+                    <option value="due_asc" {% if sort == 'due_asc' %}selected{% endif %}>Due Date (Earliest)</option>
+                    <option value="due_desc" {% if sort == 'due_desc' %}selected{% endif %}>Due Date (Latest)</option>
+                    <option value="priority" {% if sort == 'priority' %}selected{% endif %}>Priority (Urgent First)</option>
+                    <option value="created_desc" {% if sort == 'created_desc' %}selected{% endif %}>Newest First</option>
+                </select>
+            </div>
+
+            <!-- Actions -->
+            <div style="display: flex; gap: var(--space-2);">
+                <button type="submit" class="btn btn-secondary">Filter</button>
+                {% if q or status_filter or priority_filter or category_filter or due_filter or sort != 'default' %}
+                    <a href="{% url 'productivity:task_list' %}" class="btn btn-ghost">Reset</a>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Task List Table / Cards -->
+<div class="card">
+    <div class="card-header">
+        <div>
+            <h2 class="card-title">Tasks Backlog</h2>
+            <p class="card-subtitle">Showing {{ tasks|length }} task{{ tasks|length|pluralize }}</p>
+        </div>
+    </div>
+    <div class="card-body" style="padding: 0;">
+        {% if tasks %}
+            <div style="overflow-x: auto;">
+                <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: var(--font-size-sm);">
+                    <thead>
+                        <tr style="border-bottom: 1px solid var(--border-subtle); color: var(--text-muted); font-size: var(--font-size-xs); text-transform: uppercase; letter-spacing: 0.05em;">
+                            <th style="padding: var(--space-3) var(--space-4); width: 40px;"></th>
+                            <th style="padding: var(--space-3) var(--space-4);">Task Title</th>
+                            <th style="padding: var(--space-3) var(--space-4);">Category & Project</th>
+                            <th style="padding: var(--space-3) var(--space-4);">Priority</th>
+                            <th style="padding: var(--space-3) var(--space-4);">Due Date</th>
+                            <th style="padding: var(--space-3) var(--space-4);">Duration</th>
+                            <th style="padding: var(--space-3) var(--space-4); text-align: right;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for task in tasks %}
+                            <tr style="border-bottom: 1px solid var(--border-subtle); transition: background-color var(--transition-fast);">
+                                <!-- Quick Completion Checkbox -->
+                                <td style="padding: var(--space-3) var(--space-4); vertical-align: middle;">
+                                    <form method="POST" action="{% url 'productivity:task_toggle_complete' task.id %}" style="margin: 0;">
+                                        {% csrf_token %}
+                                        <button type="submit" style="background: none; border: none; padding: 0; cursor: pointer; color: inherit; display: flex; align-items: center;" aria-label="Toggle completion">
+                                            {% if task.status == 'COMPLETED' %}
+                                                <span style="display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: var(--radius-xs); background-color: var(--success); color: #0F1117;">
+                                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                                </span>
+                                            {% else %}
+                                                <span style="display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: var(--radius-xs); border: 2px solid var(--border-focus); background-color: var(--bg-card);"></span>
+                                            {% endif %}
+                                        </button>
+                                    </form>
+                                </td>
+
+                                <!-- Title & Description -->
+                                <td style="padding: var(--space-3) var(--space-4); vertical-align: middle;">
+                                    <a href="{% url 'productivity:task_detail' task.id %}" style="font-weight: var(--font-weight-medium); color: {% if task.status == 'COMPLETED' %}var(--text-muted); text-decoration: line-through;{% else %}var(--text-primary);{% endif %}; text-decoration-color: var(--text-muted);">
+                                        {{ task.title }}
+                                    </a>
+                                    {% if task.description %}
+                                        <div style="font-size: var(--font-size-xs); color: var(--text-muted); max-width: 380px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px;">
+                                            {{ task.description }}
+                                        </div>
+                                    {% endif %}
+                                </td>
+
+                                <!-- Category & Project -->
+                                <td style="padding: var(--space-3) var(--space-4); vertical-align: middle;">
+                                    <div style="display: flex; flex-direction: column; gap: 2px;">
+                                        {% if task.category %}
+                                            <span style="display: inline-flex; align-items: center; gap: 5px; font-size: var(--font-size-xs); color: var(--text-secondary);">
+                                                <span style="display: inline-block; width: 7px; height: 7px; border-radius: 50%; background-color: {{ task.category.color }};"></span>
+                                                {{ task.category.name }}
+                                            </span>
+                                        {% else %}
+                                            <span style="font-size: var(--font-size-xs); color: var(--text-muted);">No category</span>
+                                        {% endif %}
+
+                                        {% if task.project %}
+                                            <a href="{% url 'planning:project_detail' task.project.id %}" style="font-size: var(--font-size-xs); color: var(--accent-secondary); text-decoration: none;">
+                                                &bull; {{ task.project.title }}
+                                            </a>
+                                        {% endif %}
+                                    </div>
+                                </td>
+
+                                <!-- Priority -->
+                                <td style="padding: var(--space-3) var(--space-4); vertical-align: middle;">
+                                    {% if task.priority == 'URGENT' %}
+                                        <span class="badge badge-danger">Urgent</span>
+                                    {% elif task.priority == 'HIGH' %}
+                                        <span class="badge badge-warning">High</span>
+                                    {% elif task.priority == 'MEDIUM' %}
+                                        <span class="badge badge-accent">Medium</span>
+                                    {% else %}
+                                        <span class="badge badge-neutral">Low</span>
+                                    {% endif %}
+                                </td>
+
+                                <!-- Due Date -->
+                                <td style="padding: var(--space-3) var(--space-4); vertical-align: middle;">
+                                    {% if task.due_date %}
+                                        <div style="display: flex; align-items: center; gap: var(--space-2);">
+                                            <span style="color: {% if task.is_overdue %}var(--danger){% elif task.due_date == today %}var(--warning){% else %}var(--text-secondary){% endif %};">
+                                                {{ task.due_date|date:"M d, Y" }}
+                                            </span>
+                                            {% if task.is_overdue %}
+                                                <span class="badge badge-danger" style="font-size: 10px;">Overdue</span>
+                                            {% elif task.due_date == today %}
+                                                <span class="badge badge-warning" style="font-size: 10px;">Today</span>
+                                            {% endif %}
+                                        </div>
+                                    {% else %}
+                                        <span style="color: var(--text-muted); font-size: var(--font-size-xs);">None</span>
+                                    {% endif %}
+                                </td>
+
+                                <!-- Duration Tracking -->
+                                <td style="padding: var(--space-3) var(--space-4); vertical-align: middle; font-size: var(--font-size-xs); color: var(--text-muted);">
+                                    {% if task.estimated_minutes or task.actual_minutes %}
+                                        <div>Est: {{ task.estimated_minutes|default:"-" }}m</div>
+                                        <div>Act: {{ task.actual_minutes|default:"-" }}m</div>
+                                    {% else %}
+                                        <span>-</span>
+                                    {% endif %}
+                                </td>
+
+                                <!-- Actions -->
+                                <td style="padding: var(--space-3) var(--space-4); vertical-align: middle; text-align: right;">
+                                    <div style="display: inline-flex; gap: var(--space-1);">
+                                        <a href="{% url 'productivity:task_detail' task.id %}" class="btn btn-ghost btn-sm" title="View Details">View</a>
+                                        <a href="{% url 'productivity:task_update' task.id %}" class="btn btn-ghost btn-sm" title="Edit Task">Edit</a>
+                                        <a href="{% url 'productivity:task_delete' task.id %}" class="btn btn-ghost btn-sm" style="color: var(--danger);" title="Delete Task">Delete</a>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            {% if page_obj.has_other_pages %}
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: var(--space-4); border-top: 1px solid var(--border-subtle); font-size: var(--font-size-sm); color: var(--text-muted);">
+                    <div>Showing {{ page_obj.start_index }} to {{ page_obj.end_index }} of {{ total_count }} tasks</div>
+                    <div style="display: flex; gap: var(--space-2);">
+                        {% if page_obj.has_previous %}
+                            <a href="?page={{ page_obj.previous_page_number }}&q={{ q }}&status={{ status_filter }}&priority={{ priority_filter }}&category={{ category_filter }}&due={{ due_filter }}&sort={{ sort }}" class="btn btn-secondary btn-sm">&larr; Previous</a>
+                        {% endif %}
+                        <span style="padding: 0.35rem 0.75rem; border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); color: var(--text-primary);">
+                            Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+                        </span>
+                        {% if page_obj.has_next %}
+                            <a href="?page={{ page_obj.next_page_number }}&q={{ q }}&status={{ status_filter }}&priority={{ priority_filter }}&category={{ category_filter }}&due={{ due_filter }}&sort={{ sort }}" class="btn btn-secondary btn-sm">Next &rarr;</a>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endif %}
+
+        {% else %}
+            <!-- Empty State -->
+            <div class="empty-state" style="padding: var(--space-12) var(--space-6);">
+                <div class="empty-state-icon">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="9 11 12 14 22 4"></polyline>
+                        <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+                    </svg>
+                </div>
+                <h3 class="empty-state-title">No tasks found</h3>
+                <p class="empty-state-desc">
+                    {% if q or status_filter or priority_filter or category_filter or due_filter %}
+                        No tasks match your current filter parameters. Try clearing the filters or searching for another keyword.
+                    {% else %}
+                        Your task backlog is currently empty. Create your first task to start organizing your execution flow!
+                    {% endif %}
+                </p>
+                {% if q or status_filter or priority_filter or category_filter or due_filter %}
+                    <a href="{% url 'productivity:task_list' %}" class="btn btn-secondary">Clear All Filters</a>
+                {% else %}
+                    <a href="{% url 'productivity:task_create' %}" class="btn btn-primary">+ Create First Task</a>
+                {% endif %}
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

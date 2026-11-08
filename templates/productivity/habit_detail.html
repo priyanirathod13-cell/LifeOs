@@ -1,0 +1,125 @@
+{% extends 'layouts/app_layout.html' %}
+
+{% block title %}{{ habit.name }} — LifeOS{% endblock %}
+{% block header_breadcrumb %}<a href="{% url 'productivity:habit_list' %}">Habits</a> / Details{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="page-header-info">
+        <div style="display: flex; align-items: center; gap: var(--space-3); margin-bottom: var(--space-2);">
+            <h1 class="page-title" style="margin: 0;">{{ habit.name }}</h1>
+            <span class="badge badge-accent">{{ habit.get_frequency_display }}</span>
+            {% if not habit.is_active %}
+                <span class="badge badge-neutral">Paused</span>
+            {% else %}
+                <span class="badge badge-success">Active</span>
+            {% endif %}
+        </div>
+        <p class="page-subtitle">Frequency: {{ habit.get_frequency_display }} &bull; Target: {{ habit.target_count }} per period</p>
+    </div>
+    <div class="page-actions" style="display: flex; gap: var(--space-2);">
+        <form method="POST" action="{% url 'productivity:habit_log' habit.id %}" style="margin: 0;">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-primary">Check In for Today</button>
+        </form>
+        <form method="POST" action="{% url 'productivity:habit_toggle_active' habit.id %}" style="margin: 0;">
+            {% csrf_token %}
+            {% if habit.is_active %}
+                <button type="submit" class="btn btn-secondary">Pause Habit</button>
+            {% else %}
+                <button type="submit" class="btn btn-secondary">Resume Habit</button>
+            {% endif %}
+        </form>
+        <a href="{% url 'productivity:habit_update' habit.id %}" class="btn btn-secondary">Edit</a>
+        <a href="{% url 'productivity:habit_delete' habit.id %}" class="btn btn-secondary" style="color: var(--danger);">Delete</a>
+    </div>
+</div>
+
+<div class="grid grid-cols-3 gap-6">
+    <div style="grid-column: span 2; display: flex; flex-direction: column; gap: var(--space-6);">
+        <!-- 30-Day Historical Matrix Card -->
+        <div class="card">
+            <div class="card-header">
+                <div>
+                    <h2 class="card-title">30-Day Execution History</h2>
+                    <p class="card-subtitle">Consistency matrix across the last 30 calendar days</p>
+                </div>
+            </div>
+            <div class="card-body">
+                <div style="display: grid; grid-template-columns: repeat(10, 1fr); gap: var(--space-2);">
+                    {% for day in history_days %}
+                        <div style="padding: var(--space-2); text-align: center; border-radius: var(--radius-sm); border: 1px solid {% if day.is_today %}var(--accent-primary){% else %}var(--border-subtle){% endif %}; background-color: {% if day.completed %}var(--success-subtle){% else %}var(--bg-input){% endif %}; transition: all var(--transition-fast);" title="{{ day.date|date:'M d, Y' }}: {% if day.completed %}Completed{% else %}Missed{% endif %}{% if day.notes %} - {{ day.notes }}{% endif %}">
+                            <div style="font-size: 10px; color: {% if day.is_today %}var(--accent-primary){% else %}var(--text-muted){% endif %}; font-weight: {% if day.is_today %}bold{% else %}normal{% endif %};">
+                                {{ day.date|date:"d M" }}
+                            </div>
+                            <div style="margin-top: 4px;">
+                                {% if day.completed %}
+                                    <span style="color: var(--success); font-weight: bold; font-size: var(--font-size-sm);">&check;</span>
+                                {% else %}
+                                    <span style="color: var(--text-muted); font-size: var(--font-size-xs);">&bull;</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+                <div style="display: flex; gap: var(--space-4); margin-top: var(--space-4); font-size: var(--font-size-xs); color: var(--text-muted); align-items: center;">
+                    <span style="display: inline-flex; align-items: center; gap: 4px;">
+                        <span style="display: inline-block; width: 10px; height: 10px; border-radius: 2px; background-color: var(--success-subtle); border: 1px solid var(--success);"></span> Completed
+                    </span>
+                    <span style="display: inline-flex; align-items: center; gap: 4px;">
+                        <span style="display: inline-block; width: 10px; height: 10px; border-radius: 2px; background-color: var(--bg-input); border: 1px solid var(--border-subtle);"></span> Missed / Rest
+                    </span>
+                    <span style="display: inline-flex; align-items: center; gap: 4px;">
+                        <span style="display: inline-block; width: 10px; height: 10px; border-radius: 2px; border: 1px solid var(--accent-primary);"></span> Today
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Description Card -->
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Behavioral Rationale</h3>
+            </div>
+            <div class="card-body">
+                {% if habit.description %}
+                    <p style="color: var(--text-primary); line-height: 1.6; margin: 0;">{{ habit.description }}</p>
+                {% else %}
+                    <p style="color: var(--text-muted); font-style: italic; margin: 0;">No description provided.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Sidebar Streaks Card -->
+    <div>
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Streak Analytics</h3>
+            </div>
+            <div class="card-body flex flex-col gap-4">
+                <div style="padding: var(--space-3); background-color: var(--bg-input); border-radius: var(--radius-sm); text-align: center;">
+                    <div style="font-size: var(--font-size-xs); color: var(--text-muted); text-transform: uppercase;">Current Streak</div>
+                    <div style="font-size: var(--font-size-2xl); font-weight: var(--font-weight-bold); color: var(--warning); margin-top: 4px;">
+                        {{ current_streak }} {% if habit.frequency == 'WEEKLY' %}weeks{% else %}days{% endif %}
+                    </div>
+                </div>
+
+                <div style="padding: var(--space-3); background-color: var(--bg-input); border-radius: var(--radius-sm); text-align: center;">
+                    <div style="font-size: var(--font-size-xs); color: var(--text-muted); text-transform: uppercase;">All-Time Best Streak</div>
+                    <div style="font-size: var(--font-size-2xl); font-weight: var(--font-weight-bold); color: var(--success); margin-top: 4px;">
+                        {{ best_streak }} {% if habit.frequency == 'WEEKLY' %}weeks{% else %}days{% endif %}
+                    </div>
+                </div>
+
+                <div style="padding: var(--space-3); background-color: var(--bg-input); border-radius: var(--radius-sm); text-align: center;">
+                    <div style="font-size: var(--font-size-xs); color: var(--text-muted); text-transform: uppercase;">Total Completions Logged</div>
+                    <div style="font-size: var(--font-size-2xl); font-weight: var(--font-weight-bold); color: var(--accent-primary); margin-top: 4px;">
+                        {{ total_logs_count }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

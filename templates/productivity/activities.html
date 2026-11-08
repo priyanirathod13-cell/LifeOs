@@ -1,0 +1,200 @@
+{% extends 'layouts/app_layout.html' %}
+
+{% block title %}Activities & Time Tracking — LifeOS{% endblock %}
+{% block header_breadcrumb %}Activities{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="page-header-info">
+        <h1 class="page-title">Activity Tracking & Live Timers</h1>
+        <p class="page-subtitle">Track real-time deep work sessions, workouts, recovery blocks, and unstructured time.</p>
+    </div>
+    <div class="page-actions">
+        <a href="{% url 'productivity:activity_create' %}" class="btn btn-secondary">
+            + Manual Entry
+        </a>
+    </div>
+</div>
+
+<!-- Active Running Timer Banner (If an activity is active) -->
+{% if active_activity %}
+    <div class="card" style="border: 1px solid var(--accent-primary); background-color: var(--accent-primary-subtle); margin-bottom: var(--space-6);">
+        <div class="card-body" style="padding: var(--space-4) var(--space-6); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: var(--space-4);">
+            <div style="display: flex; align-items: center; gap: var(--space-4);">
+                <span style="display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: 50%; background-color: var(--accent-primary); color: #0F1117;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                    </svg>
+                </span>
+                <div>
+                    <div style="display: flex; align-items: center; gap: var(--space-2);">
+                        <span class="badge badge-accent" style="animation: pulse 2s infinite;">Live Active Session</span>
+                        {% if active_activity.category %}
+                            <span style="font-size: var(--font-size-xs); color: var(--text-muted);">&bull; {{ active_activity.category.name }}</span>
+                        {% endif %}
+                    </div>
+                    <div style="font-size: var(--font-size-lg); font-weight: var(--font-weight-bold); color: var(--text-primary); margin-top: 2px;">
+                        {{ active_activity.activity_name }}
+                    </div>
+                    <div style="font-size: var(--font-size-xs); color: var(--text-secondary);">
+                        Started at {{ active_activity.start_time|time:"H:i" }} ({{ active_activity.start_time|timesince }} ago)
+                    </div>
+                </div>
+            </div>
+
+            <form method="POST" action="{% url 'productivity:activity_stop' active_activity.id %}" style="margin: 0;">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-primary" style="background-color: var(--danger); border-color: var(--danger); color: #fff;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="6" y="6" width="12" height="12"></rect>
+                    </svg>
+                    Stop & Save Session
+                </button>
+            </form>
+        </div>
+    </div>
+{% else %}
+    <!-- Quick Start Timer Card -->
+    <div class="card" style="margin-bottom: var(--space-6);">
+        <div class="card-body" style="padding: var(--space-4) var(--space-6);">
+            <form method="POST" action="{% url 'productivity:activity_start' %}" class="flex flex-wrap items-center gap-3">
+                {% csrf_token %}
+                <div style="flex: 2; min-width: 220px;">
+                    <input type="text" name="activity_name" class="form-control" placeholder="What are you working on right now?" required>
+                </div>
+                <div style="flex: 1; min-width: 160px;">
+                    <select name="category_id" class="form-select">
+                        <option value="">— Select Category —</option>
+                        {% for cat in categories %}
+                            <option value="{{ cat.id }}">{{ cat.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                    </svg>
+                    Start Timer
+                </button>
+            </form>
+        </div>
+    </div>
+{% endif %}
+
+<!-- Activity Summary Metrics -->
+<div class="grid grid-cols-3 gap-4" style="margin-bottom: var(--space-6);">
+    <div class="metric-card">
+        <div class="metric-header"><span class="metric-label">Tracked Today</span></div>
+        <div class="metric-value" style="color: var(--accent-primary);">{{ today_duration }}</div>
+        <div class="metric-trend trend-neutral"><span>Current calendar day</span></div>
+    </div>
+    <div class="metric-card">
+        <div class="metric-header"><span class="metric-label">Tracked This Week</span></div>
+        <div class="metric-value" style="color: var(--accent-secondary);">{{ week_duration }}</div>
+        <div class="metric-trend trend-neutral"><span>Monday to today</span></div>
+    </div>
+    <div class="metric-card">
+        <div class="metric-header"><span class="metric-label">Filter Category</span></div>
+        <div style="margin-top: var(--space-2);">
+            <form method="GET" action="{% url 'productivity:activity_list' %}" class="flex gap-2">
+                <select name="category" class="form-select" onchange="this.form.submit();">
+                    <option value="">All Categories</option>
+                    {% for cat in categories %}
+                        <option value="{{ cat.id }}" {% if cat_id == cat.id|stringformat:"s" %}selected{% endif %}>{{ cat.name }}</option>
+                    {% endfor %}
+                </select>
+                {% if cat_id %}
+                    <a href="{% url 'productivity:activity_list' %}" class="btn btn-ghost btn-sm">Clear</a>
+                {% endif %}
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Activity Log Table -->
+<div class="card">
+    <div class="card-header">
+        <div>
+            <h2 class="card-title">Activity History</h2>
+            <p class="card-subtitle">Showing recent tracked sessions</p>
+        </div>
+    </div>
+    <div class="card-body" style="padding: 0;">
+        {% if activities %}
+            <div style="overflow-x: auto;">
+                <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: var(--font-size-sm);">
+                    <thead>
+                        <tr style="border-bottom: 1px solid var(--border-subtle); color: var(--text-muted); font-size: var(--font-size-xs); text-transform: uppercase; letter-spacing: 0.05em;">
+                            <th style="padding: var(--space-3) var(--space-4);">Activity Name</th>
+                            <th style="padding: var(--space-3) var(--space-4);">Category</th>
+                            <th style="padding: var(--space-3) var(--space-4);">Start Time</th>
+                            <th style="padding: var(--space-3) var(--space-4);">End Time</th>
+                            <th style="padding: var(--space-3) var(--space-4);">Duration</th>
+                            <th style="padding: var(--space-3) var(--space-4); text-align: right;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for act in activities %}
+                            <tr style="border-bottom: 1px solid var(--border-subtle); transition: background-color var(--transition-fast);">
+                                <td style="padding: var(--space-3) var(--space-4); font-weight: var(--font-weight-medium); color: var(--text-primary);">
+                                    {{ act.activity_name }}
+                                    {% if act.description %}
+                                        <div style="font-size: var(--font-size-xs); color: var(--text-muted); margin-top: 2px;">{{ act.description }}</div>
+                                    {% endif %}
+                                </td>
+                                <td style="padding: var(--space-3) var(--space-4);">
+                                    {% if act.category %}
+                                        <span style="display: inline-flex; align-items: center; gap: 5px; font-size: var(--font-size-xs); color: var(--text-secondary);">
+                                            <span style="display: inline-block; width: 7px; height: 7px; border-radius: 50%; background-color: {{ act.category.color }};"></span>
+                                            {{ act.category.name }}
+                                        </span>
+                                    {% else %}
+                                        <span style="color: var(--text-muted); font-size: var(--font-size-xs);">&mdash;</span>
+                                    {% endif %}
+                                </td>
+                                <td style="padding: var(--space-3) var(--space-4); color: var(--text-secondary); font-size: var(--font-size-xs);">
+                                    {{ act.start_time|date:"M d, H:i" }}
+                                </td>
+                                <td style="padding: var(--space-3) var(--space-4); color: var(--text-secondary); font-size: var(--font-size-xs);">
+                                    {% if act.end_time %}
+                                        {{ act.end_time|date:"M d, H:i" }}
+                                    {% else %}
+                                        <span class="badge badge-accent">Running Now</span>
+                                    {% endif %}
+                                </td>
+                                <td style="padding: var(--space-3) var(--space-4); font-weight: var(--font-weight-semibold); color: var(--text-primary);">
+                                    {% if act.duration_minutes is not None %}
+                                        {{ act.duration_minutes }} mins
+                                    {% else %}
+                                        <span style="color: var(--accent-primary);">In Progress</span>
+                                    {% endif %}
+                                </td>
+                                <td style="padding: var(--space-3) var(--space-4); text-align: right;">
+                                    {% if act.end_time is None %}
+                                        <form method="POST" action="{% url 'productivity:activity_stop' act.id %}" style="display: inline; margin: 0;">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-secondary btn-sm" style="color: var(--danger);">Stop</button>
+                                        </form>
+                                    {% endif %}
+                                    <a href="{% url 'productivity:activity_delete' act.id %}" class="btn btn-ghost btn-sm" style="color: var(--danger);">Delete</a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="empty-state" style="padding: var(--space-12) var(--space-6);">
+                <div class="empty-state-icon">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                    </svg>
+                </div>
+                <h3 class="empty-state-title">No activities logged</h3>
+                <p class="empty-state-desc">Start a live timer or manually record completed focus blocks, workouts, and sessions.</p>
+                <a href="{% url 'productivity:activity_create' %}" class="btn btn-primary">+ Record Manual Activity</a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,140 @@
+{% extends 'layouts/app_layout.html' %}
+
+{% block title %}{{ page_title }} — LifeOS{% endblock %}
+{% block header_breadcrumb %}<a href="{% url 'productivity:task_list' %}">Tasks</a> / {{ page_title }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="page-header-info">
+        <h1 class="page-title">{{ page_title }}</h1>
+        <p class="page-subtitle">Configure task priorities, deliverables, deadlines, and time tracking.</p>
+    </div>
+</div>
+
+<div class="grid grid-cols-3 gap-6">
+    <div style="grid-column: span 2;">
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">Task Parameters</h2>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    {% csrf_token %}
+
+                    {% if form.non_field_errors %}
+                        <div class="alert alert-danger" style="margin-bottom: var(--space-4);">
+                            {{ form.non_field_errors }}
+                        </div>
+                    {% endif %}
+
+                    <!-- Title -->
+                    <div class="form-group" style="margin-bottom: var(--space-4);">
+                        <label class="form-label" for="{{ form.title.id_for_label }}">
+                            Task Title <span style="color: var(--danger);">*</span>
+                        </label>
+                        {{ form.title }}
+                        {% if form.title.errors %}
+                            <div style="color: var(--danger); font-size: var(--font-size-xs); margin-top: 4px;">{{ form.title.errors }}</div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Description -->
+                    <div class="form-group" style="margin-bottom: var(--space-4);">
+                        <label class="form-label" for="{{ form.description.id_for_label }}">Description</label>
+                        {{ form.description }}
+                        {% if form.description.errors %}
+                            <div style="color: var(--danger); font-size: var(--font-size-xs); margin-top: 4px;">{{ form.description.errors }}</div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Priority & Status -->
+                    <div class="grid grid-cols-2 gap-4" style="margin-bottom: var(--space-4);">
+                        <div class="form-group">
+                            <label class="form-label" for="{{ form.priority.id_for_label }}">Priority</label>
+                            {{ form.priority }}
+                            {% if form.priority.errors %}
+                                <div style="color: var(--danger); font-size: var(--font-size-xs); margin-top: 4px;">{{ form.priority.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="{{ form.status.id_for_label }}">Status</label>
+                            {{ form.status }}
+                            {% if form.status.errors %}
+                                <div style="color: var(--danger); font-size: var(--font-size-xs); margin-top: 4px;">{{ form.status.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Category & Project -->
+                    <div class="grid grid-cols-2 gap-4" style="margin-bottom: var(--space-4);">
+                        <div class="form-group">
+                            <label class="form-label" for="{{ form.category.id_for_label }}">Category</label>
+                            {{ form.category }}
+                            <span style="font-size: var(--font-size-xs); color: var(--text-muted); margin-top: 2px; display: block;">
+                                Or <a href="{% url 'productivity:category_create' %}" style="color: var(--accent-primary);">add new category</a>
+                            </span>
+                            {% if form.category.errors %}
+                                <div style="color: var(--danger); font-size: var(--font-size-xs); margin-top: 4px;">{{ form.category.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="{{ form.project.id_for_label }}">Parent Project</label>
+                            {{ form.project }}
+                            <span style="font-size: var(--font-size-xs); color: var(--text-muted); margin-top: 2px; display: block;">
+                                Or <a href="{% url 'planning:project_create' %}" style="color: var(--accent-primary);">create project</a>
+                            </span>
+                            {% if form.project.errors %}
+                                <div style="color: var(--danger); font-size: var(--font-size-xs); margin-top: 4px;">{{ form.project.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Due Date & Time Tracking -->
+                    <div class="grid grid-cols-3 gap-4" style="margin-bottom: var(--space-6);">
+                        <div class="form-group">
+                            <label class="form-label" for="{{ form.due_date.id_for_label }}">Due Date</label>
+                            {{ form.due_date }}
+                            {% if form.due_date.errors %}
+                                <div style="color: var(--danger); font-size: var(--font-size-xs); margin-top: 4px;">{{ form.due_date.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="{{ form.estimated_minutes.id_for_label }}">Estimated Minutes</label>
+                            {{ form.estimated_minutes }}
+                            {% if form.estimated_minutes.errors %}
+                                <div style="color: var(--danger); font-size: var(--font-size-xs); margin-top: 4px;">{{ form.estimated_minutes.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="{{ form.actual_minutes.id_for_label }}">Actual Minutes</label>
+                            {{ form.actual_minutes }}
+                            {% if form.actual_minutes.errors %}
+                                <div style="color: var(--danger); font-size: var(--font-size-xs); margin-top: 4px;">{{ form.actual_minutes.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Submit & Cancel -->
+                    <div style="display: flex; gap: var(--space-3); border-top: 1px solid var(--border-subtle); padding-top: var(--space-4);">
+                        <button type="submit" class="btn btn-primary">Save Task</button>
+                        <a href="{% url 'productivity:task_list' %}" class="btn btn-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Sidebar Tips -->
+    <div>
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Productivity Tips</h3>
+            </div>
+            <div class="card-body" style="font-size: var(--font-size-sm); color: var(--text-secondary); line-height: 1.6;">
+                <p><strong>Time Estimation:</strong> Breaking tasks down into increments of 25–90 minutes significantly boosts completion rates.</p>
+                <p style="margin-top: var(--space-3);"><strong>Categories vs Projects:</strong> Use categories for areas of life (e.g. Health, Career), and Projects for multi-stage deliverables with definitive completion targets.</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

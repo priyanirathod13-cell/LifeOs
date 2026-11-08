@@ -1,0 +1,90 @@
+{% extends 'layouts/app_layout.html' %}
+
+{% block title %}{{ page_title }} — LifeOS{% endblock %}
+{% block header_breadcrumb %}<a href="{% url 'productivity:habit_list' %}">Habits</a> / {{ page_title }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="page-header-info">
+        <h1 class="page-title">{{ page_title }}</h1>
+        <p class="page-subtitle">Configure behavioral routine, frequency, and daily target.</p>
+    </div>
+</div>
+
+<div class="grid grid-cols-3 gap-6">
+    <div style="grid-column: span 2;">
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">Habit Parameters</h2>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    {% csrf_token %}
+
+                    {% if form.non_field_errors %}
+                        <div class="alert alert-danger" style="margin-bottom: var(--space-4);">
+                            {{ form.non_field_errors }}
+                        </div>
+                    {% endif %}
+
+                    <div class="form-group" style="margin-bottom: var(--space-4);">
+                        <label class="form-label" for="{{ form.name.id_for_label }}">Habit Name <span style="color: var(--danger);">*</span></label>
+                        {{ form.name }}
+                        {% if form.name.errors %}
+                            <div style="color: var(--danger); font-size: var(--font-size-xs); margin-top: 4px;">{{ form.name.errors }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4" style="margin-bottom: var(--space-4);">
+                        <div class="form-group">
+                            <label class="form-label" for="{{ form.frequency.id_for_label }}">Frequency</label>
+                            {{ form.frequency }}
+                            {% if form.frequency.errors %}
+                                <div style="color: var(--danger); font-size: var(--font-size-xs); margin-top: 4px;">{{ form.frequency.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="{{ form.category.id_for_label }}">Category</label>
+                            {{ form.category }}
+                            {% if form.category.errors %}
+                                <div style="color: var(--danger); font-size: var(--font-size-xs); margin-top: 4px;">{{ form.category.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4" style="margin-bottom: var(--space-4);">
+                        <div class="form-group">
+                            <label class="form-label" for="{{ form.target_count.id_for_label }}">Daily Target Count</label>
+                            {{ form.target_count }}
+                            {% if form.target_count.errors %}
+                                <div style="color: var(--danger); font-size: var(--font-size-xs); margin-top: 4px;">{{ form.target_count.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="form-group" style="display: flex; align-items: center; margin-top: var(--space-6);">
+                            <label style="display: flex; align-items: center; gap: var(--space-2); cursor: pointer; color: var(--text-primary); font-size: var(--font-size-sm);">
+                                {{ form.is_active }}
+                                <span>Active Habit (currently tracking)</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: var(--space-6);">
+                        <label class="form-label" for="{{ form.description.id_for_label }}">Description & Implementation Intention</label>
+                        {{ form.description }}
+                        {% if form.description.errors %}
+                            <div style="color: var(--danger); font-size: var(--font-size-xs); margin-top: 4px;">{{ form.description.errors }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div style="display: flex; gap: var(--space-3); border-top: 1px solid var(--border-subtle); padding-top: var(--space-4);">
+                        <button type="submit" class="btn btn-primary">Save Habit</button>
+                        <a href="{% url 'productivity:habit_list' %}" class="btn btn-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

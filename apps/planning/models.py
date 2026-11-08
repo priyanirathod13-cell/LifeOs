@@ -77,7 +77,7 @@ class Project(models.Model):
 
     def clean(self):
         super().clean()
-        if self.category and self.category.user_id != self.user_id:
+        if self.user_id and self.category and self.category.user_id != self.user_id:
             raise ValidationError({'category': 'Cannot associate with a category belonging to another user.'})
         if self.start_date and self.target_date and self.target_date < self.start_date:
             raise ValidationError({'target_date': 'Target date cannot precede start date.'})
@@ -137,7 +137,7 @@ class Goal(models.Model):
 
     def clean(self):
         super().clean()
-        if self.category and self.category.user_id != self.user_id:
+        if self.user_id and self.category and self.category.user_id != self.user_id:
             raise ValidationError({'category': 'Cannot associate with a category belonging to another user.'})
         if self.start_date and self.target_date and self.target_date < self.start_date:
             raise ValidationError({'target_date': 'Target date cannot precede start date.'})

@@ -1,19 +1,22 @@
 from django.urls import path
+from apps.planning.views import goal_list_view, project_list_view
+from apps.productivity.views import (
+    activity_list_view,
+    category_list_view,
+    habit_list_view,
+    task_list_view,
+)
 from .views import (
-    activities_view,
     behavioral_insights_view,
     checkin_view,
     dashboard,
     decisions_view,
     financial_analytics_view,
-    goals_view,
-    habits_view,
     health_check,
     journal_view,
     landing_view,
     mistakes_view,
     productivity_analytics_view,
-    projects_view,
     quick_add_task_view,
     quick_checkin_view,
     recommendations_view,
@@ -21,7 +24,6 @@ from .views import (
     settings_view,
     study_analytics_view,
     study_view,
-    tasks_view,
     timetable_view,
     toggle_habit_view,
     toggle_task_view,
@@ -50,15 +52,16 @@ urlpatterns = [
     # MY DAY (Protected)
     path('timetable/', timetable_view, name='timetable'),
     path('routines/', routines_view, name='routines'),
-    path('tasks/', tasks_view, name='tasks'),
-    path('habits/', habits_view, name='habits'),
-    path('activities/', activities_view, name='activities'),
+    path('tasks/', task_list_view, name='tasks'),
+    path('categories/', category_list_view, name='categories'),
+    path('habits/', habit_list_view, name='habits'),
+    path('activities/', activity_list_view, name='activities'),
     path('checkin/', checkin_view, name='checkin'),
 
     # MY GROWTH (Protected)
     path('study/', study_view, name='study'),
-    path('goals/', goals_view, name='goals'),
-    path('projects/', projects_view, name='projects'),
+    path('goals/', goal_list_view, name='goals'),
+    path('projects/', project_list_view, name='projects'),
     path('journal/', journal_view, name='journal'),
     path('decisions/', decisions_view, name='decisions'),
     path('mistakes/', mistakes_view, name='mistakes'),

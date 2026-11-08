@@ -1,0 +1,92 @@
+{% extends 'layouts/app_layout.html' %}
+
+{% block title %}Categories — LifeOS{% endblock %}
+{% block header_breadcrumb %}<a href="{% url 'productivity:task_list' %}">Tasks</a> / Categories{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="page-header-info">
+        <h1 class="page-title">Category Management</h1>
+        <p class="page-subtitle">Personal classification tags organizing tasks, habits, activities, and finances.</p>
+    </div>
+    <div class="page-actions">
+        <a href="{% url 'productivity:category_create' %}" class="btn btn-primary">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+            + New Category
+        </a>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <div>
+            <h2 class="card-title">Your Categories</h2>
+            <p class="card-subtitle">{{ categories|length }} active categories configured</p>
+        </div>
+    </div>
+    <div class="card-body" style="padding: 0;">
+        {% if categories %}
+            <div style="overflow-x: auto;">
+                <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: var(--font-size-sm);">
+                    <thead>
+                        <tr style="border-bottom: 1px solid var(--border-subtle); color: var(--text-muted); font-size: var(--font-size-xs); text-transform: uppercase; letter-spacing: 0.05em;">
+                            <th style="padding: var(--space-3) var(--space-4);">Color</th>
+                            <th style="padding: var(--space-3) var(--space-4);">Name</th>
+                            <th style="padding: var(--space-3) var(--space-4);">Type</th>
+                            <th style="padding: var(--space-3) var(--space-4);">Description</th>
+                            <th style="padding: var(--space-3) var(--space-4);">Associated Records</th>
+                            <th style="padding: var(--space-3) var(--space-4); text-align: right;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for cat in categories %}
+                            <tr style="border-bottom: 1px solid var(--border-subtle); transition: background-color var(--transition-fast);">
+                                <td style="padding: var(--space-3) var(--space-4); width: 60px;">
+                                    <span style="display: inline-block; width: 16px; height: 16px; border-radius: 4px; background-color: {{ cat.color }}; border: 1px solid var(--border-subtle);"></span>
+                                </td>
+                                <td style="padding: var(--space-3) var(--space-4); font-weight: var(--font-weight-medium); color: var(--text-primary);">
+                                    {{ cat.name }}
+                                </td>
+                                <td style="padding: var(--space-3) var(--space-4);">
+                                    <span class="badge badge-accent">{{ cat.get_category_type_display }}</span>
+                                </td>
+                                <td style="padding: var(--space-3) var(--space-4); color: var(--text-muted); font-size: var(--font-size-xs);">
+                                    {{ cat.description|default:"—" }}
+                                </td>
+                                <td style="padding: var(--space-3) var(--space-4); font-size: var(--font-size-xs); color: var(--text-secondary);">
+                                    <span>{{ cat.task_count }} task{{ cat.task_count|pluralize }}</span> &bull;
+                                    <span>{{ cat.habit_count }} habit{{ cat.habit_count|pluralize }}</span> &bull;
+                                    <span>{{ cat.activity_count }} activit{{ cat.activity_count|pluralize:"y,ies" }}</span>
+                                </td>
+                                <td style="padding: var(--space-3) var(--space-4); text-align: right;">
+                                    <div style="display: inline-flex; gap: var(--space-1);">
+                                        <a href="{% url 'productivity:category_update' cat.id %}" class="btn btn-ghost btn-sm">Edit</a>
+                                        <a href="{% url 'productivity:category_delete' cat.id %}" class="btn btn-ghost btn-sm" style="color: var(--danger);">Delete</a>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="empty-state" style="padding: var(--space-12) var(--space-6);">
+                <div class="empty-state-icon">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="3" width="7" height="7"></rect>
+                        <rect x="14" y="3" width="7" height="7"></rect>
+                        <rect x="14" y="14" width="7" height="7"></rect>
+                        <rect x="3" y="14" width="7" height="7"></rect>
+                    </svg>
+                </div>
+                <h3 class="empty-state-title">No categories created yet</h3>
+                <p class="empty-state-desc">Categories help you classify tasks, habits, and activities across life dimensions.</p>
+                <a href="{% url 'productivity:category_create' %}" class="btn btn-primary">+ Create First Category</a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

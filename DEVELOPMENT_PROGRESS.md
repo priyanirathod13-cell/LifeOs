@@ -9,8 +9,8 @@
 | **03** | **Authentication System** | **Completed** | Public landing page, user registration with full name & email, case-insensitive unique email check, email authentication backend, login with Remember Me, secure logout, password reset flow via console email, user profile management with password change, strict `@login_required` access control, 25 automated tests. |
 | **04** | **Database Architecture & Data Models** | **Completed** | Normalized 3NF models across 5 apps (`productivity`, `planning`, `personal`, `finance`, `study`), 21 models total, check constraints, composite unique keys, multi-user isolation validation, admin registrations, legacy data preservation migration, 45 automated tests (100% passing). |
 | **05** | **Main Dashboard Implementation** | **Completed** | Dynamic authenticated dashboard at `/dashboard/`, live data aggregation across 6 domain apps, 4 summary metric cards, interactive task toggle, habit completion toggle, quick add task modal, quick biometric check-in modal, upcoming exams, schedule blocks, recent activity feed, 59 automated tests (100% passing). |
-| **06** | **Decision Engine & Mistakes Journal** | Pending | Strategic decision logs, expected outcomes, retrospectives, and post-mortems. |
-| **07** | **Analytics & Behavioral Intelligence** | Pending | Correlation engines, productivity analytics, study mastery metrics, and recommendations. |
+| **06** | **Productivity Management** | **Completed** | Full Productivity Management system across 6 sub-modules: Tasks (CRUD, multi-filter, sort, search, pagination, duration tracking), Categories (color-coded, duplicate prevention, safe unlinking), Habits (CRUD, pause/active toggle, 30-day matrix, daily/weekly streak engine), Activities (manual logging, live start/stop timer, duration aggregation), Goals (CRUD, target countdowns, task linkage, progress calculation), Projects (CRUD, child tasks, completion progress), 79 automated tests (100% passing). |
+| **07** | **Study Management & Syllabi** | Pending | Course management, syllabus topic tracking, active recall sessions, and exam readiness. |
 
 ---
 
@@ -153,3 +153,62 @@
 - **Automated Test Suite**:
   - 59 automated tests across all 7 applications (`apps.accounts`, `apps.core`, `apps.productivity`, `apps.planning`, `apps.personal`, `apps.finance`, `apps.study`).
   - 100% pass rate (`Ran 59 tests in 53.717s — OK`).
+
+
+---
+
+## Detailed Step 06 Deliverables: Productivity Management
+
+### 1. Task Management (`apps/productivity/`)
+- **Views & Endpoints**:
+  - `productivity:task_list` (`GET /productivity/tasks/` or `/tasks/`): Search by title/description, filter by status (`pending`, `in_progress`, `completed`, `cancelled`), priority (`low`, `medium`, `high`, `urgent`), category, due date presets (`today`, `week`, `overdue`), sort by due date / priority / creation date, paginated with 15 tasks per page.
+  - `productivity:task_create` (`GET/POST /productivity/tasks/create/`): Validates user-scoped categories and projects; auto-sets `completed_at` if created directly in completed state.
+  - `productivity:task_detail` (`GET /productivity/tasks/<id>/`): Shows full description, priority badges, category color chips, estimated vs. actual minutes, project association, and aligned goals.
+  - `productivity:task_update` (`GET/POST /productivity/tasks/<id>/edit/`): Update all task attributes with IDOR protection.
+  - `productivity:task_delete` (`GET/POST /productivity/tasks/<id>/delete/`): Confirmation dialog with safe deletion.
+  - `productivity:task_toggle_complete` (`POST /productivity/tasks/<id>/toggle/`): Quick toggle between pending and completed; automatically stamps `completed_at` timestamps.
+
+### 2. Category Management (`apps/productivity/`)
+- **Views & Endpoints**:
+  - `productivity:category_list` (`GET /productivity/categories/`): Lists user categories with assigned color preview chips, classification badges, and live counts of associated records.
+  - `productivity:category_create` (`GET/POST /productivity/categories/create/`): Enforces case-insensitive duplicate prevention per user.
+  - `productivity:category_update` (`GET/POST /productivity/categories/<id>/edit/`): Edit category name, color, and description.
+  - `productivity:category_delete` (`GET/POST /productivity/categories/<id>/delete/`): Safe deletion pattern — informs user of associated record counts and sets foreign keys to `NULL` (`on_delete=models.SET_NULL`), ensuring zero cascade destruction of user tasks, habits, or activities.
+
+### 3. Habit Management (`apps/productivity/`)
+- **Views & Endpoints**:
+  - `productivity:habit_list` (`GET /productivity/habits/` or `/habits/`): Grid of active and paused habits with current streak counters, frequency tags, target counts, and today's execution toggles.
+  - `productivity:habit_create` (`GET/POST /productivity/habits/create/`): Configure title, routine cue notes, frequency (Daily or Weekly), and target completions.
+  - `productivity:habit_detail` (`GET /productivity/habits/<id>/`): 30-day historical execution matrix showing daily completed/missed cells, total completions, and current consecutive streak.
+  - `productivity:habit_log` (`POST /productivity/habits/<id>/log/`): Logs completion for any specified date (defaulting to today), preventing duplicate logs on the same day through `update_or_create`.
+  - `productivity:habit_toggle_active` (`POST /productivity/habits/<id>/toggle-active/`): Pause or resume habit routines without deleting history.
+
+### 4. Activity & Time Tracking (`apps/productivity/`)
+- **Views & Endpoints**:
+  - `productivity:activity_list` (`GET /productivity/activities/` or `/activities/`): Real-time timer interface displaying active session counter, today's aggregated time, past 7 days duration, category breakdown, and chronological logs.
+  - `productivity:activity_start` (`POST /productivity/activities/start/`): Starts a live timer session, automatically closing and finalizing any previously dangling active session.
+  - `productivity:activity_stop` (`POST /productivity/activities/<id>/stop/`): Finalizes the live timer, calculating and persisting exact `duration_minutes`.
+  - `productivity:activity_create` (`GET/POST /productivity/activities/create/`): Manual backfill for past sessions with datetime-local validation preventing `end_time < start_time`.
+  - `productivity:activity_delete` (`GET/POST /productivity/activities/<id>/delete/`): Deletes activity session with confirmation.
+
+### 5. Goal Management (`apps/planning/`)
+- **Views & Endpoints**:
+  - `planning:goal_list` (`GET /planning/goals/` or `/goals/`): Strategic milestone list with countdown badges ("X days left" or "Overdue by Y days"), priority badges, category chips, and live task-progress indicators.
+  - `planning:goal_create` (`GET/POST /planning/goals/create/`): Define outcome statements, target deadlines, priority, and categories.
+  - `planning:goal_detail` (`GET /planning/goals/<id>/`): Displays outcome scope, countdown, execution progress bar (`completed/total*100`), form to link existing user tasks (`GoalTaskLinkForm`), and table of currently linked tasks with unlinking actions.
+  - `planning:goal_link_task` (`POST /planning/goals/<id>/link-task/`): Links an existing user task to the goal; strictly prevents cross-user task linking.
+  - `planning:goal_unlink_task` (`POST /planning/goals/<id>/unlink-task/<task_id>/`): Unlinks task from goal without deleting the underlying task.
+  - `planning:goal_delete` (`GET/POST /planning/goals/<id>/delete/`): Deletes goal while explicitly keeping all linked tasks intact.
+
+### 6. Project Management (`apps/planning/`)
+- **Views & Endpoints**:
+  - `planning:project_list` (`GET /planning/projects/` or `/projects/`): High-level project portfolio cards with status tags (`Planning`, `In Progress`, `On Hold`, `Completed`, `Cancelled`), target dates, priority levels, and child task progress bars.
+  - `planning:project_create` (`GET/POST /planning/projects/create/`): Create new project initiatives.
+  - `planning:project_detail` (`GET /planning/projects/<id>/`): View project deliverables, milestone deadlines, completion rate, and full child task list with links to view details.
+  - `planning:project_update` (`GET/POST /planning/projects/<id>/edit/`): Update project scope, status, dates; auto-sets `completed_at` on completion.
+  - `planning:project_delete` (`GET/POST /planning/projects/<id>/delete/`): Deletes project safely unlinking child tasks (`Task.project = None`) without deleting tasks.
+
+### Automated Test Suite
+- **79 Automated Tests** across the entire application:
+  - 29 tests in `apps.productivity` and `apps.planning` covering CRUD, filtering, pagination, search, validation, timer mechanics, streak computation, and strict multi-user cross-boundary IDOR protection.
+  - 100% pass rate (`Ran 79 tests in 53.175s — OK`).

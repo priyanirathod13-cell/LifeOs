@@ -31,12 +31,18 @@ if %ERRORLEVEL% neq 0 (
     echo.
 )
 
+:run_tunnel
+echo ======================================================================
 echo [INFO] Starting Cloudflare Tunnel...
 echo [INFO] Look for the URL ending with '.trycloudflare.com' below.
 echo [INFO] Share that HTTPS link with your friends to give them access!
-echo.
 echo ======================================================================
+echo.
 
 .\.venv\Scripts\cloudflared.exe tunnel --url http://127.0.0.1:8000
 
-pause
+echo.
+echo [WARNING] Cloudflare Tunnel disconnected or connection was reset.
+echo [INFO] Re-establishing tunnel in 5 seconds... (Press Ctrl+C to stop)
+timeout /t 5 /nobreak >nul
+goto run_tunnel

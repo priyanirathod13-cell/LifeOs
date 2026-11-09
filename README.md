@@ -303,23 +303,99 @@ python manage.py runserver
 
 ---
 
-## 7. Cloud Deployment & Production Operations
+## 7. Hosting, Access & Production Operations
 
-LifeOS is fully production-hardened and pre-configured for instant deployment on cloud platforms:
+LifeOS is configured for **Free Laptop-Based Hosting** with zero cloud fees, zero domain costs, and complete data ownership.
 
-- **WhiteNoise Static Delivery**: Automatic Gzip/Brotli compression and long-lived caching directly from Gunicorn (`whitenoise.middleware.WhiteNoiseMiddleware`).
-- **Gunicorn WSGI Server**: 3 workers with 120-second timeout.
-- **Docker & Compose**: Pre-packaged [`Dockerfile`](Dockerfile) and [`docker-compose.yml`](docker-compose.yml) with automatic health checks.
-- **PaaS 1-Click Manifests**:
-  - **Railway**: Configured via [`railway.toml`](railway.toml) and [`Procfile`](Procfile) with automatic MySQL attachment.
-  - **Render**: Blueprint specification via [`render.yaml`](render.yaml).
-- **Security Hardening**:
-  - `DEBUG=False` production mode.
-  - Automatic HTTPS redirect (`SECURE_SSL_REDIRECT = True`).
-  - HSTS enabled with 1-year preload (`SECURE_HSTS_SECONDS = 31536000`).
-  - Secure and HTTP-only session and CSRF cookies.
-  - Frame protection (`X_FRAME_OPTIONS = 'DENY'`).
-  - Custom branded error pages for 400, 403, 404, and 500 errors.
+---
 
-For complete, step-by-step production setup instructions across Railway, Render, Docker, and Ubuntu/Nginx, refer to [`DEPLOYMENT.md`](DEPLOYMENT.md).
+### A. One-Click Local Hosting (Waitress WSGI)
+
+LifeOS uses the multi-threaded **Waitress WSGI server** (`waitress>=3.0.0`) for high-performance serving on Windows:
+
+1. **Start Server**: Double-click [`start_lifeos.bat`](start_lifeos.bat) or run:
+   ```cmd
+   c:\LifeOs\start_lifeos.bat
+   ```
+   Or via command line:
+   ```powershell
+   .\.venv\Scripts\python.exe serve.py
+   ```
+2. **Access Locally**:
+   - Primary: [http://localhost:8000](http://localhost:8000)
+   - Loopback: [http://127.0.0.1:8000](http://127.0.0.1:8000)
+   - Health check: [http://localhost:8000/health/](http://localhost:8000/health/)
+
+---
+
+### B. Accessing LifeOS from Mobile Devices on Local Wi-Fi
+
+You can access LifeOS from any smartphone, tablet, or secondary computer connected to the same Wi-Fi router:
+
+1. Open your mobile browser (Chrome on Android, Safari on iOS).
+2. Navigate to:
+   ```
+   http://<YOUR_LAN_IP>:8000
+   ```
+   *(Your active LAN IP is automatically displayed in the console when `serve.py` starts).*
+3. **Windows Firewall Rule (One-Time Setup)**:
+   Run in Administrator PowerShell / Command Prompt:
+   ```cmd
+   netsh advfirewall firewall add rule name="LifeOS Web Server" dir=in action=allow protocol=TCP localport=8000
+   ```
+4. **Install as Mobile App (PWA)**:
+   - Android (Chrome): Tap menu `⋮` → **"Install app"** or **"Add to Home Screen"**.
+   - iOS (Safari): Tap Share icon → **"Add to Home Screen"**.
+
+For full details, see [`LOCAL_HOSTING_GUIDE.md`](LOCAL_HOSTING_GUIDE.md).
+
+---
+
+### C. Free Global Public Access (Cloudflare Quick Tunnel)
+
+Share LifeOS with friends or collaborators worldwide with **$0 cost**, **no domain purchase**, and **no router port forwarding**:
+
+1. Ensure the LifeOS server is running via `start_lifeos.bat`.
+2. Double-click [`start_tunnel.bat`](start_tunnel.bat) or run:
+   ```powershell
+   .\.venv\Scripts\cloudflared.exe tunnel --url http://127.0.0.1:8000
+   ```
+3. Cloudflare generates a secure, free public HTTPS link:
+   ```text
+   https://<generated-name>.trycloudflare.com
+   ```
+4. Share this HTTPS link. Friends can register their own accounts with strict multi-user tenant isolation.
+5. **Security**: MySQL port 3306 is **never exposed**; only web requests to port 8000 are tunneled through an outbound encrypted tunnel.
+
+For full details, see [`PUBLIC_ACCESS_GUIDE.md`](PUBLIC_ACCESS_GUIDE.md).
+
+---
+
+### D. Database Backup & Disaster Recovery
+
+LifeOS includes an automated one-click backup utility to ensure zero data loss:
+
+1. **Create Backup**: Double-click [`backup_database.bat`](backup_database.bat) or run:
+   ```cmd
+   c:\LifeOs\backup_database.bat
+   ```
+   Generates a timestamped SQL dump in `backups/lifeos_db_backup_YYYYMMDD_HHMMSS.sql`.
+2. **Restore Database**:
+   ```cmd
+   "C:\xampp\mysql\bin\mysql.exe" --user=root --host=127.0.0.1 lifeos_db < "backups\filename.sql"
+   ```
+
+For full details and automated daily task scheduling, see [`DATABASE_BACKUP_GUIDE.md`](DATABASE_BACKUP_GUIDE.md).
+
+---
+
+### E. Security & Privacy Considerations
+
+- **Multi-User Zero-Trust Isolation**: Strict tenant scoping across all models and views prevents unauthorized cross-user data access (tested with 160 automated tests).
+- **Environment Protection**: `.env` is excluded from version control via `.gitignore`.
+- **Database Safety**: Raw MySQL dumps and `.sql` backups are excluded from Git tracking.
+- **CSRF & Session Security**: Configured with `CSRF_TRUSTED_ORIGINS`, `SECURE_PROXY_SSL_HEADER`, and secure cookie options.
+- **Static Asset Caching**: WhiteNoise handles asset hashing, compression, and caching with zero server overhead.
+
+For full operations, Docker containerization, and traditional Linux deployment details, see [`DEPLOYMENT.md`](DEPLOYMENT.md).
 

@@ -64,60 +64,38 @@ LIFEOS_LOG_LEVEL=INFO
 
 ---
 
-## 3. Cloud Deployment Options
+## 3. Hosting & Deployment Options
 
-LifeOS is pre-configured with deployment manifests for major cloud PaaS and container hosting providers.
-
-### Option A: Railway (Recommended — 1-Click Zero Config)
-
-LifeOS includes [`railway.toml`](file:///c:/LifeOs/railway.toml) and [`Procfile`](file:///c:/LifeOs/Procfile) for automated deployment on Railway.
-
-1. **Create Project**: Sign in to [Railway.app](https://railway.app) and click **New Project** → **Deploy from GitHub repo**.
-2. **Select Repository**: Connect your LifeOS repository.
-3. **Add Database**:
-   - In the Railway project canvas, click **New** → **Database** → **MySQL**.
-   - Railway will provision a dedicated MySQL 8.0 instance and expose `DATABASE_URL`.
-4. **Configure Environment Variables**:
-   In your Web Service settings, add:
-   - `SECRET_KEY`: (Generate a secure 50+ character string)
-   - `DEBUG`: `False`
-   - `DATABASE_URL`: `${{ MySQL.DATABASE_URL }}`
-   - `ALLOWED_HOSTS`: `*.railway.app,yourdomain.com`
-   - `CSRF_TRUSTED_ORIGINS`: `https://*.railway.app,https://yourdomain.com`
-   - `SECURE_SSL_REDIRECT`: `True`
-5. **Deploy**:
-   Railway automatically detects `Nixpacks` / `Procfile`, executes static collection (`python manage.py collectstatic --noinput`), runs database migrations (`python manage.py migrate`), and starts Gunicorn.
-6. **Verify**: Visit `https://your-service.up.railway.app/health/` — it will return `{"status": "ok", "application": "LifeOS"}`.
+LifeOS supports multiple deployment models. The **Primary, Zero-Cost Recommended Approach** is **Free Laptop Server + Cloudflare Quick Tunnel**, which eliminates cloud hosting fees and gives you full control of your database.
 
 ---
 
-### Option B: Render (Blueprint Deployment)
+### Option 1: Free Laptop Server + Cloudflare Quick Tunnel (PRIMARY / RECOMMENDED)
 
-LifeOS provides a complete [`render.yaml`](file:///c:/LifeOs/render.yaml) blueprint declaring both the web service and managed database.
+This model transforms your personal Windows machine into a private, high-performance home server with zero monthly costs, zero domain purchases, and complete data ownership.
 
-1. Push your repository to GitHub or GitLab.
-2. Sign in to [Render.com](https://render.com) and navigate to **Blueprints**.
-3. Select your LifeOS repository. Render reads `render.yaml` and initializes:
-   - A Web Service (`lifeos-app`) running Python 3.12.
-   - A managed database (`lifeos-db`).
-4. Review the generated configuration and click **Apply**.
-5. Render runs the build command:
-   ```bash
-   pip install -r requirements.txt && python manage.py collectstatic --noinput
-   ```
-   And executes the start command:
-   ```bash
-   gunicorn config.wsgi:application --bind 0.0.0.0:$PORT --workers 3 --timeout 120
-   ```
-6. On initial deployment, run migrations from the Render Web Shell:
-   ```bash
-   python manage.py migrate
-   python manage.py createsuperuser
-   ```
+- **WSGI Production Server**: Waitress (`waitress>=3.0.0`) multi-threaded production WSGI server.
+- **Database**: Local MySQL (`lifeos_db`) on `127.0.0.1:3306`.
+- **Local Browser Access**: `http://localhost:8000` / `http://127.0.0.1:8000`.
+- **Local Wi-Fi Network Access**: `http://10.169.154.34:8000` (or local Wi-Fi IP). Connect any phone, tablet, or laptop on the same Wi-Fi router.
+- **Free Public Internet Sharing**: Cloudflare Quick Tunnel (`cloudflared tunnel --url http://127.0.0.1:8000`). Generates a temporary, free public HTTPS link (`https://*.trycloudflare.com`) to share with friends without opening router ports or exposing MySQL.
+- **Cost**: **$0.00** (Zero recurring or upfront costs).
+
+#### Quick Start:
+1. Double-click `start_lifeos.bat` to launch the Waitress WSGI server.
+2. (Optional) Double-click `start_tunnel.bat` to generate a public HTTPS link for friends.
+3. Run `backup_database.bat` to create an instant timestamped backup in `backups/`.
+
+For complete step-by-step guides, refer to:
+- [`LOCAL_HOSTING_GUIDE.md`](file:///c:/LifeOs/LOCAL_HOSTING_GUIDE.md) — Local server, Wi-Fi LAN access, and Windows Firewall setup.
+- [`PUBLIC_ACCESS_GUIDE.md`](file:///c:/LifeOs/PUBLIC_ACCESS_GUIDE.md) — Free public HTTPS tunneling via Cloudflare.
+- [`DATABASE_BACKUP_GUIDE.md`](file:///c:/LifeOs/DATABASE_BACKUP_GUIDE.md) — Automated and manual MySQL backup and restore.
+
+> **Cloud Hosting Status**: Paid cloud hosting options (Railway, AWS, Render) were evaluated and cancelled in favor of this zero-cost laptop server model. No paid resources, credit cards, or cloud databases were provisioned.
 
 ---
 
-### Option C: Containerized Deployment (Docker & Docker Compose)
+### Option 2: Containerized Deployment (Docker & Docker Compose)
 
 LifeOS includes a production [`Dockerfile`](file:///c:/LifeOs/Dockerfile), [`docker-compose.yml`](file:///c:/LifeOs/docker-compose.yml), and [`.dockerignore`](file:///c:/LifeOs/.dockerignore).
 

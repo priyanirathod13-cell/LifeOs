@@ -30,27 +30,29 @@ SECRET_KEY = os.getenv(
 DEBUG = os.getenv('DEBUG', 'True').lower() in ('true', '1', 'yes')
 
 # Allowed hosts configuration
-allowed_hosts_env = os.getenv('ALLOWED_HOSTS', '127.0.0.1,localhost')
+# Supports local laptop loopback, Wi-Fi LAN IP (phone/tablet access), and Cloudflare Tunnel
+allowed_hosts_env = os.getenv('ALLOWED_HOSTS', '127.0.0.1,localhost,0.0.0.0,10.169.154.34,.trycloudflare.com')
 ALLOWED_HOSTS = [host.strip() for host in allowed_hosts_env.split(',') if host.strip()]
 
-# Automatic detection of Railway public domain
-railway_domain = os.getenv('RAILWAY_PUBLIC_DOMAIN', '').strip()
-if railway_domain and railway_domain not in ALLOWED_HOSTS:
-    ALLOWED_HOSTS.append(railway_domain)
+for default_host in ['127.0.0.1', 'localhost', '0.0.0.0', '.trycloudflare.com', '.local']:
+    if default_host not in ALLOWED_HOSTS:
+        ALLOWED_HOSTS.append(default_host)
 
-# CSRF Trusted Origins for Cloud Deployment (e.g. https://lifeos.up.railway.app)
+# CSRF Trusted Origins (Supporting local laptop, local Wi-Fi LAN, and Cloudflare Tunnel)
 csrf_trusted_env = os.getenv('CSRF_TRUSTED_ORIGINS', '')
 CSRF_TRUSTED_ORIGINS = [origin.strip() for origin in csrf_trusted_env.split(',') if origin.strip()]
-if railway_domain:
-    railway_origin = f"https://{railway_domain}"
-    if railway_origin not in CSRF_TRUSTED_ORIGINS:
-        CSRF_TRUSTED_ORIGINS.append(railway_origin)
 
-if any('.railway.app' in h for h in ALLOWED_HOSTS) or railway_domain:
-    if 'https://*.railway.app' not in CSRF_TRUSTED_ORIGINS:
-        CSRF_TRUSTED_ORIGINS.append('https://*.railway.app')
-    if 'https://*.up.railway.app' not in CSRF_TRUSTED_ORIGINS:
-        CSRF_TRUSTED_ORIGINS.append('https://*.up.railway.app')
+for default_origin in [
+    'http://127.0.0.1:8000',
+    'http://localhost:8000',
+    'http://10.169.154.34:8000',
+    'https://*.trycloudflare.com',
+]:
+    if default_origin not in CSRF_TRUSTED_ORIGINS:
+        CSRF_TRUSTED_ORIGINS.append(default_origin)
+
+# Trust reverse proxy / tunnel SSL header (Cloudflare Tunnel forwards X-Forwarded-Proto)
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 
 # Application definition
@@ -221,9 +223,9 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Security Headers & Cookie Protection
 if not DEBUG:
-    SECURE_SSL_REDIRECT = os.getenv('SECURE_SSL_REDIRECT', 'True').lower() in ('true', '1', 'yes')
-    SESSION_COOKIE_SECURE = os.getenv('SESSION_COOKIE_SECURE', 'True').lower() in ('true', '1', 'yes')
-    CSRF_COOKIE_SECURE = os.getenv('CSRF_COOKIE_SECURE', 'True').lower() in ('true', '1', 'yes')
+    SECURE_SSL_REDIRECT = os.getenv('SECURE_SSL_REDIRECT', 'False').lower() in ('true', '1', 'yes')
+    SESSION_COOKIE_SECURE = os.getenv('SESSION_COOKIE_SECURE', 'False').lower() in ('true', '1', 'yes')
+    CSRF_COOKIE_SECURE = os.getenv('CSRF_COOKIE_SECURE', 'False').lower() in ('true', '1', 'yes')
     SECURE_HSTS_SECONDS = int(os.getenv('SECURE_HSTS_SECONDS', '31536000'))
     SECURE_HSTS_INCLUDE_SUBDOMAINS = os.getenv('SECURE_HSTS_INCLUDE_SUBDOMAINS', 'True').lower() in ('true', '1', 'yes')
     SECURE_HSTS_PRELOAD = os.getenv('SECURE_HSTS_PRELOAD', 'True').lower() in ('true', '1', 'yes')

@@ -15,7 +15,7 @@
 | **09** | **Personal Management Module** | **Completed** | Full Personal Management module across 8 functional areas: Personal Dashboard (8 summary KPI cards, recent journal/decisions/mistakes streams, 14-day mood trend, spending share), Journal (CRUD, date filters, search, newest/oldest sorting), Daily Check-in (standardized 1-5 scales, duplicate date prevention, 14-day history strip), Mood & Energy Tracking (7d/14d/30d/90d ranges, mood bar chart, energy vs stress comparison), Sleep Tracking (bedtime and wake-up timestamps, overnight duration calculation, 7.0–8.5h benchmark band, DailyMetric sync), Decision Journal (DRAFT/EVALUATING/DECIDED/REVIEWED lifecycle, options analysis, post-mortem outcome scoring), Mistake Tracker (anti-pattern logs, root causes, severity impacts, corrective protocols), Finance Manager (positive decimal transactions in ₹ INR, lifetime & monthly net balance/savings, category breakdowns, ledger search/filters), 22 tests in personal & finance, 123 total system tests (100% passing). |
 | **10** | **Analytics & Behavioral Intelligence** | **Completed** | Full multi-dimensional analytics suite: Main Analytics Dashboard (`/analytics/`), Productivity Analytics (task completion rate, estimation errors, daily trends), Study Analytics (subject hours, syllabus progress %, planning accuracy), Habit Analytics (frequency-aware completion, streaks, friction tracking), Time Management (time distribution donut, schedule adherence), Personal Well-being (mood/energy/stress/sleep trends, Pearson correlations with N>=14 threshold), Behavioral Insights Engine (deterministic rule-based heuristics with dismiss/restore), Period Comparison System (multi-domain delta scorecard with 0-denominator safety), 12 new analytics tests, 135 total system tests (100% passing). |
 | **11** | **Advanced Features & Integration** | **Completed** | Cross-module reactive sync (Task ↔ ScheduleBlock, StudySession ↔ StudyPlan/Topic), In-App Proactive Notifications with deduplication and unread counter badge, Global Multi-Entity Search across 10 models with tenant isolation, Rule-based Heuristic Recommendation Engine (`/recommendations/`) with dismissal persistence, Self-service Data Export Engine (sanitized JSON + modular CSV/ZIP), System Settings & Preferences (`/settings/`), PWA readiness (`manifest.json` + static-only `service-worker.js`), 16 new Step 11 tests, 151 total system tests (100% passing). |
-| **12** | **Final Testing, Security Audit & Cloud Deployment** | **Completed** | Multi-user zero-trust security audit (User A vs User B cross-tenant isolation tests), production environment hardening (DEBUG=False, dynamic SECRET_KEY, ALLOWED_HOSTS, CSRF_TRUSTED_ORIGINS, SSL/HSTS headers, secure cookies), custom 400/403/404/500 error pages, WhiteNoise static files compression & caching, Gunicorn WSGI configuration, dj-database-url cloud database support, Dockerfile & docker-compose.yml, Procfile, runtime.txt, render.yaml, railway.toml, DEPLOYMENT.md operations guide, 160 total system tests (100% passing). |
+| **12** | **Free Laptop Server, Local Access & Public Tunnel** | **Completed** | Production laptop server on Windows (Waitress WSGI on 0.0.0.0:8000), local Wi-Fi access for mobile/tablets (`10.169.154.34:8000`), free public internet sharing via Cloudflare Quick Tunnel (`cloudflared`, $0 cost, zero port forwarding, zero domain fees, protected MySQL port 3306), full MySQL database backup utility (`backup_database.bat`), automated startup scripts (`start_lifeos.bat`, `start_tunnel.bat`), complete documentation guides (`LOCAL_HOSTING_GUIDE.md`, `PUBLIC_ACCESS_GUIDE.md`, `DATABASE_BACKUP_GUIDE.md`), cancelled all paid cloud services (zero cloud charges), 160 total system tests (100% passing). |
 
 ---
 
@@ -661,10 +661,38 @@
 - **WSGI Application Server**: Gunicorn configured with 3 workers and 120-second timeout.
 - **Database Portability**: Integrated `dj-database-url` to support cloud `DATABASE_URL` connection strings alongside standard MySQL environment variables.
 
-### 5. Cloud Deployment Infrastructure & Operations Manual
-- **Containerization**: Production `Dockerfile` with multi-stage build and health check (`/health/`), `docker-compose.yml`, and `.dockerignore`.
-- **PaaS Deployment Manifests**: `railway.toml` and `Procfile` for Railway, and `render.yaml` for Render Blueprint deployment.
-- **Operations Guide**: Created `DEPLOYMENT.md` providing end-to-end instructions for Railway, Render, Docker, and Ubuntu/Nginx deployment.
+### 5. Deployment Infrastructure & Cloud Hosting Status
+- **PaaS Deployment Review**: Evaluated cloud PaaS deployment. To ensure zero cost, avoid subscription commitments, and maintain full local database control, cloud deployment on Railway was officially cancelled. Zero cloud services, databases, or subscriptions were provisioned on Railway.
+- **Operations Guide**: Updated `DEPLOYMENT.md` providing end-to-end instructions for Free Laptop Server hosting, Docker, Render, and Linux/Nginx deployment.
+
+### 6. Free Laptop Server, Local Wi-Fi Access & Cloudflare Tunnel Architecture
+- **Production WSGI Application Server (`serve.py`)**:
+  - Implemented multi-threaded Waitress WSGI application server (`waitress>=3.0.0`) binding to `0.0.0.0:8000` with 6 worker threads and automatic socket cleanup.
+  - Dynamically detects the laptop's LAN / Wi-Fi IP address and displays a rich console banner with local, LAN, and tunnel access instructions.
+- **Local Wi-Fi Network Access**:
+  - Configured `ALLOWED_HOSTS` to support `127.0.0.1`, `localhost`, `0.0.0.0`, LAN IP `10.169.154.34`, and `.local`.
+  - Configured `CSRF_TRUSTED_ORIGINS` with `http://127.0.0.1:8000`, `http://localhost:8000`, and `http://10.169.154.34:8000`.
+  - Configured `SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')` and dynamic `SECURE_SSL_REDIRECT` so mobile devices on local Wi-Fi connect seamlessly via HTTP without invalid SSL errors.
+  - Documented Windows Firewall setup command: `netsh advfirewall firewall add rule name="LifeOS Web Server" dir=in action=allow protocol=TCP localport=8000`.
+- **Free Public Internet Sharing via Cloudflare Quick Tunnel**:
+  - Bundled standalone `cloudflared.exe` (v2026.10.7) in `.venv\Scripts\`.
+  - Created one-click tunnel launcher `start_tunnel.bat` (`cloudflared tunnel --url http://127.0.0.1:8000`).
+  - Generates an instant, zero-cost, encrypted public HTTPS link (`https://*.trycloudflare.com`) that can be shared with friends and testers worldwide.
+  - 100% free forever: zero domain purchases, zero router port forwarding, zero subscription fees.
+  - Complete security isolation: MySQL port 3306 is strictly isolated to loopback (`127.0.0.1`), never exposed to the public internet.
+  - Configured `ALLOWED_HOSTS` and `CSRF_TRUSTED_ORIGINS` to allow `.trycloudflare.com` without HTTP 400 errors.
+- **Database Backup & Disaster Recovery System**:
+  - Created automated one-click backup utility `backup_database.bat` generating timestamped `.sql` backups in `backups/lifeos_db_backup_YYYYMMDD_HHMMSS.sql`.
+  - Verified pre-hosting backup (`lifeos_db_pre_laptop_hosting_backup.sql`, 75,839 bytes) and live backup (`lifeos_db_backup_20261109_090720.sql`, 75,891 bytes).
+  - Protected backups directory in `.gitignore`.
+  - Authored comprehensive disaster recovery guide `DATABASE_BACKUP_GUIDE.md`.
+- **One-Click Automation Scripts & Operational Guides**:
+  - `start_lifeos.bat`: Automated server launcher (checks MySQL, runs migrations, starts Waitress).
+  - `start_tunnel.bat`: Automated Cloudflare Quick Tunnel launcher.
+  - `backup_database.bat`: Automated timestamped MySQL database backup utility.
+  - `LOCAL_HOSTING_GUIDE.md`: Complete local server, Wi-Fi LAN access, mobile PWA, and Windows Firewall guide.
+  - `PUBLIC_ACCESS_GUIDE.md`: Complete guide for public internet sharing via Cloudflare Quick Tunnel.
+  - `DATABASE_BACKUP_GUIDE.md`: Backup, restoration, and Windows Task Scheduler guide.
 
 ### Final Automated Test Results
 - **160 Total Automated Tests** across all 8 applications (100% passing):
@@ -675,7 +703,7 @@
   - `apps.personal` & `apps.finance`: 22 tests (Journal, Biometrics, Sleep, Decisions, Mistakes, Finances)
   - `apps.analytics`: 16 tests (Velocity, Adherence, Correlations, Insights Engine)
   - `apps.core`: 35 tests (16 Step 11 tests + 9 Step 12 Multi-User Security tests + 10 foundation tests)
-  - **Full test execution**: `Ran 160 tests in 180.433s — OK (100% pass rate)`.
+  - **Full test execution against local MySQL**: `Ran 160 tests in 176.411s — OK (100% pass rate)`.
 
 
 

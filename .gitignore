@@ -23,6 +23,8 @@ venv.bak/
 # Database
 *.sqlite3
 *.db
+backups/
+*.sql
 
 # Static and Media files
 staticfiles/

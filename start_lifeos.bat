@@ -1,9 +1,9 @@
 @echo off
-title LifeOS Server (Production Waitress WSGI)
+title LifeOS Server (Production Supervisor & WSGI)
 cd /d "%~dp0"
 
 echo ======================================================================
-echo                      Starting LifeOS Server
+echo                 Starting LifeOS Production Service
 echo ======================================================================
 
 REM Check if Python venv exists
@@ -17,7 +17,7 @@ if not exist ".venv\Scripts\python.exe" (
 REM Check if MySQL is running (TCP 3306)
 netstat -ano | findstr /R /C:":3306 " >nul
 if %ERRORLEVEL% neq 0 (
-    echo [INFO] MySQL is not running on port 3306. Attempting to start XAMPP MySQL...
+    echo [INFO] MySQL is not running on port 3306. Starting XAMPP MySQL...
     if exist "C:\xampp\mysql\bin\mysqld.exe" (
         start "MySQL Server" /D "C:\xampp\mysql" "C:\xampp\mysql\bin\mysqld.exe" --defaults-file="C:\xampp\mysql\bin\my.ini" --console
         ping -n 4 127.0.0.1 >nul
@@ -33,8 +33,8 @@ REM Run migrations safely
 echo [INFO] Checking database migrations...
 .\.venv\Scripts\python.exe manage.py migrate --noinput
 
-REM Launch Waitress WSGI production server
-echo [INFO] Launching Waitress WSGI server on 0.0.0.0:8000...
-.\.venv\Scripts\python.exe serve.py
+REM Launch Supervisor (which supervises Waitress, health checks, and Tailscale Funnel)
+echo [INFO] Launching LifeOS Supervisor & Health Monitor...
+.\.venv\Scripts\python.exe supervisor.py
 
 pause

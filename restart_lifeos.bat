@@ -7,5 +7,5 @@ echo                     Restarting LifeOS Server
 echo ======================================================================
 
 call stop_lifeos.bat
-timeout /t 2 /nobreak >nul
+ping -n 3 127.0.0.1 >nul
 call start_lifeos.bat

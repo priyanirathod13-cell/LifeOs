@@ -44,7 +44,18 @@ from apps.study.models import Exam, StudySession, Subject
 def health_check(request):
     """
     Health-check endpoint confirming the LifeOS application is operational.
+    Verifies database connectivity before returning HTTP 200.
     """
+    try:
+        from django.db import connection
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT 1")
+    except Exception:
+        return JsonResponse({
+            "status": "degraded",
+            "application": "LifeOS"
+        }, status=503)
+
     return JsonResponse({
         "status": "ok",
         "application": "LifeOS"

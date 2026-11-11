@@ -47,6 +47,7 @@ Desktop.ini
 
 # Logs and debug
 *.log
+*.pid
 pip-log.txt
 pip-delete-this-directory.txt
 

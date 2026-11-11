@@ -68,10 +68,35 @@ def main():
   Press Ctrl+C to stop the server safely.
 ======================================================================
 """
-    print(banner)
+    try:
+        if sys.stdout and not sys.stdout.closed:
+            print(banner)
+    except Exception:
+        pass
 
-    # Configure waitress logging
-    logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
+    # Configure waitress logging to both file and console
+    log_handlers = []
+    try:
+        log_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), "server.log")
+        file_handler = logging.FileHandler(log_file, encoding="utf-8")
+        log_handlers.append(file_handler)
+    except Exception:
+        pass
+
+    try:
+        if sys.stdout and not sys.stdout.closed:
+            stream_handler = logging.StreamHandler(sys.stdout)
+            log_handlers.append(stream_handler)
+    except Exception:
+        pass
+
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s [%(levelname)s] %(message)s",
+        handlers=log_handlers if log_handlers else None
+    )
+
+    logging.info("Starting LifeOS Waitress server on %s:%d", host, port)
 
     waitress.serve(
         application,

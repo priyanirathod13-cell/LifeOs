@@ -1,44 +1,64 @@
-# LifeOS — Free Public Access Guide (Cloudflare Quick Tunnel)
+# LifeOS — Permanent Free Public Access Guide (Tailscale Funnel & Cloudflare)
 
-This guide explains how to share LifeOS over the public internet with friends, testers, or colleagues **completely free of cost**, with **zero domain purchases**, **zero router port forwarding**, and **zero cloud hosting fees**.
-
----
-
-## 1. How It Works
-
-```
-                                  [The Public Internet]
-                                           |
-                                           v
-                         [Friend / Collaborator's Browser]
-                                           |
-                                           v (HTTPS / TLS Encrypted)
-                            [Cloudflare Global Edge Network]
-                           https://<random>.trycloudflare.com
-                                           |
-                        =======================================
-                         Outbound Encrypted Tunnel (cloudflared)
-                        =======================================
-                                           |
-                                           v
-                            [Your Windows Laptop Server]
-                                           |
-                      +--------------------+--------------------+
-                      |                                         |
-                      v                                         v
-            [Waitress WSGI: Port 8000]                 [MySQL: Port 3306]
-           (Processes Web Requests)                 (STRICTLY PRIVATE / LOCAL)
-```
-
-1. Your laptop runs the LifeOS server on `127.0.0.1:8000`.
-2. A lightweight background tool (`cloudflared.exe`, downloaded in `.venv\Scripts\`) opens an outbound, encrypted tunnel to Cloudflare.
-3. Cloudflare assigns a unique, secure public HTTPS URL (e.g. `https://alpha-beta-gamma.trycloudflare.com`).
-4. Friends access that URL from anywhere in the world. Cloudflare proxies requests through the secure tunnel directly to your laptop.
-5. When you close the tunnel, public access is severed immediately.
+This guide explains how to host and share LifeOS over the public internet with friends, testers, or family **completely free of cost**, with **zero domain purchases**, **zero router port forwarding**, and **zero cloud hosting fees**.
 
 ---
 
-## 2. Key Security & Cost Benefits
+## 1. Primary Method: Tailscale Funnel (Stable & Permanent HTTPS)
+
+Tailscale Funnel exposes your local Waitress server (`http://127.0.0.1:8000`) to the public internet using a **permanent, stable MagicDNS domain** (`*.ts.net`) with automated Let's Encrypt TLS certificates.
+
+### Architecture
+
+```
+                                [The Public Internet]
+                                          |
+                                          v
+                            [Any Web Browser Worldwide]
+                                          |
+                                          v (HTTPS / TLS Encrypted)
+                             [Tailscale Global Edge Ingress]
+                         https://laptop-lkra47mc.tail581455.ts.net
+                                          |
+                        ======================================
+                         Encrypted WireGuard / Funnel Tunnel
+                        ======================================
+                                          |
+                                          v
+                           [Your Windows Laptop Server]
+                           (Tailscale IPN Windows Service)
+                                          |
+                     +--------------------+--------------------+
+                     |                                         |
+                     v                                         v
+           [Waitress WSGI: Port 8000]                 [MySQL: Port 3306]
+          (Processes Web Requests)                 (STRICTLY PRIVATE / LOCAL)
+```
+
+### Why Tailscale Funnel is the Permanent Solution:
+- **Stable URL**: Your public URL is **`https://laptop-lkra47mc.tail581455.ts.net/`**. It never rotates or changes randomly.
+- **Zero Cost**: 100% free forever for personal use on Tailscale's free tier.
+- **Persistent Background Service**: Operates via `Tailscale IPN` Windows Service (`--bg`), automatically recovering across reboots.
+- **Complete MySQL Isolation**: Port 3306 is never exposed to the public; only HTTP traffic to port 8000 is proxied.
+- **Antigravity Independence**: Runs as a Windows system service, completely unaffected by IDE or editor restarts.
+
+### How to Start or Manage Tailscale Funnel:
+1. Double-click [`start_tailscale_funnel.bat`](start_tailscale_funnel.bat) or run:
+   ```cmd
+   tailscale funnel --bg 8000
+   ```
+2. Check Funnel status anytime:
+   ```cmd
+   tailscale funnel status
+   ```
+3. To stop public exposure:
+   ```cmd
+   tailscale funnel --https=443 off
+   ```
+
+---
+
+## 2. Alternative Method: Cloudflare Quick Tunnel (Ephemeral Demos)
 
 | Feature | LifeOS Laptop + Cloudflare Tunnel | Traditional Cloud / VPS |
 |---|---|---|

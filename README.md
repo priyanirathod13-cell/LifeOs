@@ -351,27 +351,40 @@ For full details, see [`LOCAL_HOSTING_GUIDE.md`](LOCAL_HOSTING_GUIDE.md).
 
 ---
 
-### C. Free Global Public Access (Cloudflare Quick Tunnel)
+### C. Permanent Free Public Access (Tailscale Funnel)
 
-Share LifeOS with friends or collaborators worldwide with **$0 cost**, **no domain purchase**, and **no router port forwarding**:
+Share LifeOS with friends or collaborators worldwide with **$0 cost**, **no custom domain purchase**, and a **permanent, stable HTTPS URL**:
+
+1. Ensure the LifeOS server is running via `start_lifeos.bat`.
+2. Double-click [`start_tailscale_funnel.bat`](start_tailscale_funnel.bat) or run:
+   ```cmd
+   tailscale funnel --bg 8000
+   ```
+3. Your permanent, stable public HTTPS link is:
+   ```text
+   https://laptop-lkra47mc.tail581455.ts.net/
+   ```
+4. **Permanent & Self-Healing**: Runs as a Windows background service (`Tailscale IPN`), automatically recovering across laptop reboots.
+5. **Security**: MySQL port 3306 is **never exposed**; only web requests to port 8000 are tunneled through encrypted WireGuard connections.
+
+---
+
+### D. Alternative Public Access (Cloudflare Quick Tunnel)
+
+As an alternative for ephemeral sessions without Tailscale:
 
 1. Ensure the LifeOS server is running via `start_lifeos.bat`.
 2. Double-click [`start_tunnel.bat`](start_tunnel.bat) or run:
    ```powershell
    .\.venv\Scripts\cloudflared.exe tunnel --url http://127.0.0.1:8000
    ```
-3. Cloudflare generates a secure, free public HTTPS link:
-   ```text
-   https://<generated-name>.trycloudflare.com
-   ```
-4. Share this HTTPS link. Friends can register their own accounts with strict multi-user tenant isolation.
-5. **Security**: MySQL port 3306 is **never exposed**; only web requests to port 8000 are tunneled through an outbound encrypted tunnel.
+3. Generates a temporary `https://<generated-name>.trycloudflare.com` link.
 
 For full details, see [`PUBLIC_ACCESS_GUIDE.md`](PUBLIC_ACCESS_GUIDE.md).
 
 ---
 
-### D. Database Backup & Disaster Recovery
+### E. Database Backup & Disaster Recovery
 
 LifeOS includes an automated one-click backup utility to ensure zero data loss:
 

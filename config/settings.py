@@ -30,15 +30,15 @@ SECRET_KEY = os.getenv(
 DEBUG = os.getenv('DEBUG', 'True').lower() in ('true', '1', 'yes')
 
 # Allowed hosts configuration
-# Supports local laptop loopback, Wi-Fi LAN IP (phone/tablet access), and Cloudflare Tunnel
-allowed_hosts_env = os.getenv('ALLOWED_HOSTS', '127.0.0.1,localhost,0.0.0.0,10.169.154.34,.trycloudflare.com')
+# Supports local laptop loopback, Wi-Fi LAN IP, Cloudflare Tunnel, and Tailscale Funnel (.ts.net)
+allowed_hosts_env = os.getenv('ALLOWED_HOSTS', '127.0.0.1,localhost,0.0.0.0,10.169.154.34,.trycloudflare.com,.ts.net')
 ALLOWED_HOSTS = [host.strip() for host in allowed_hosts_env.split(',') if host.strip()]
 
-for default_host in ['127.0.0.1', 'localhost', '0.0.0.0', '.trycloudflare.com', '.local']:
+for default_host in ['127.0.0.1', 'localhost', '0.0.0.0', '.trycloudflare.com', '.ts.net', '.local']:
     if default_host not in ALLOWED_HOSTS:
         ALLOWED_HOSTS.append(default_host)
 
-# CSRF Trusted Origins (Supporting local laptop, local Wi-Fi LAN, and Cloudflare Tunnel)
+# CSRF Trusted Origins (Supporting local laptop, local Wi-Fi LAN, Cloudflare Tunnel, and Tailscale Funnel)
 csrf_trusted_env = os.getenv('CSRF_TRUSTED_ORIGINS', '')
 CSRF_TRUSTED_ORIGINS = [origin.strip() for origin in csrf_trusted_env.split(',') if origin.strip()]
 
@@ -47,6 +47,7 @@ for default_origin in [
     'http://localhost:8000',
     'http://10.169.154.34:8000',
     'https://*.trycloudflare.com',
+    'https://*.ts.net',
 ]:
     if default_origin not in CSRF_TRUSTED_ORIGINS:
         CSRF_TRUSTED_ORIGINS.append(default_origin)

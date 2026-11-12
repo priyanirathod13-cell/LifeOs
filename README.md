@@ -1,418 +1,391 @@
-# LifeOS — Personal Behavioral Intelligence & Life Management System
+# LifeOS — Personal Behavioral Intelligence
 
-LifeOS is a multi-user behavioral intelligence and life management platform designed to help users track, organize, and analyze all aspects of their daily lives. By systematically connecting planning, daily habits, task completion, mood, energy levels, decision-making, and financial activity, LifeOS enables users to discover patterns in their behavior and optimize their personal growth and productivity.
+> **A Debugger for Humans.**  
+> A multi-user behavioral intelligence and life management platform designed to capture, understand, and optimize the multi-dimensional relationships between planning, daily habits, states of mind, and life outcomes.
 
 ---
 
-## 1. Project Overview
+> [!IMPORTANT]
+> ### 🌐 Live Demonstration Links
+> - **Live Application:** [https://laptop-lkra47mc.tail581455.ts.net/](https://laptop-lkra47mc.tail581455.ts.net/)
+> - **User Login:** [https://laptop-lkra47mc.tail581455.ts.net/accounts/login/](https://laptop-lkra47mc.tail581455.ts.net/accounts/login/)
+> - **User Registration:** [https://laptop-lkra47mc.tail581455.ts.net/accounts/register/](https://laptop-lkra47mc.tail581455.ts.net/accounts/register/)
+> - **Health-Check Endpoint:** [https://laptop-lkra47mc.tail581455.ts.net/health/](https://laptop-lkra47mc.tail581455.ts.net/health/)
+>
+> **Hosting & Availability Notice**: This live application is hosted on a dedicated Windows development laptop utilizing **Tailscale Funnel** for encrypted, public HTTPS access. It is accessible whenever the host laptop, internet connection, Tailscale background service, and LifeOS application server are operational. It is an edge-hosted personal demonstration environment rather than a 24/7 cloud-managed cluster.
 
-LifeOS brings together multiple life dimensions into a cohesive, private, multi-user system:
-- **Tasks & Productivity**: Prioritized task tracking and focus workflows.
-- **Habits & Routines**: Streak tracking, consistency metrics, and behavioral feedback.
-- **Goals & Projects**: Structured milestones linking high-level objectives to daily tasks.
-- **Study Management**: Subject tracking, revision schedules, and academic workflows.
-- **Timetables & Schedules**: Dynamic daily and weekly routines with auto-generation.
-- **Journal Entries & Reflections**: Qualitative daily logs for retrospectives.
-- **Mood, Sleep & Energy**: Biometric and subjective state logging to correlate with productivity.
-- **Financial Activities**: Personal expense and cash flow tracking in INR.
-- **Decisions & Mistakes**: Documenting decisions, expected outcomes, and lessons learned.
-- **Behavioral Analytics**: Insights into the relationships between planning, execution, and outcomes.
-- **In-App Notifications**: Proactive, deduplicated alerts for overdue tasks, exams, revisions, and habits.
-- **Global Search**: Instant cross-entity search spanning 10 core LifeOS data models.
-- **Personalized Recommendations**: Deterministic heuristic rules across productivity, study, and routines.
-- **Data Sovereignty & Export**: Full self-service JSON and multi-table CSV / ZIP downloads.
-- **PWA Readiness**: Offline static caching service worker and Web App Manifest.
+---
+
+## 1. Project Overview & Philosophy
+
+Most productivity applications operate as isolated silos: a to-do list here, a habit tracker there, a separate study timer, and a disconnected mood journal. Consequently, users never see the underlying invisible patterns governing their performance and well-being:
+* *How does 6 hours of sleep versus 8 hours impact deep work completion?*
+* *Does study session length correlate with topic retention or exam scores?*
+* *Which habits trigger productive workdays, and which ones induce friction?*
+* *What cognitive biases repeatedly lead to regrettable decisions?*
+
+**LifeOS** operates as **a debugger for human behavior**. By systematically connecting planning, daily habits, task completion, mood, energy, sleep, decision-making, and financial activity into a unified relational data model, LifeOS uncovers behavioral correlations and delivers actionable insights to help individuals make better decisions.
+
+### Core Architectural Principles
+1. **Multi-User Data Isolation**: Complete tenant privacy. Every model enforces explicit user-level ownership checks preventing Insecure Direct Object References (IDOR).
+2. **Behavioral Intelligence**: Multi-dimensional correlation engine calculating Pearson correlation coefficients ($N \ge 14$ threshold) across biometrics, habits, and productivity.
+3. **Cognitive Calm & Minimalist UI**: Dark-mode design system built on CSS custom properties and semantic tokens, eliminating visual clutter.
+4. **Data Sovereignty**: Zero lock-in. Full self-service single JSON backups and multi-table CSV / ZIP downloads.
+5. **Self-Healing Edge Hosting**: Production WSGI architecture on Windows with autonomous monitoring, automated recovery, and zero cloud expenses.
 
 ---
 
 ## 2. Technology Stack
 
-- **Backend**: Python (3.11+) & Django (4.2 LTS)
-- **Database**: MySQL / MariaDB via Django ORM and `mysqlclient`
-- **Frontend Architecture**: Server-rendered HTML5, CSS3 with CSS Variables, Modern Vanilla JavaScript
-- **Typography**: Inter (Weights 400, 500, 600, 700)
-- **Design Concept**: Minimal Modern Dark + Soft Indigo Accents
-- **Environment Management**: Python Virtual Environment (`venv`), `python-dotenv`
-- **Version Control**: Git & GitHub
+| Layer | Technologies & Tools |
+| :--- | :--- |
+| **Backend Framework** | **Python 3.13**, **Django 4.2 LTS** (ORM, Custom Auth, Security Middleware) |
+| **Database Engine** | **MySQL 8.0** / **MariaDB 10.4+** via `mysqlclient` and Django ORM (3NF, strict integrity constraints) |
+| **Data Science & Analytics** | **Pandas**, **NumPy** (data wrangling, rolling metrics), **Plotly** (interactive time-series, correlation matrices) |
+| **Frontend Architecture** | **Semantic HTML5**, **CSS3 with Design Tokens / CSS Variables**, **Modern Vanilla JavaScript (ES6+)** |
+| **Design & Typography** | **Inter Font Family** (400, 500, 600, 700), Minimal Modern Dark Canvas (`#0F1117`) with Soft Indigo (`#818CF8`) |
+| **Production WSGI Server** | **Waitress** (`waitress>=3.0.0`) multi-threaded WSGI server (port 8000) |
+| **High Availability & Supervision** | Custom autonomous supervisor (`supervisor.py`) with Win32 Named Mutex single-instance locking |
+| **Public Networking & Tunneling** | **Tailscale Funnel** (MagicDNS, Let's Encrypt automated TLS) + **Cloudflare Quick Tunnel** fallback |
+| **Static File Optimization** | **WhiteNoise** with Gzip/Brotli compression and persistent caching |
+| **Mobile & PWA Support** | Web App Manifest (`manifest.json`), Service Worker (`service-worker.js`) |
 
 ---
 
-## 3. Project Folder Structure
+## 3. Application Architecture
+
+```mermaid
+flowchart TD
+    subgraph Clients["Clients & Edge Gateway"]
+        Browser["Desktop & Mobile Browsers"]
+        PWA["Installed Mobile PWA"]
+        TailscaleEdge["Tailscale Edge Ingress\nhttps://laptop-lkra47mc.tail581455.ts.net"]
+    end
+
+    subgraph Host["Windows Laptop Host"]
+        subgraph NetLayer["Networking & Security"]
+            TS_IPN["Tailscale IPN Service\n(Reverse Proxy to :8000)"]
+            Firewall["Windows Firewall\n(Strict Port 8000 only)"]
+        end
+
+        subgraph SupervisorDaemon["Autonomous Self-Healing Supervisor"]
+            Supervisor["supervisor.py\n(Win32 Mutex, 15s Health Loop)"]
+            MonitorLog["monitor.log\n(Auto-Rotating)"]
+        end
+
+        subgraph WSGI["Production Application Server"]
+            Waitress["Waitress WSGI Server\n(Port 8000, 6 Threads)"]
+            WhiteNoise["WhiteNoise Middleware\n(Compressed Static Assets)"]
+            DjangoCore["Django 4.2 Framework\n(Middleware, Auth, CSRF, URL Routing)"]
+        end
+
+        subgraph Apps["Domain Applications"]
+            AccountsApp["apps.accounts\n(Custom User, EmailAuth)"]
+            ProdApp["apps.productivity\n(Tasks, Habits, Timetable)"]
+            PlanningApp["apps.planning\n(Goals, Projects)"]
+            StudyApp["apps.study\n(Subjects, Syllabus, Timer)"]
+            PersonalApp["apps.personal\n(Journal, Check-in, Sleep, Decisions)"]
+            FinanceApp["apps.finance\n(Transactions, Cash Flow)"]
+            AnalyticsApp["apps.analytics\n(Pandas, NumPy, Pearson Engine)"]
+            CoreApp["apps.core\n(Search, Notifications, Recommendations)"]
+        end
+
+        subgraph DataStore["Persistence Layer"]
+            MySQL[("MySQL 8.0 / MariaDB\nlifeos_db on 127.0.0.1:3306\n(STRICTLY PRIVATE)")]
+        end
+    end
+
+    Browser -->|Public HTTPS| TailscaleEdge
+    PWA -->|Public HTTPS| TailscaleEdge
+    TailscaleEdge -->|Encrypted WireGuard| TS_IPN
+    TS_IPN --> Firewall
+    Firewall --> Waitress
+    Supervisor -->|Health Check / Relaunch| Waitress
+    Supervisor -->|Ensure / Relaunch| MySQL
+    Supervisor --> MonitorLog
+    Waitress --> WhiteNoise
+    WhiteNoise --> DjangoCore
+    DjangoCore --> Apps
+    Apps -->|Django ORM / Strict Tenant SQL| MySQL
+```
+
+---
+
+## 4. Main Features & Modular System
+
+LifeOS organizes personal behavioral intelligence across structured domains:
+
+### 1. Executive Dashboard (`/dashboard/`)
+* **Real-time Metrics**: Today's task completion velocity, active habit streak completion %, total study focus time, and active quarterly goal progress.
+* **Interactive Quick Actions**: One-click task completion toggle, instant habit check-in, and quick biometric check-in modal.
+* **Contextual Streams**: Chronological schedule blocks, upcoming examinations, and recent multi-module activity feed.
+
+### 2. Productivity & Daily Rhythm (`/productivity/`, `/timetable/`)
+* **Task Manager**: Priority matrix (P1–P4), multi-attribute filtering, search, time estimation vs. actual duration tracking.
+* **Habits & Streaks**: 30-day visual matrix, daily/weekly streak engine, consistency tiers, and pause/active toggles.
+* **Daily & Weekly Timetable**: Chronological timeline, drag/reschedule capabilities, and 7-day Monday–Sunday visual calendar.
+* **Smart Generator Engine**: Deterministic rule-based scheduling engine prioritizing study commitments, task urgency, rest breaks, and fatigue bounds.
+* **Activity Stopwatch**: Live start/stop timer for deep work sessions with automatic duration calculation.
+
+### 3. Study Management & Academic Syllabi (`/study/`)
+* **Syllabus Progress Tracker**: Subjects, courses, topics, chapter units, and behind-schedule alerts.
+* **Live Study Stopwatch**: Focus sessions with focus ratings (1–10), auto-closure of dangling sessions, and syllabus velocity charts.
+* **Revision Planner**: Spaced repetition iterations with overdue, today, and upcoming queues.
+* **Exams & Assessments**: Examination schedules, countdown timers, and target score tracking.
+
+### 4. Personal Well-being & Cognitive Logging (`/personal/`)
+* **Daily Check-in**: Standardized 5-point Likert scales for Mood, Energy, and Stress levels.
+* **Sleep Tracker**: Overnight duration calculator handling midnight crossings, quality ratings, and benchmark bands (7.0–8.5h).
+* **Introspective Journal**: Rich markdown reflections with full-text search and date range filtering.
+* **Decision Journal**: Structured decision lifecycle (Draft $\rightarrow$ Evaluating $\rightarrow$ Decided $\rightarrow$ Reviewed), option payoffs, and post-mortem outcome scoring.
+* **Mistake Tracker**: Anti-pattern documentation, root-cause triggers, severity impacts, and mitigation action plans.
+
+### 5. Financial Management (`/personal/finance/`)
+* **Income & Expense Tracking**: Strict positive decimal transactions in INR (₹).
+* **Cash Flow Analytics**: Monthly net balance, savings rate, category-wise breakdowns, and ledger search.
+
+### 6. Behavioral Intelligence & Analytics (`/analytics/`)
+* **Cross-Dimensional Correlations**: Powered by Pandas and NumPy, calculating Pearson correlation coefficients ($r$) with statistical significance thresholds ($N \ge 14$).
+* **Interactive Charts**: Powered by Plotly and lightweight CSS visualizations.
+* **Behavioral Insights Engine**: Deterministic heuristic rules generating actionable insights (e.g. *"When sleep is $\ge 7.5$ hours, deep work completion increases by 34%"*).
+* **Period Comparison Scorecard**: Comparing current vs. previous 7-day, 30-day, and 90-day performance with zero-division safeguards.
+
+### 7. Core Cross-Cutting Services
+* **In-App Notifications**: Proactive, deduplicated alerts for overdue tasks, upcoming exams, spaced revisions, and habit streaks.
+* **Global Multi-Entity Search**: Instant cross-entity search spanning 10 core LifeOS models.
+* **Personalized Recommendations**: Heuristic recommendations with dismiss/restore capabilities.
+* **Data Sovereignty & Export**: Single-click full JSON export and multi-table CSV/ZIP archive download.
+
+---
+
+## 5. UI Showcase & Visual Design System
+
+LifeOS uses a custom dark-mode design system built from scratch with zero heavy CSS framework bloat:
+
+```
++-----------------------------------------------------------------------------------+
+|  LifeOS               🔍 Global Search...              🔔 (3)   👤 Priyani Rathod |
++------------------+----------------------------------------------------------------+
+|  MY DAY          |  Welcome back, Priyani                     Wednesday, 12 Nov   |
+|  📊 Dashboard    |  +----------------+ +----------------+ +---------------------+ |
+|  📅 Timetable    |  | Tasks Done     | | Habit Streak   | | Deep Work Focus     | |
+|  ✅ Tasks        |  | 8 / 10 (80%)   | | 14 Days Active | | 4 hrs 15 mins       | |
+|  🔁 Habits       |  +----------------+ +----------------+ +---------------------+ |
+|  ⏱️ Activities   |                                                                |
+|                  |  Today's Timetable               Behavioral Insights           |
+|  MY GROWTH       |  [09:00 - 10:30] Deep Work       💡 Higher sleep duration (8h) |
+|  📚 Study Hub    |  [10:45 - 12:00] Mathematics        correlated with +38% study |
+|  🎯 Goals        |  [14:00 - 15:30] Project Sprint     focus rating this week.    |
+|  📁 Projects     |                                                                |
+|  📝 Journal      |  Active Habits                   Recent Activity               |
+|  ⚖️ Decisions    |  [x] Morning Meditation (14d)    - Finished Task: API Spec     |
+|                  |  [x] 2.5L Water (8d)             - Logged 90m Study Session    |
+|  INTELLIGENCE    |  [ ] Evening Reading (5d)        - Check-in: Energy 4/5        |
+|  📈 Analytics    +----------------------------------------------------------------+
++-----------------------------------------------------------------------------------+
+```
+
+### Visual Token Hierarchy (`static/css/variables.css`)
+* `--bg-primary: #0F1117` (Deep charcoal canvas)
+* `--bg-sidebar: #151821` (Structured navigation tone)
+* `--bg-card: #1B1F2A` (Elevated component card surfaces)
+* `--accent-primary: #818CF8` (Soft indigo focal color)
+* `--text-primary: #F3F4F6` (High-contrast typography)
+* `--text-secondary: #9CA3AF` (Refined descriptive metadata)
+* `--success: #34D399` | `--warning: #FBBF24` | `--danger: #F87171` (Semantic status indicators)
+
+---
+
+## 6. Project Directory Structure
 
 ```
 LifeOS/
+├── manage.py                     # Django CLI administrative entry point
+├── requirements.txt              # Production and development dependencies
+├── .env.example                  # Safe configuration template (committed)
+├── .env                          # Local credentials (STRICTLY GIT-IGNORED)
+├── .gitignore                    # Git exclusion rules
+├── README.md                     # Project manual & presentation documentation
+├── PROJECT_CONTEXT.md            # System mission & architectural blueprint
+├── DEVELOPMENT_PROGRESS.md       # Milestone roadmap & development log
+├── DATABASE_SCHEMA.md            # Relational database schema reference
+├── DEPLOYMENT.md                 # Production deployment operations manual
+├── LOCAL_HOSTING_GUIDE.md        # Local laptop & Wi-Fi LAN setup guide
+├── PUBLIC_ACCESS_GUIDE.md        # Tailscale Funnel public access manual
+├── DATABASE_BACKUP_GUIDE.md       # Backup and disaster recovery manual
 │
-├── manage.py                   # Django CLI utility for administrative tasks
-├── requirements.txt            # Project dependencies
-├── .env                        # Local environment variables (not committed)
-├── .env.example                # Example environment configuration template
-├── .gitignore                  # Git ignore rules
-├── README.md                   # Project documentation
-├── PROJECT_CONTEXT.md          # Architectural context and philosophy
-├── DEVELOPMENT_PROGRESS.md     # Step-by-step milestone tracking
-├── DATABASE_SCHEMA.md          # Database tables and schema roadmap
+├── serve.py                      # Multi-threaded Waitress WSGI production server
+├── supervisor.py                 # Autonomous supervisor & health monitor daemon
+├── start_lifeos.bat              # One-click startup script (MySQL check + supervisor)
+├── stop_lifeos.bat               # One-click graceful shutdown script
+├── stop_lifeos.ps1               # Clean process termination engine
+├── restart_lifeos.bat            # One-click safe restart script
+├── launch_lifeos_background.vbs  # Headless Windows Startup launcher
+├── start_tailscale_funnel.bat    # Permanent Tailscale Funnel activator
+├── start_tunnel.bat              # Cloudflare Quick Tunnel alternative
+├── backup_database.bat           # Automated MySQL timestamped backup utility
 │
-├── config/                     # Core project configuration
-│   ├── __init__.py
-│   ├── settings.py             # Django settings (database, apps, middleware, tz)
-│   ├── urls.py                 # Top-level URL routing
-│   ├── asgi.py                 # ASGI configuration for async support
-│   └── wsgi.py                 # WSGI configuration for production servers
+├── config/                       # Core Django configuration
+│   ├── settings.py               # Database, auth, security, timezone settings
+│   ├── urls.py                   # Master URL routing table
+│   ├── wsgi.py                   # WSGI entry point
+│   └── asgi.py                   # ASGI entry point
 │
-├── apps/                       # Modular Django applications
-│   ├── __init__.py
-│   ├── core/                   # System core, notifications, search, recommendations, export, preferences
-│   │   └── services/           # notification_service, search_service, recommendation_service, export_service
-│   ├── accounts/               # Custom user model, authentication, profile & sessions
-│   ├── productivity/           # Category, Task, Habit, HabitLog, Activity, Routine, ScheduleBlock
-│   ├── planning/               # Project, Goal, GoalTask
-│   ├── personal/               # JournalEntry, Decision, DecisionOption, DecisionOutcome, Mistake, DailyMetric, SleepRecord
-│   ├── finance/                # Transaction
-│   ├── study/                  # Subject, Topic, StudySession, StudyPlan, Revision, Exam
-│   └── analytics/              # Multi-domain analytics, correlation engine, charts & insights persistence
+├── apps/                         # Modular Django applications
+│   ├── accounts/                 # Custom User, authentication backends, profiles
+│   ├── core/                     # Dashboard, global search, notifications, export
+│   ├── productivity/             # Tasks, Categories, Habits, Timetable, Routines
+│   ├── planning/                 # Goals, Projects, Milestones
+│   ├── study/                    # Subjects, Topics, Syllabi, Timers, Revisions
+│   ├── personal/                 # Journal, Daily Check-in, Sleep, Decisions, Mistakes
+│   ├── finance/                  # Ledger transactions and cash flow analytics
+│   └── analytics/                # Pearson correlation engine, charts, insight rules
 │
-├── templates/                  # Django Template Architecture
-│   ├── base.html               # Foundational HTML5 shell and asset links
-│   ├── layouts/
-│   │   └── app_layout.html     # Authenticated three-tier layout
-│   ├── components/
-│   │   ├── sidebar.html        # Left navigation grouped by domain
-│   │   ├── header.html         # Top header with profile, search, breadcrumbs
-│   │   └── messages.html       # Flash messages integration
-│   └── pages/
-│       ├── dashboard.html      # Executive behavioral overview
-│       ├── ui_system.html      # 16-component design system catalog
-│       ├── placeholder.html    # Reusable module under-construction view
-│       ├── tasks.html          # Tasks module page
-│       ├── habits.html         # Habits module page
-│       ├── study.html          # Study management page
-│       ├── projects.html       # Projects page
-│       ├── journal.html        # Journal entries page
-│       └── settings.html       # System settings page
+├── templates/                    # Clean HTML5 presentation layer
+│   ├── base.html                 # Master HTML5 template
+│   ├── layouts/app_layout.html   # Three-tier authenticated layout
+│   └── pages/                    # Domain views (dashboard, tasks, study, etc.)
 │
-├── static/                     # Design System Static Assets
-│   ├── css/
-│   │   ├── variables.css       # Central color system & design tokens
-│   │   ├── base.css            # Reset, typography, utility classes
-│   │   ├── layout.css          # Sidebar, sticky header, content area
-│   │   ├── components.css      # All 16 reusable UI components
-│   │   └── responsive.css      # Tablet and mobile breakpoint queries
-│   ├── js/
-│   │   ├── main.js             # Dropdown, modal, alert interactions
-│   │   └── navigation.js       # Sidebar toggle, drawer, active links
-│   └── images/
-│       ├── logo.svg            # Custom LifeOS SVG mark
-│       └── avatar-placeholder.svg
+├── static/                       # Static UI assets
+│   ├── css/                      # CSS variables, typography, layout, components
+│   ├── js/                       # Modular ES6 interactive UI scripts
+│   └── images/                   # Vector marks and icon assets
 │
-└── media/                      # User-uploaded files (avatars, attachments)
-    └── .gitkeep
+└── backups/                      # Timestamped database backups (GIT-IGNORED)
 ```
 
 ---
 
-## 4. Design System & Visual Identity
-
-### Direction: Minimal Modern Dark + Soft Indigo Accents
-LifeOS adheres to a disciplined visual system prioritizing readability, cognitive calm, and clear visual hierarchy.
-
-### Central CSS Color Palette
-All colors are configured centrally in `static/css/variables.css`:
-```css
-:root {
-    --bg-primary: #0F1117;          /* Main application canvas */
-    --bg-sidebar: #151821;          /* Left sidebar background */
-    --bg-card: #1B1F2A;             /* Cards, dialogs, dropdowns */
-    --accent-primary: #818CF8;      /* Primary soft indigo accent */
-    --accent-secondary: #A78BFA;    /* Secondary violet accent */
-    --text-primary: #F3F4F6;        /* High-contrast body text */
-    --text-secondary: #9CA3AF;      /* Secondary descriptive text */
-    --text-muted: #6B7280;          /* Captions, labels, timestamps */
-    --success: #34D399;             /* Positive streaks, completed states */
-    --warning: #FBBF24;             /* In-progress states, deadlines */
-    --danger: #F87171;              /* High-friction alerts, overdue items */
-    --border: #2A2F3A;              /* Subtle card and divider borders */
-}
-```
-
-### 16 Foundational UI Components
-1. **Primary Button** (`.btn.btn-primary`)
-2. **Secondary Button** (`.btn.btn-secondary`)
-3. **Outline Button** (`.btn.btn-outline`)
-4. **Input Field** (`.form-control`)
-5. **Textarea** (`textarea.form-control`)
-6. **Select Dropdown** (`.form-select`)
-7. **Custom Checkbox** (`.custom-checkbox`)
-8. **Toggle Switch** (`.toggle-switch`)
-9. **Card & Metric Card** (`.card`, `.metric-card`)
-10. **Modal Dialog** (`.modal-backdrop`, `.modal-dialog`)
-11. **Status Badges** (`.badge`, `.badge-accent`, `.badge-success`, `.badge-warning`, `.badge-danger`, `.badge-neutral`)
-12. **Progress Bars** (`.progress-bar-wrap`, `.progress-fill`)
-13. **Responsive Data Tables** (`.table-container`, `.table`)
-14. **Empty State** (`.empty-state`)
-15. **Alerts & Notifications** (`.alert`, `.alert-info`, `.alert-success`, `.alert-warning`, `.alert-danger`)
-16. **Loading Indicators** (`.spinner`, `.skeleton-box`)
-
----
-
-## 5. Getting Started: Step-by-Step Guide for Beginners
+## 7. Local Installation & Setup
 
 ### Prerequisites
-1. **Python** (version 3.10 to 3.13)
-2. **MySQL Server** or **MariaDB** (port 3306)
-3. **Git**
+* **Python 3.10 – 3.13** installed on your system.
+* **MySQL 8.0** or **MariaDB 10.4+** (e.g. via XAMPP or standalone service).
+* **Git** version control.
+
+### Step-by-Step Setup
+
+1. **Clone the Repository**:
+   ```bash
+   git clone https://github.com/priyanirathod13-cell/LifeOs.git
+   cd LifeOs
+   ```
+
+2. **Create and Activate Virtual Environment**:
+   ```powershell
+   # Windows (PowerShell)
+   python -m venv .venv
+   .\.venv\Scripts\Activate.ps1
+   ```
+
+3. **Install Dependencies**:
+   ```powershell
+   pip install -r requirements.txt
+   ```
+
+4. **Configure Environment Variables**:
+   ```powershell
+   Copy-Item .env.example .env
+   ```
+   Open `.env` and configure your local MySQL database credentials:
+   ```ini
+   SECRET_KEY=your-secure-random-secret-key-here
+   DEBUG=True
+   ALLOWED_HOSTS=127.0.0.1,localhost,.ts.net
+   CSRF_TRUSTED_ORIGINS=http://127.0.0.1:8000,http://localhost:8000,https://*.ts.net
+   DB_NAME=lifeos_db
+   DB_USER=root
+   DB_PASSWORD=
+   DB_HOST=127.0.0.1
+   DB_PORT=3306
+   TIME_ZONE=Asia/Kolkata
+   LANGUAGE_CODE=en-us
+   ```
+
+5. **Initialize Database & Run Migrations**:
+   Ensure MySQL is active on port 3306, then execute:
+   ```powershell
+   python manage.py migrate
+   ```
+
+6. **Run System Checks and Automated Test Suite**:
+   ```powershell
+   python manage.py check
+   python manage.py test
+   ```
 
 ---
 
-### Step 1: Create and Activate the Virtual Environment
+## 8. Managing LifeOS: Start, Stop & Restart
 
-**On Windows (PowerShell):**
-```powershell
-cd c:\LifeOs
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-```
+LifeOS provides dedicated management utilities for both interactive development and background autonomous hosting:
 
----
-
-### Step 2: Install Dependencies
-
-```powershell
-pip install -r requirements.txt
-```
+| Action | Recommended Command / Script | Behavior |
+| :--- | :--- | :--- |
+| **Start Service** | Double-click [`start_lifeos.bat`](start_lifeos.bat) | Checks MySQL, runs migrations, acquires Named Mutex, and starts the supervisor. |
+| **Stop Service** | Double-click [`stop_lifeos.bat`](stop_lifeos.bat) | Gracefully terminates supervisor, Waitress WSGI, and frees port 8000 via PowerShell. |
+| **Restart Service** | Double-click [`restart_lifeos.bat`](restart_lifeos.bat) | Calls `stop_lifeos.bat`, delays 3 seconds, and relaunches `start_lifeos.bat`. |
+| **Background Auto-Start** | Handled via Windows Startup (`LifeOS.lnk`) | Silently executes `launch_lifeos_background.vbs` upon Windows user login. |
+| **Manual Dev Server** | `python manage.py runserver` | Standard Django interactive development server on `127.0.0.1:8000`. |
+| **Manual Production Server** | `python serve.py` | Multi-threaded Waitress WSGI server directly bound to `0.0.0.0:8000`. |
 
 ---
 
-### Step 3: Configure Environment Variables
+## 9. Automated Testing & Verification
 
+LifeOS maintains an extensive automated test suite covering authentication, permissions, multi-user isolation, database check constraints, scheduling algorithms, and analytics calculations.
+
+### Running the Test Suite
 ```powershell
-Copy-Item .env.example .env
-```
-
-Ensure `.env` matches your MySQL settings:
-```ini
-SECRET_KEY=django-insecure-lifeos-local-development-key-change-in-prod
-DEBUG=True
-ALLOWED_HOSTS=127.0.0.1,localhost
-DB_NAME=lifeos_db
-DB_USER=root
-DB_PASSWORD=
-DB_HOST=127.0.0.1
-DB_PORT=3306
-TIME_ZONE=Asia/Kolkata
-LANGUAGE_CODE=en-us
-```
-
----
-
-### Step 4: Run Migrations and Tests
-
-```powershell
-# Run database migrations
-python manage.py migrate
-
-# (Optional) Import legacy data from legacy 'lifeos' database
-python manage.py import_legacy_data
-
-# Run Django system checks
-python manage.py check
-
-# Run automated test suite across all 8 applications (160 tests, 100% passing)
+# Run full test suite across all 8 apps
 python manage.py test
 
-# Or run specific modules
+# Run specific functional test suites
+python manage.py test apps.core.tests.CoreAndLandingTests
+python manage.py test apps.accounts
 python manage.py test apps.productivity
 python manage.py test apps.study
 python manage.py test apps.personal
 python manage.py test apps.finance
 python manage.py test apps.analytics
-python manage.py test apps.core.tests_step11
-python manage.py test apps.core.tests_security
 ```
 
-Expected output:
-```
-System check identified no issues (0 silenced).
-Ran 160 tests in ~180s
-
-OK
-```
+### Key Test Coverage Areas
+* **Health-Check API**: `GET /health/` verifies database connectivity (`SELECT 1`) and responds with `HTTP 200` (`status: ok`).
+* **Tenant Isolation**: Verifies that User A cannot read, edit, or delete User B's tasks, habits, projects, or journals.
+* **Authentication Security**: Case-insensitive email normalization, password hashing, timing-attack mitigation, and CSRF enforcement.
+* **Integrity Constraints**: Positive monetary values (`amount > 0`), valid Likert ratings ($1 \le \text{score} \le 5$), and sleep duration consistency.
 
 ---
 
-### Step 5: Start the Development Server
+## 10. Public Access & Edge Hosting Architecture
 
-```powershell
-python manage.py runserver
-```
+### Permanent Public HTTPS via Tailscale Funnel
+* **Architecture**: The Waitress production server listens on `0.0.0.0:8000`. Tailscale's Windows service accepts public internet traffic at `https://laptop-lkra47mc.tail581455.ts.net/` and proxies requests to `http://127.0.0.1:8000`.
+* **Zero Cloud Expenses**: 100% free forever with automated Let's Encrypt certificates.
+* **Strict MySQL Isolation**: Port 3306 is bound to loopback `127.0.0.1:3306` and is **never** forwarded to the public internet.
+* **Troubleshooting DNS**: If `DNS_PROBE_FINISHED_NXDOMAIN` occurs immediately upon laptop boot, allow 15 seconds for Tailscale network synchronization, then press `Ctrl + F5` to refresh the browser.
 
----
-
-### Step 6: Explore the Interfaces
-
-- **Public Landing Page**: [http://127.0.0.1:8000/](http://127.0.0.1:8000/) (Introduces LifeOS, redirects authenticated users to their dashboard)
-- **User Registration**: [http://127.0.0.1:8000/accounts/register/](http://127.0.0.1:8000/accounts/register/) (Create a new private user account)
-- **User Login**: [http://127.0.0.1:8000/accounts/login/](http://127.0.0.1:8000/accounts/login/) (Sign in with email, password, and Remember Me toggle)
-- **Password Reset**: [http://127.0.0.1:8000/accounts/password-reset/](http://127.0.0.1:8000/accounts/password-reset/) (Console email delivery in development)
-- **Executive Dashboard**: [http://127.0.0.1:8000/dashboard/](http://127.0.0.1:8000/dashboard/) (Central control panel with live tasks, habits, study duration, goals, schedule blocks, recent activity, and quick actions)
-- **Daily Timetable**: [http://127.0.0.1:8000/timetable/](http://127.0.0.1:8000/timetable/) (Chronological day timeline, date navigation, 4 KPI cards, block status actions, reschedule, manual block modal)
-- **Weekly Timetable**: [http://127.0.0.1:8000/timetable/weekly/](http://127.0.0.1:8000/timetable/weekly/) (7-day Monday–Sunday visual calendar grid, today indicator, pending backlog sidebar)
-- **Daily Routine Management**: [http://127.0.0.1:8000/routines/](http://127.0.0.1:8000/routines/) (Recurring fixed commitments, weekday filter pills, active toggles, overlap prevention)
-- **Availability Management**: [http://127.0.0.1:8000/availability/](http://127.0.0.1:8000/availability/) (Productive time windows per weekday, weekly overview cards)
-- **Smart Timetable Generator**: [http://127.0.0.1:8000/timetable/generator/](http://127.0.0.1:8000/timetable/generator/) (Deterministic rule-based scheduling simulation, study + task prioritization, rest break insertion, daily workload cap, unscheduled diagnostic reasons, apply confirmation)
-- **Schedule History**: [http://127.0.0.1:8000/timetable/history/](http://127.0.0.1:8000/timetable/history/) (Audit log table of generator runs with metrics and unscheduled tags)
-- **Scheduling Preferences**: [http://127.0.0.1:8000/timetable/preferences/](http://127.0.0.1:8000/timetable/preferences/) (Day bounds, continuous work threshold, break duration, buffer, daily fatigue cap)
-- **Study Dashboard**: [http://127.0.0.1:8000/study/](http://127.0.0.1:8000/study/) (7 summary KPI metrics, active timer banner, today's planned sessions, upcoming exams, weekly study rhythm)
-- **Subjects & Courses**: [http://127.0.0.1:8000/study/subjects/](http://127.0.0.1:8000/study/subjects/) (Course catalog, chapter grouping, progress bars, and cascade warnings)
-- **Topics & Chapters**: [http://127.0.0.1:8000/study/topics/](http://127.0.0.1:8000/study/topics/) (Curriculum breakdown, duration tracking, priority, instant completion toggle)
-- **Syllabus Tracker**: [http://127.0.0.1:8000/study/syllabus/](http://127.0.0.1:8000/study/syllabus/) (Subject mastery progress and behind-schedule alerts)
-- **Study Planner**: [http://127.0.0.1:8000/study/planner/](http://127.0.0.1:8000/study/planner/) (Commitment scheduling with temporal tabs: Today, Upcoming, This Week, Past, All)
-- **Study Sessions & Stopwatch**: [http://127.0.0.1:8000/study/sessions/](http://127.0.0.1:8000/study/sessions/) (Live stopwatch timer, auto-closing dangling sessions, focus ratings 1-10, manual logging)
-- **Revision Planner**: [http://127.0.0.1:8000/study/revisions/](http://127.0.0.1:8000/study/revisions/) (Spaced revision iterations, overdue/today/upcoming groupings, quick reschedule)
-- **Exams & Assessments**: [http://127.0.0.1:8000/study/exams/](http://127.0.0.1:8000/study/exams/) (Exam scheduling, deadline countdowns, score tracking)
-- **Study Analytics**: [http://127.0.0.1:8000/study/analytics/](http://127.0.0.1:8000/study/analytics/) (14-day study rhythm bar chart, subject time share, syllabus velocity, plan adherence)
-- **Task Management**: [http://127.0.0.1:8000/productivity/tasks/](http://127.0.0.1:8000/productivity/tasks/) or `/tasks/` (Full CRUD, filtering, sorting, pagination, search, duration tracking)
-- **Category Management**: [http://127.0.0.1:8000/productivity/categories/](http://127.0.0.1:8000/productivity/categories/) (Color-coded categories with safe unlinking)
-- **Habit Tracker**: [http://127.0.0.1:8000/productivity/habits/](http://127.0.0.1:8000/productivity/habits/) or `/habits/` (Daily/weekly streaks, 30-day matrix, pause/resume)
-- **Activities & Time Tracking**: [http://127.0.0.1:8000/productivity/activities/](http://127.0.0.1:8000/productivity/activities/) or `/activities/` (Live stopwatch timer, duration aggregations, manual logs)
-- **Goals & Milestones**: [http://127.0.0.1:8000/planning/goals/](http://127.0.0.1:8000/planning/goals/) or `/goals/` (Outcome tracking, target countdowns, task linkage & progress bars)
-- **Projects**: [http://127.0.0.1:8000/planning/projects/](http://127.0.0.1:8000/planning/projects/) or `/projects/` (Initiatives portfolio, deliverable deadlines, child tasks)
-- **Personal Dashboard**: [http://127.0.0.1:8000/personal/](http://127.0.0.1:8000/personal/) (8 summary KPI cards, recent journal entries, decisions, mistakes, daily check-in snapshot, 14-day mood chart, monthly spending overview)
-- **Journal Management**: [http://127.0.0.1:8000/personal/journal/](http://127.0.0.1:8000/personal/journal/) or `/journal/` (Introspective daily reflections, full-text search, date filtering, detail reading view)
-- **Daily Check-in**: [http://127.0.0.1:8000/personal/checkin/](http://127.0.0.1:8000/personal/checkin/) or `/checkin/` (Standardized 5-point scales for mood, energy, and stress, sleep hours, 14-day historical strip, duplicate-date auto-update)
-- **Mood & Energy Analytics**: [http://127.0.0.1:8000/personal/mood-energy/](http://127.0.0.1:8000/personal/mood-energy/) (7d/14d/30d/90d filtering, mood bar chart, dual-bar energy vs stress comparison, 7d vs 30d averages, self-awareness disclaimer)
-- **Sleep Tracker**: [http://127.0.0.1:8000/personal/sleep/](http://127.0.0.1:8000/personal/sleep/) (Bedtime and wake-up logging, automated midnight-crossing duration calculation, quality ratings 1-5, 14-day duration trend with 7.0-8.5h benchmark band, DailyMetric auto-sync)
-- **Decision Journal**: [http://127.0.0.1:8000/personal/decisions/](http://127.0.0.1:8000/personal/decisions/) or `/decisions/` (Decision lifecycle Draft/Evaluating/Decided/Reviewed, candidate option comparison, chosen option selection, delayed outcome evaluations with 1-10 scores and reflections)
-- **Mistake Tracker**: [http://127.0.0.1:8000/personal/mistakes/](http://127.0.0.1:8000/personal/mistakes/) or `/mistakes/` (Anti-pattern logging, root cause triggers, severity impact, status Open/In Progress/Resolved/Recurring, lessons learned, preventive action plans)
-- **Finance Manager**: [http://127.0.0.1:8000/personal/finance/](http://127.0.0.1:8000/personal/finance/) or `/finance/` (Lifetime and monthly financial KPIs, net balance, cash flow comparison bar, category-wise spending breakdown, ledger transaction search/filter/sort, INR currency formatting)
-- **User Profile & Settings**: [http://127.0.0.1:8000/accounts/profile/](http://127.0.0.1:8000/accounts/profile/) (Update full name, bio, timezone, and change password)
-- **Main Executive Analytics Dashboard**: [http://127.0.0.1:8000/analytics/](http://127.0.0.1:8000/analytics/) (Central multi-domain overview of productivity, study, habits, well-being, time allocation, finances, and active behavioral insights)
-- **Productivity Analytics**: [http://127.0.0.1:8000/analytics/productivity/](http://127.0.0.1:8000/analytics/productivity/) (Task throughput, completion velocity, duration estimation accuracy, under/overestimated task cohorts, and daily trend chart)
-- **Study & Learning Analytics**: [http://127.0.0.1:8000/analytics/study/](http://127.0.0.1:8000/analytics/study/) (Study duration charts, subject time allocation, syllabus completion progress per subject, and plan adherence)
-- **Habit Analytics**: [http://127.0.0.1:8000/analytics/habits/](http://127.0.0.1:8000/analytics/habits/) (Frequency-aware habit completion rates, consistency tiers, streak reporting, and active habit ledger)
-- **Time Management Analytics**: [http://127.0.0.1:8000/analytics/time/](http://127.0.0.1:8000/analytics/time/) (Time distribution donut chart, timetable block execution adherence, and unscheduled task backlog)
-- **Well-being & Biological Correlations**: [http://127.0.0.1:8000/analytics/wellbeing/](http://127.0.0.1:8000/analytics/wellbeing/) (Mood/energy/stress/sleep trend charts, Pearson correlations with N >= 14 data threshold, scatter plots, and medical disclaimer)
-- **Behavioral Insights Engine**: [http://127.0.0.1:8000/analytics/insights/](http://127.0.0.1:8000/analytics/insights/) (Deterministic rule-based heuristics across all life domains with confidence ratings, supporting metrics, and dismiss/restore persistence)
-- **Period Comparison System**: [http://127.0.0.1:8000/analytics/compare/](http://127.0.0.1:8000/analytics/compare/) (Multi-domain comparative delta scorecard comparing current vs. previous periods with zero-denominator safety)
-- **Notifications Center**: [http://127.0.0.1:8000/notifications/](http://127.0.0.1:8000/notifications/) (In-app proactive alerts, overdue tasks, exam alerts, revision triggers, mark all read, deletion)
-- **Global Search**: [http://127.0.0.1:8000/search/](http://127.0.0.1:8000/search/) (Cross-entity search spanning Tasks, Habits, Goals, Projects, Subjects, Topics, Journal, Decisions, Mistakes, Activities)
-- **Personalized Recommendations**: [http://127.0.0.1:8000/recommendations/](http://127.0.0.1:8000/recommendations/) (Heuristic rule-based recommendations with rationales, metrics, actions, and dismissals)
-- **Data Export & Privacy**: [http://127.0.0.1:8000/settings/export/](http://127.0.0.1:8000/settings/export/) (Self-service single JSON backup and multi-table CSV/ZIP archive download)
-- **System Settings & Preferences**: [http://127.0.0.1:8000/settings/](http://127.0.0.1:8000/settings/) (User localization, 12h/24h time, week start day, daily work goals, notification toggles)
-- **UI Design System Showcase**: [http://127.0.0.1:8000/ui-system/](http://127.0.0.1:8000/ui-system/) (Interactive 16-component catalog)
-- **Health-Check API Endpoint**: [http://127.0.0.1:8000/health/](http://127.0.0.1:8000/health/) (Preserved from Step 01)
+For complete deployment details and alternatives, refer to:
+* [`DEPLOYMENT.md`](DEPLOYMENT.md) — Production operations manual.
+* [`PUBLIC_ACCESS_GUIDE.md`](PUBLIC_ACCESS_GUIDE.md) — Tailscale Funnel & Cloudflare Quick Tunnel guide.
+* [`LOCAL_HOSTING_GUIDE.md`](LOCAL_HOSTING_GUIDE.md) — Wi-Fi LAN access & PWA setup.
+* [`DATABASE_BACKUP_GUIDE.md`](DATABASE_BACKUP_GUIDE.md) — Disaster recovery & automated backups.
 
 ---
 
-## 7. Hosting, Access & Production Operations
+## 11. Project Presentation Summary
 
-LifeOS is configured for **Free Laptop-Based Hosting** with zero cloud fees, zero domain costs, and complete data ownership.
-
----
-
-### A. One-Click Local Hosting (Waitress WSGI)
-
-LifeOS uses the multi-threaded **Waitress WSGI server** (`waitress>=3.0.0`) for high-performance serving on Windows:
-
-1. **Start Server**: Double-click [`start_lifeos.bat`](start_lifeos.bat) or run:
-   ```cmd
-   c:\LifeOs\start_lifeos.bat
-   ```
-   Or via command line:
-   ```powershell
-   .\.venv\Scripts\python.exe serve.py
-   ```
-2. **Access Locally**:
-   - Primary: [http://localhost:8000](http://localhost:8000)
-   - Loopback: [http://127.0.0.1:8000](http://127.0.0.1:8000)
-   - Health check: [http://localhost:8000/health/](http://localhost:8000/health/)
+| Attribute | Details |
+| :--- | :--- |
+| **Project Name** | **LifeOS** |
+| **Tagline** | **Personal Behavioral Intelligence — A Debugger for Humans** |
+| **Author** | **Priyani Rathod** |
+| **Repository** | [https://github.com/priyanirathod13-cell/LifeOs](https://github.com/priyanirathod13-cell/LifeOs) |
+| **Live URL** | [https://laptop-lkra47mc.tail581455.ts.net/](https://laptop-lkra47mc.tail581455.ts.net/) |
+| **Hosting Model** | Edge-hosted Windows Laptop with Tailscale Funnel & Autonomous Supervisor |
+| **Status** | Production-Ready, Feature-Complete, Multi-User Isolated |
 
 ---
 
-### B. Accessing LifeOS from Mobile Devices on Local Wi-Fi
-
-You can access LifeOS from any smartphone, tablet, or secondary computer connected to the same Wi-Fi router:
-
-1. Open your mobile browser (Chrome on Android, Safari on iOS).
-2. Navigate to:
-   ```
-   http://<YOUR_LAN_IP>:8000
-   ```
-   *(Your active LAN IP is automatically displayed in the console when `serve.py` starts).*
-3. **Windows Firewall Rule (One-Time Setup)**:
-   Run in Administrator PowerShell / Command Prompt:
-   ```cmd
-   netsh advfirewall firewall add rule name="LifeOS Web Server" dir=in action=allow protocol=TCP localport=8000
-   ```
-4. **Install as Mobile App (PWA)**:
-   - Android (Chrome): Tap menu `⋮` → **"Install app"** or **"Add to Home Screen"**.
-   - iOS (Safari): Tap Share icon → **"Add to Home Screen"**.
-
-For full details, see [`LOCAL_HOSTING_GUIDE.md`](LOCAL_HOSTING_GUIDE.md).
-
----
-
-### C. Permanent Free Public Access (Tailscale Funnel)
-
-Share LifeOS with friends or collaborators worldwide with **$0 cost**, **no custom domain purchase**, and a **permanent, stable HTTPS URL**:
-
-1. LifeOS automatically starts on Windows user login via the autonomous supervisor (`supervisor.py`) registered in Windows Startup.
-2. To start manually or view logs, double-click [`start_lifeos.bat`](start_lifeos.bat) or run:
-   ```cmd
-   start_lifeos.bat
-   ```
-3. Enable or verify Tailscale Funnel anytime via [`start_tailscale_funnel.bat`](start_tailscale_funnel.bat) or:
-   ```cmd
-   tailscale funnel --bg 8000
-   ```
-4. Your permanent, stable public HTTPS link is:
-   ```text
-   https://laptop-lkra47mc.tail581455.ts.net/
-   ```
-5. **Autonomous Self-Healing**: The background supervisor monitors MySQL, Waitress, and Funnel every 15 seconds, automatically recovering services if any crash occurs.
-6. **Security**: MySQL port 3306 is **never exposed**; only web requests to port 8000 are tunneled through encrypted connections.
-
----
-
-### D. Alternative Public Access (Cloudflare Quick Tunnel)
-
-As an alternative for ephemeral sessions without Tailscale:
-
-1. Ensure the LifeOS server is running via `start_lifeos.bat`.
-2. Double-click [`start_tunnel.bat`](start_tunnel.bat) or run:
-   ```powershell
-   .\.venv\Scripts\cloudflared.exe tunnel --url http://127.0.0.1:8000
-   ```
-3. Generates a temporary `https://<generated-name>.trycloudflare.com` link.
-
-For full details, see [`PUBLIC_ACCESS_GUIDE.md`](PUBLIC_ACCESS_GUIDE.md).
-
----
-
-### E. Database Backup & Disaster Recovery
-
-LifeOS includes an automated one-click backup utility to ensure zero data loss:
-
-1. **Create Backup**: Double-click [`backup_database.bat`](backup_database.bat) or run:
-   ```cmd
-   c:\LifeOs\backup_database.bat
-   ```
-   Generates a timestamped SQL dump in `backups/lifeos_db_backup_YYYYMMDD_HHMMSS.sql`.
-2. **Restore Database**:
-   ```cmd
-   "C:\xampp\mysql\bin\mysql.exe" --user=root --host=127.0.0.1 lifeos_db < "backups\filename.sql"
-   ```
-
-For full details and automated daily task scheduling, see [`DATABASE_BACKUP_GUIDE.md`](DATABASE_BACKUP_GUIDE.md).
-
----
-
-### E. Security & Privacy Considerations
-
-- **Multi-User Zero-Trust Isolation**: Strict tenant scoping across all models and views prevents unauthorized cross-user data access (tested with 160 automated tests).
-- **Environment Protection**: `.env` is excluded from version control via `.gitignore`.
-- **Database Safety**: Raw MySQL dumps and `.sql` backups are excluded from Git tracking.
-- **CSRF & Session Security**: Configured with `CSRF_TRUSTED_ORIGINS`, `SECURE_PROXY_SSL_HEADER`, and secure cookie options.
-- **Static Asset Caching**: WhiteNoise handles asset hashing, compression, and caching with zero server overhead.
-
-For full operations, Docker containerization, and traditional Linux deployment details, see [`DEPLOYMENT.md`](DEPLOYMENT.md).
-
+*LifeOS — Built with passion to help humans understand, debug, and optimize their daily lives.*

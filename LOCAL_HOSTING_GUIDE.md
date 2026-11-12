@@ -1,6 +1,6 @@
 # LifeOS — Local Hosting & Wi-Fi Access Guide
 
-This guide explains how to host LifeOS directly on your Windows laptop as a production-ready home server, allowing you and anyone on your local Wi-Fi network (phones, tablets, laptops) to access the application with zero cloud costs.
+This guide explains how to host LifeOS directly on your Windows laptop as a production-grade home server, allowing you and anyone on your local Wi-Fi network (phones, tablets, laptops) to access the application with zero cloud hosting costs and complete data privacy.
 
 ---
 
@@ -32,12 +32,13 @@ This guide explains how to host LifeOS directly on your Windows laptop as a prod
                                                   |                             |
                                                   v                             v
                                          [Android Phone / Tablet]      [iPhone / iPad]
-                                         http://10.169.154.34:8000     http://10.169.154.34:8000
+                                         http://<YOUR_LAN_IP>:8000     http://<YOUR_LAN_IP>:8000
 ```
 
 - **Application Server**: Waitress WSGI server (multi-threaded, production-ready on Windows).
-- **Static Files**: WhiteNoise handles caching, compression, and serving with zero overhead.
-- **Database**: Local MySQL (`lifeos_db`) on `127.0.0.1:3306`.
+- **Supervisor Daemon**: Autonomous supervisor (`supervisor.py`) running in the background with automatic self-healing.
+- **Static Files**: WhiteNoise handles caching, compression, and serving with zero configuration.
+- **Database**: Local MySQL (`lifeos_db`) strictly on `127.0.0.1:3306`.
 - **Cost**: **$0.00** — completely free forever.
 
 ---
@@ -45,13 +46,13 @@ This guide explains how to host LifeOS directly on your Windows laptop as a prod
 ## 2. Prerequisites
 
 1. **Python Virtual Environment**: Located at `c:\LifeOs\.venv` with all dependencies installed.
-2. **Local MySQL Service**: Running on port `3306` with database `lifeos_db` (via XAMPP or native Windows service).
+2. **Local MySQL Service**: Running on port `3306` with database `lifeos_db` (via XAMPP MySQL or standalone service).
 
 ---
 
-## 3. How to Start LifeOS
+## 3. How to Start, Stop and Restart LifeOS
 
-### Option A: One-Click Startup (Recommended)
+### Start LifeOS (One-Click)
 Double-click or run:
 ```cmd
 c:\LifeOs\start_lifeos.bat
@@ -60,13 +61,24 @@ This script automatically:
 1. Verifies the virtual environment.
 2. Checks whether MySQL is running on port 3306 (and launches it if XAMPP is installed).
 3. Executes pending database migrations.
-4. Launches the Waitress WSGI server bound to `0.0.0.0:8000`.
+4. Launches the supervisor and Waitress WSGI server bound to `0.0.0.0:8000`.
 
-### Option B: Manual Command Line
-Open PowerShell or Command Prompt in `c:\LifeOs`:
-```powershell
-.\.venv\Scripts\python.exe serve.py
+### Stop LifeOS (One-Click)
+Double-click or run:
+```cmd
+c:\LifeOs\stop_lifeos.bat
 ```
+Safely terminates the supervisor, Waitress server, and frees port 8000 without orphan processes.
+
+### Restart LifeOS (One-Click)
+Double-click or run:
+```cmd
+c:\LifeOs\restart_lifeos.bat
+```
+Stops the server cleanly, waits 3 seconds, and restarts all services.
+
+### Background Auto-Start on Windows Login
+LifeOS is registered in your Windows Startup folder. When you log in to Windows, [`launch_lifeos_background.vbs`](launch_lifeos_background.vbs) automatically starts the supervisor silently in the background.
 
 ---
 
@@ -75,29 +87,28 @@ Open PowerShell or Command Prompt in `c:\LifeOs`:
 Once the server is running, open any browser on your laptop:
 - **Primary URL**: [http://localhost:8000](http://localhost:8000)
 - **Loopback URL**: [http://127.0.0.1:8000](http://127.0.0.1:8000)
-- **Health Check**: [http://localhost:8000/health/](http://localhost:8000/health/)
+- **Health Check**: [http://localhost:8000/health/](http://localhost:8000/health/) (Returns `{"status": "ok", "application": "LifeOS"}`)
 
 ---
 
 ## 5. Accessing from Mobile Phones & Tablets on Wi-Fi
 
-You can access LifeOS from your smartphone, tablet, or another family member's computer on the same Wi-Fi network:
+You can access LifeOS from your smartphone, tablet, or another computer on the same Wi-Fi network:
 
 1. Connect your mobile device to the **exact same Wi-Fi network** as your laptop.
 2. Check your laptop's current Wi-Fi IP address:
-   - The startup script automatically displays this (e.g., `http://10.169.154.34:8000`).
-   - Or run `ipconfig` in Command Prompt to find your IPv4 Address.
+   - Run `ipconfig` in Command Prompt to find your IPv4 Address (e.g. `10.65.211.34`).
 3. Open your mobile browser (Chrome on Android, Safari on iOS) and navigate to:
    ```
-   http://10.169.154.34:8000
+   http://<YOUR_LAN_IP>:8000
    ```
-   *(Replace with your laptop's actual IP if different).*
+   *(e.g. `http://10.65.211.34:8000`)*.
 
 ---
 
 ## 6. Windows Firewall Setup (One-Time Step)
 
-To allow incoming connections from your Wi-Fi network to port 8000, Windows Firewall must allow inbound TCP traffic.
+To allow incoming connections from your local Wi-Fi network to port 8000, add a Windows Firewall inbound rule:
 
 ### Add Firewall Inbound Rule:
 Run the following command once in **Administrator PowerShell** or **Administrator Command Prompt**:
@@ -114,30 +125,30 @@ netsh advfirewall firewall delete rule name="LifeOS Web Server"
 
 ## 7. Installing LifeOS as a Mobile App (PWA)
 
-LifeOS comes with a built-in Web App Manifest and Service Worker:
-1. Open `http://<YOUR_LAN_IP>:8000` on your mobile browser.
+LifeOS includes an offline-ready Web App Manifest and Service Worker:
+1. Open `http://<YOUR_LAN_IP>:8000` (or the public Tailscale link) on your mobile browser.
 2. **On Android (Google Chrome)**:
    - Tap the three-dot menu icon `⋮`.
    - Tap **"Add to Home Screen"** or **"Install app"**.
 3. **On iOS (Apple Safari)**:
    - Tap the **Share** button (box with upward arrow).
    - Scroll down and tap **"Add to Home Screen"**.
-4. LifeOS will now launch in full-screen app mode with its own dedicated home screen icon.
+4. LifeOS launches in full-screen standalone app mode with its own dedicated home screen icon.
 
 ---
 
 ## 8. Keeping Your Laptop Awake as a Server
 
-To ensure the server remains accessible without interrupting when you step away:
+To ensure the server remains accessible without sleeping when you step away:
 1. Open Windows **Settings** > **System** > **Power & battery**.
 2. Expand **Screen and sleep**.
 3. Under **"When plugged in, put my device to sleep after"**, select **"Never"**.
-4. You can keep "Turn off my screen after" set to 5 or 10 minutes so your display turns off while the server remains active.
+4. Set "Turn off my screen after" to 5 or 10 minutes so your display turns off while the laptop and server remain fully operational.
 
 ---
 
-## 9. Stopping the Server
+## 9. Checking Server Health & Logs
 
-To stop the server cleanly:
-- Press `Ctrl + C` in the console window where `serve.py` or `start_lifeos.bat` is running.
-- All connections will be drained and closed safely.
+- **Local Health Endpoint**: [http://localhost:8000/health/](http://localhost:8000/health/)
+- **Supervisor Health Log**: `c:\LifeOs\monitor.log`
+- **Waitress Server Log**: `c:\LifeOs\server.log`

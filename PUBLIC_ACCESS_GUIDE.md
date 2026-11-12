@@ -56,6 +56,14 @@ Tailscale Funnel exposes your local Waitress server (`http://127.0.0.1:8000`) to
    tailscale funnel --https=443 off
    ```
 
+### Troubleshooting: `DNS_PROBE_FINISHED_NXDOMAIN` or `HTTP 502`
+- **`DNS_PROBE_FINISHED_NXDOMAIN`**:
+  * **Cause**: When your laptop first boots or wakes from sleep, Tailscale requires 10–20 seconds to establish connection to the coordination network (`BackendState: Running`). If you attempt to open the URL in Chrome immediately before Tailscale initializes, Chrome records an NXDOMAIN error in its local DNS cache.
+  * **Resolution**: Wait ~15 seconds until Tailscale icon shows connected. Run `ipconfig /flushdns` in Command Prompt or press `Ctrl + F5` (hard refresh) in the browser to clear Chrome's internal cache (`chrome://net-internals/#dns`).
+- **`HTTP 502 Bad Gateway`**:
+  * **Cause**: Tailscale Funnel is listening, but the local Waitress server on port 8000 was stopped or crashed.
+  * **Resolution**: LifeOS includes an autonomous supervisor daemon (`supervisor.py`) running in the background. It continuously tests local health every 15 seconds and automatically relaunches Waitress and MySQL if either crashes. To restart manually, double-click [`restart_lifeos.bat`](restart_lifeos.bat).
+
 ---
 
 ## 2. Alternative Method: Cloudflare Quick Tunnel (Ephemeral Demos)

@@ -97,6 +97,8 @@ class ServiceSupervisor:
         self.waitress_proc = None
         self.restart_history = []
         self.running = True
+        self.public_host = PUBLIC_HOST
+        self.public_health_url = PUBLIC_HEALTH_URL
 
     def is_port_listening(self, host: str, port: int, timeout: float = 2.0) -> bool:
         try:
@@ -177,7 +179,7 @@ class ServiceSupervisor:
 
     def is_public_health_ok(self, timeout: float = 6.0) -> bool:
         try:
-            req = urllib.request.Request(PUBLIC_HEALTH_URL, headers={"User-Agent": "LifeOS-Supervisor/1.0"})
+            req = urllib.request.Request(self.public_health_url, headers={"User-Agent": "LifeOS-Supervisor/1.0"})
             with urllib.request.urlopen(req, timeout=timeout) as response:
                 if response.status == 200:
                     body = response.read().decode("utf-8")
@@ -247,10 +249,46 @@ class ServiceSupervisor:
         logger.error("[ERROR] Waitress server did not respond with HTTP 200 within 15 seconds.")
         return False
 
+    def wait_for_tailscale(self, timeout: int = 40) -> bool:
+        """Wait for Tailscale backend state to be Running and discover public hostname."""
+        if not os.path.exists(TAILSCALE_EXE):
+            return False
+        import json
+        for _ in range(max(1, timeout // 2)):
+            try:
+                res = subprocess.run(
+                    [TAILSCALE_EXE, "status", "--json"],
+                    capture_output=True,
+                    text=True,
+                    timeout=5,
+                    creationflags=CREATE_NO_WINDOW
+                )
+                if res.returncode == 0:
+                    data = json.loads(res.stdout)
+                    state = data.get("BackendState")
+                    if state == "Running":
+                        cert_domains = data.get("CertDomains")
+                        if cert_domains and len(cert_domains) > 0:
+                            self.public_host = cert_domains[0]
+                        else:
+                            dns_name = data.get("Self", {}).get("DNSName", "").rstrip(".")
+                            if dns_name:
+                                self.public_host = dns_name
+                        self.public_health_url = f"https://{self.public_host}/health/"
+                        return True
+            except Exception:
+                pass
+            time.sleep(2)
+        return False
+
     def ensure_tailscale_funnel(self) -> bool:
         """Verify Tailscale Funnel is forwarding to port 8000; enable if not."""
         if not os.path.exists(TAILSCALE_EXE):
             logger.warning("Tailscale executable not found. Skipping Funnel verification.")
+            return False
+
+        if not self.wait_for_tailscale(timeout=30):
+            logger.warning("Tailscale daemon not yet running. Will retry in monitor loop.")
             return False
 
         try:
@@ -262,12 +300,12 @@ class ServiceSupervisor:
                 creationflags=CREATE_NO_WINDOW
             )
             output = status_res.stdout + status_res.stderr
-            if PUBLIC_HOST in output and "8000" in output:
+            if self.public_host in output and "8000" in output:
                 return True
         except Exception as e:
             logger.warning(f"Error checking tailscale funnel status: {e}")
 
-        logger.info("Enabling Tailscale Funnel for port 8000 (--bg mode)...")
+        logger.info(f"Enabling Tailscale Funnel on port 8000 for {self.public_host} (--bg mode)...")
         try:
             run_res = subprocess.run(
                 [TAILSCALE_EXE, "funnel", "--bg", "8000"],

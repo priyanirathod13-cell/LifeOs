@@ -355,17 +355,21 @@ For full details, see [`LOCAL_HOSTING_GUIDE.md`](LOCAL_HOSTING_GUIDE.md).
 
 Share LifeOS with friends or collaborators worldwide with **$0 cost**, **no custom domain purchase**, and a **permanent, stable HTTPS URL**:
 
-1. Ensure the LifeOS server is running via `start_lifeos.bat`.
-2. Double-click [`start_tailscale_funnel.bat`](start_tailscale_funnel.bat) or run:
+1. LifeOS automatically starts on Windows user login via the autonomous supervisor (`supervisor.py`) registered in Windows Startup.
+2. To start manually or view logs, double-click [`start_lifeos.bat`](start_lifeos.bat) or run:
+   ```cmd
+   start_lifeos.bat
+   ```
+3. Enable or verify Tailscale Funnel anytime via [`start_tailscale_funnel.bat`](start_tailscale_funnel.bat) or:
    ```cmd
    tailscale funnel --bg 8000
    ```
-3. Your permanent, stable public HTTPS link is:
+4. Your permanent, stable public HTTPS link is:
    ```text
    https://laptop-lkra47mc.tail581455.ts.net/
    ```
-4. **Permanent & Self-Healing**: Runs as a Windows background service (`Tailscale IPN`), automatically recovering across laptop reboots.
-5. **Security**: MySQL port 3306 is **never exposed**; only web requests to port 8000 are tunneled through encrypted WireGuard connections.
+5. **Autonomous Self-Healing**: The background supervisor monitors MySQL, Waitress, and Funnel every 15 seconds, automatically recovering services if any crash occurs.
+6. **Security**: MySQL port 3306 is **never exposed**; only web requests to port 8000 are tunneled through encrypted connections.
 
 ---
 
